@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<rect width="1080" height="1080" fill="#0D1F14"/>
+
+  <text x="60" y="160" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" letter-spacing="6">INTEL DROP</text>
+  <line x1="60" y1="185" x2="380" y2="185" stroke="#B8F04A" stroke-width="4"/>
+  <!-- giant stat -->
+  <text x="540" y="520" font-family="Arial Black, sans-serif" font-weight="900" font-size="240" fill="#B8F04A" text-anchor="middle">__STAT__</text>
+  <!-- context line -->
+  <text x="540" y="640" font-family="Arial, sans-serif" font-weight="bold" font-size="48" fill="#F5F0E8" text-anchor="middle">__WHAT_IT_MEANS__</text>
+  <text x="540" y="720" font-family="Arial, sans-serif" font-size="34" fill="#D4A843" text-anchor="middle">__SUPPORTING_LINE__</text>
+  <text x="540" y="1010" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" text-anchor="middle" letter-spacing="2">@TheScratchSheet</text>
+
+</svg>

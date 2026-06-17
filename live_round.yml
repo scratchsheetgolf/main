@@ -1,0 +1,61 @@
+name: Live Round Polling
+
+# Every 5 minutes, Thursday through Sunday (typical tournament rounds).
+# GitHub's cron has ~5 min minimum granularity and can be delayed under load —
+# fine for this use case, DataGolf itself only refreshes every 5 min anyway.
+# pipeline.py exits fast (one cheap API call) if no round is actually live,
+# so running this broadly across tournament weeks doesn't waste real work.
+on:
+  schedule:
+    - cron: "*/5 * * * 4,5,6,0"
+  workflow_dispatch:
+    inputs:
+      event_tag:
+        description: 'Real event hashtag for majors, e.g. #USOpen. Leave blank for normal weeks.'
+        required: false
+        default: ''
+      dry_run:
+        description: 'true = print what would post without posting (safe to test). Scheduled runs always post live regardless of this.'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write  # needed for image_host.py and state.py to commit back to the repo
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need full history for the media-branch worktree trick
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git identity for auto-commits
+        run: |
+          git config user.name "scratch-sheet-bot"
+          git config user.email "bot@users.noreply.github.com"
+
+      - name: Run live poll
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"; fi
+          python pipeline.py live --tour pga --event-tag "${{ github.event.inputs.event_tag }}" $FLAG

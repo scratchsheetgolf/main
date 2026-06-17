@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<rect width="1080" height="1080" fill="#0D1F14"/>
+
+  <rect x="0" y="0" width="1080" height="120" fill="#1A4A2E"/>
+  <text x="60" y="74" font-family="Arial Black, sans-serif" font-weight="900" font-size="44" fill="#B8F04A">THIS WEEK'S PICKS</text>
+  <text x="60" y="200" font-family="Arial, sans-serif" font-weight="bold" font-size="32" fill="#F5F0E8" letter-spacing="2">__EVENT_NAME__</text>
+
+  <g font-family="Arial, sans-serif">
+    <text x="60" y="330" font-weight="900" font-size="40" fill="#B8F04A">WIN</text>
+    <text x="320" y="330" font-weight="bold" font-size="40" fill="#F5F0E8">__WIN_PLAYER__</text>
+
+    <text x="60" y="450" font-weight="900" font-size="40" fill="#B8F04A">VALUE</text>
+    <text x="320" y="450" font-weight="bold" font-size="40" fill="#F5F0E8">__VALUE_PLAYER__</text>
+
+    <text x="60" y="570" font-weight="900" font-size="40" fill="#E84040">FADE</text>
+    <text x="320" y="570" font-weight="bold" font-size="40" fill="#F5F0E8">__FADE_PLAYER__</text>
+
+    <text x="60" y="690" font-weight="900" font-size="40" fill="#D4A843">SLEEPER</text>
+    <text x="320" y="690" font-weight="bold" font-size="40" fill="#F5F0E8">__SLEEPER_PLAYER__</text>
+  </g>
+  <line x1="60" y1="760" x2="1020" y2="760" stroke="#B8F04A" stroke-width="3"/>
+  <text x="60" y="840" font-family="Arial, sans-serif" font-style="italic" font-size="32" fill="#D4A843">Full breakdown in the newsletter &#8599;</text>
+  <text x="540" y="1010" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" text-anchor="middle" letter-spacing="2">@TheScratchSheet</text>
+
+</svg>

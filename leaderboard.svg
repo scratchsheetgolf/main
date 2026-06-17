@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<rect width="1080" height="1080" fill="#0D1F14"/>
+
+  <!-- header bar -->
+  <rect x="0" y="0" width="1080" height="120" fill="#1A4A2E"/>
+  <circle cx="70" cy="60" r="34" fill="none" stroke="#B8F04A" stroke-width="4"/>
+  <text x="70" y="74" font-family="Arial Black, sans-serif" font-weight="900" font-size="32" fill="#B8F04A" text-anchor="middle">SS</text>
+  <text x="130" y="72" font-family="Arial, sans-serif" font-weight="bold" font-size="34" fill="#F5F0E8" letter-spacing="2">THE SCRATCH SHEET</text>
+  <!-- title -->
+  <text x="60" y="220" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" letter-spacing="3">__EVENT__ &#183; __ROUND__</text>
+  <text x="60" y="290" font-family="Arial Black, sans-serif" font-weight="900" font-size="64" fill="#F5F0E8">LEADERBOARD</text>
+  <!-- rows -->
+  <g font-family="Arial, sans-serif">
+    <line x1="60" y1="340" x2="1020" y2="340" stroke="#B8F04A" stroke-width="3"/>
+    <text x="60" y="420" font-weight="900" font-size="48" fill="#B8F04A">1</text>
+    <text x="140" y="420" font-weight="bold" font-size="44" fill="#F5F0E8">__PLAYER_1__</text>
+    <text x="1020" y="420" font-weight="900" font-size="48" fill="#B8F04A" text-anchor="end">__SCORE_1__</text>
+
+    <text x="60" y="510" font-weight="900" font-size="48" fill="#F5F0E8">2</text>
+    <text x="140" y="510" font-weight="bold" font-size="44" fill="#F5F0E8">__PLAYER_2__</text>
+    <text x="1020" y="510" font-weight="900" font-size="48" fill="#F5F0E8" text-anchor="end">__SCORE_2__</text>
+
+    <text x="60" y="600" font-weight="900" font-size="48" fill="#F5F0E8">3</text>
+    <text x="140" y="600" font-weight="bold" font-size="44" fill="#F5F0E8">__PLAYER_3__</text>
+    <text x="1020" y="600" font-weight="900" font-size="48" fill="#F5F0E8" text-anchor="end">__SCORE_3__</text>
+
+    <text x="60" y="690" font-weight="900" font-size="48" fill="#F5F0E8">4</text>
+    <text x="140" y="690" font-weight="bold" font-size="44" fill="#F5F0E8">__PLAYER_4__</text>
+    <text x="1020" y="690" font-weight="900" font-size="48" fill="#F5F0E8" text-anchor="end">__SCORE_4__</text>
+
+    <text x="60" y="780" font-weight="900" font-size="48" fill="#F5F0E8">5</text>
+    <text x="140" y="780" font-weight="bold" font-size="44" fill="#F5F0E8">__PLAYER_5__</text>
+    <text x="1020" y="780" font-weight="900" font-size="48" fill="#F5F0E8" text-anchor="end">__SCORE_5__</text>
+    <line x1="60" y1="820" x2="1020" y2="820" stroke="#B8F04A" stroke-width="3"/>
+  </g>
+  <!-- footer tag -->
+  <text x="540" y="1000" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" text-anchor="middle" letter-spacing="2">@TheScratchSheet</text>
+
+</svg>

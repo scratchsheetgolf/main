@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<rect width="1080" height="1080" fill="#0D1F14"/>
+
+  <text x="60" y="160" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" letter-spacing="6">HOT TAKE</text>
+  <line x1="60" y1="185" x2="320" y2="185" stroke="#B8F04A" stroke-width="4"/>
+  <!-- big quote area -->
+  <text x="60" y="380" font-family="Arial Black, sans-serif" font-weight="900" font-size="70" fill="#F5F0E8">
+    <tspan x="60" dy="0">__TAKE_LINE_1__</tspan>
+    <tspan x="60" dy="90">__TAKE_LINE_2__</tspan>
+    <tspan x="60" dy="90">__TAKE_LINE_3__</tspan>
+    <tspan x="60" dy="90">__TAKE_LINE_4__</tspan>
+  </text>
+  <!-- accent line -->
+  <rect x="60" y="760" width="120" height="8" fill="#B8F04A"/>
+  <text x="60" y="840" font-family="Arial, sans-serif" font-style="italic" font-size="34" fill="#D4A843">__KICKER__</text>
+  <text x="540" y="1010" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" text-anchor="middle" letter-spacing="2">@TheScratchSheet</text>
+
+</svg>
