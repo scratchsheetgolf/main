@@ -1,8 +1,8 @@
 name: Weekly Newsletter
 
 on:
-  schedule:
-    - cron: "0 14 * * 1"  # Monday 14:00 UTC, after the weekend's tournament wraps
+  # schedule:  # PAUSED until a local --dry-run passes; re-enable deliberately
+  #    - cron: "0 14 * * 1"  # Monday 14:00 UTC, after the weekend's tournament wraps
   workflow_dispatch: {}
 
 jobs:

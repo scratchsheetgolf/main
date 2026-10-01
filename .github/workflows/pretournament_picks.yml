@@ -2,8 +2,8 @@ name: Pre-Tournament Picks
 
 # Runs once a week, Tuesday morning, when fields are typically set.
 on:
-  schedule:
-    - cron: "0 13 * * 2"  # Tuesday 13:00 UTC — adjust to your timezone preference
+  # schedule:  # PAUSED until a local --dry-run passes; re-enable deliberately
+  #    - cron: "0 13 * * 2"  # Tuesday 13:00 UTC — adjust to your timezone preference
   workflow_dispatch:
     inputs:
       event_tag:

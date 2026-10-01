@@ -6,8 +6,8 @@ name: Live Round Polling
 # pipeline.py exits fast (one cheap API call) if no round is actually live,
 # so running this broadly across tournament weeks doesn't waste real work.
 on:
-  schedule:
-    - cron: "*/5 * * * 4,5,6,0"
+  # schedule:  # PAUSED until a local --dry-run passes; re-enable deliberately
+  #    - cron: "*/5 * * * 4,5,6,0"
   workflow_dispatch:
     inputs:
       event_tag:
