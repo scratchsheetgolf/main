@@ -1,5 +1,10 @@
 name: Live Round Polling
 
+# Every 5 minutes, Thursday through Sunday (typical tournament rounds).
+# GitHub's cron has ~5 min minimum granularity and can be delayed under load —
+# fine for this use case, DataGolf itself only refreshes every 5 min anyway.
+# pipeline.py exits fast (one cheap API call) if no round is actually live,
+# so running this broadly across tournament weeks doesn't waste real work.
 on:
   schedule:
     - cron: "*/5 * * * 4,5,6,0"
@@ -15,17 +20,17 @@ on:
         default: 'true'
 
 permissions:
-  contents: write
+  contents: write  # needed for image_host.py and state.py to commit back to the repo
 
 jobs:
   poll:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # need full history for the media-branch worktree trick
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
