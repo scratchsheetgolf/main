@@ -33,6 +33,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install card fonts
+        # render.py's templates use the fonts in fonts/; without this step cairo
+        # silently falls back to a default font and the cards look wrong.
+        run: |
+          mkdir -p ~/.local/share/fonts
+          cp fonts/*.ttf ~/.local/share/fonts/
+          fc-cache -f
+          fc-list : family | grep -E "Anton|DM Serif Display|Permanent Marker|Barlow" || { echo "card fonts missing"; exit 1; }
+
       - name: Configure git identity for auto-commits
         run: |
           git config user.name "scratch-sheet-bot"

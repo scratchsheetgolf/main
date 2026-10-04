@@ -1,1 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080"><rect width="1080" height="1080" fill="#0D1F14"/><rect width="1080" height="140" fill="#E84040"/><text x="60" y="92" font-family="Arial" font-weight="bold" font-size="56" fill="#F5F0E8">LIVE</text><text x="1020" y="90" font-family="Arial" font-weight="bold" font-size="36" fill="#F5F0E8" text-anchor="end">__HOLE_MOMENT__</text><text x="60" y="420" font-family="Arial" font-weight="bold" font-size="80" fill="#F5F0E8">__EVENT_LINE_1__</text><text x="60" y="520" font-family="Arial" font-weight="bold" font-size="80" fill="#F5F0E8">__EVENT_LINE_2__</text><rect x="60" y="780" width="120" height="8" fill="#B8F04A"/><text x="60" y="860" font-family="Arial" font-style="italic" font-size="36" fill="#B8F04A">__REACTION__</text><text x="540" y="1010" font-family="Arial" font-weight="bold" font-size="30" fill="#B8F04A" text-anchor="middle">@TheScratchSheet</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+<!-- Scratch Sheet · style: MARKED-UP SCORECARD · live alert. paper #F2ECDC · ink #1E2A22 · rule #CFC5AC · pencil #6E6857 · green #2E5A3A · printed red #B3322B · sharpie #D3261F -->
+<rect width="1080" height="1350" fill="#F2ECDC"/>
+<rect x="36" y="36" width="1008" height="1278" fill="none" stroke="#1E2A22" stroke-width="3"/>
+<rect x="48" y="48" width="984" height="712" fill="#B3322B"/>
+<circle cx="108" cy="134" r="16" fill="#F2ECDC"/>
+<text x="140" y="160" font-family="Anton" font-size="76" fill="#F2ECDC" letter-spacing="8">LIVE</text>
+<text x="984" y="156" font-family="Anton" font-size="50" fill="#F2ECDC" letter-spacing="3" text-anchor="end" data-fit="520">__HOLE_MOMENT__</text>
+<line x1="96" y1="200" x2="984" y2="200" stroke="#F2ECDC" stroke-opacity="0.4" stroke-width="2"/>
+<text font-family="Anton" font-size="130" fill="#F2ECDC" data-fit="880"><tspan x="92" y="450">__EVENT_LINE_1__</tspan><tspan x="92" y="590">__EVENT_LINE_2__</tspan></text>
+<rect x="48" y="48" width="984" height="1254" fill="none" stroke="#1E2A22" stroke-width="1"/>
+<text x="98" y="890" font-family="Permanent Marker" font-size="36" fill="#D3261F" transform="rotate(-2 98 890)" data-fit="880">__REACTION__</text>
+<g font-family="Barlow Condensed SemiBold" text-anchor="middle">
+<rect x="96" y="1040" width="888" height="96" fill="none" stroke="#1E2A22" stroke-width="2"/>
+<rect x="96" y="1040" width="888" height="48" fill="#2E5A3A"/>
+<text x="148" y="1074" font-size="24" fill="#F2ECDC" letter-spacing="3">HOLE</text>
+<text x="148" y="1122" font-size="24" fill="#1E2A22" letter-spacing="3">PAR</text>
+<line x1="200" y1="1040" x2="200" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="243" y="1075" font-size="28" fill="#F2ECDC">10</text>
+<text x="243" y="1123" font-size="28" fill="#1E2A22">4</text>
+<line x1="287" y1="1040" x2="287" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="330" y="1075" font-size="28" fill="#F2ECDC">11</text>
+<text x="330" y="1123" font-size="28" fill="#1E2A22">4</text>
+<line x1="374" y1="1040" x2="374" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="417" y="1075" font-size="28" fill="#F2ECDC">12</text>
+<text x="417" y="1123" font-size="28" fill="#1E2A22">3</text>
+<line x1="461" y1="1040" x2="461" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="504" y="1075" font-size="28" fill="#F2ECDC">13</text>
+<text x="504" y="1123" font-size="28" fill="#1E2A22">5</text>
+<line x1="548" y1="1040" x2="548" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="591" y="1075" font-size="28" fill="#F2ECDC">14</text>
+<text x="591" y="1123" font-size="28" fill="#1E2A22">4</text>
+<line x1="635" y1="1040" x2="635" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="678" y="1075" font-size="28" fill="#F2ECDC">15</text>
+<text x="678" y="1123" font-size="28" fill="#1E2A22">3</text>
+<line x1="722" y1="1040" x2="722" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="765" y="1075" font-size="28" fill="#F2ECDC">16</text>
+<text x="765" y="1123" font-size="28" fill="#1E2A22">4</text>
+<line x1="809" y1="1040" x2="809" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="852" y="1075" font-size="28" fill="#F2ECDC">17</text>
+<text x="852" y="1123" font-size="28" fill="#1E2A22">5</text>
+<line x1="896" y1="1040" x2="896" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
+<text x="939" y="1075" font-size="28" fill="#F2ECDC">18</text>
+<text x="939" y="1123" font-size="28" fill="#1E2A22">4</text>
+</g>
+<text x="96" y="1262" font-family="Barlow Condensed SemiBold" font-size="26" fill="#6E6857" letter-spacing="4">ATTEST</text>
+<line x1="186" y1="1264" x2="560" y2="1264" stroke="#6E6857" stroke-width="1.5"/>
+<text x="214" y="1252" font-family="Permanent Marker" font-size="44" fill="#D3261F" transform="rotate(-4 214 1252)">SS</text>
+<text x="984" y="1262" font-family="Barlow SemiBold" font-size="30" fill="#2E5A3A" text-anchor="end">@TheScratchSheet</text>
+</svg>

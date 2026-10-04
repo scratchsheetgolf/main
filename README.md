@@ -6,8 +6,13 @@ Built to run on GitHub Actions (free) with minimal recurring cost.
 ## What's here
 
 ```
-templates/      the 5 SVG templates, cleaned up with unique __TOKEN__ placeholders
-render.py       fills templates with real data, rasterizes to PNG (tested, works)
+templates/      the 5 SVG card templates (Marked-Up Scorecard, 1080x1350) — GENERATED, don't hand-edit
+tools/
+  build_markup.py  builds templates/ — edit this to change the cards, then run it
+  marker.py        hand-drawn Sharpie circles/boxes/squiggles used by the builder
+fonts/          the card fonts (OFL/Apache) — workflows install them; install locally too
+render.py       fills templates, auto-shrinks long text, colors scores, rasterizes to PNG
+preview_cards.py renders every card with sample / longest / over-long data to check layout
 data/
   datagolf.py   DataGolf API client (schedule, predictions, live stats/odds)
   state.py      persists snapshot data across runs (for detecting changes)

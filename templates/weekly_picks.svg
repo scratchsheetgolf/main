@@ -1,25 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
-<rect width="1080" height="1080" fill="#0D1F14"/>
-
-  <rect x="0" y="0" width="1080" height="120" fill="#1A4A2E"/>
-  <text x="60" y="74" font-family="Arial Black, sans-serif" font-weight="900" font-size="44" fill="#B8F04A">THIS WEEK'S PICKS</text>
-  <text x="60" y="200" font-family="Arial, sans-serif" font-weight="bold" font-size="32" fill="#F5F0E8" letter-spacing="2">__EVENT_NAME__</text>
-
-  <g font-family="Arial, sans-serif">
-    <text x="60" y="330" font-weight="900" font-size="40" fill="#B8F04A">WIN</text>
-    <text x="320" y="330" font-weight="bold" font-size="40" fill="#F5F0E8">__WIN_PLAYER__</text>
-
-    <text x="60" y="450" font-weight="900" font-size="40" fill="#B8F04A">VALUE</text>
-    <text x="320" y="450" font-weight="bold" font-size="40" fill="#F5F0E8">__VALUE_PLAYER__</text>
-
-    <text x="60" y="570" font-weight="900" font-size="40" fill="#E84040">FADE</text>
-    <text x="320" y="570" font-weight="bold" font-size="40" fill="#F5F0E8">__FADE_PLAYER__</text>
-
-    <text x="60" y="690" font-weight="900" font-size="40" fill="#D4A843">SLEEPER</text>
-    <text x="320" y="690" font-weight="bold" font-size="40" fill="#F5F0E8">__SLEEPER_PLAYER__</text>
-  </g>
-  <line x1="60" y1="760" x2="1020" y2="760" stroke="#B8F04A" stroke-width="3"/>
-  <text x="60" y="840" font-family="Arial, sans-serif" font-style="italic" font-size="32" fill="#D4A843">Full breakdown in the newsletter &#8599;</text>
-  <text x="540" y="1010" font-family="Arial, sans-serif" font-weight="bold" font-size="30" fill="#B8F04A" text-anchor="middle" letter-spacing="2">@TheScratchSheet</text>
-
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+<!-- Scratch Sheet · style: MARKED-UP SCORECARD · weekly picks. paper #F2ECDC · ink #1E2A22 · rule #CFC5AC · pencil #6E6857 · green #2E5A3A · printed red #B3322B · sharpie #D3261F -->
+<rect width="1080" height="1350" fill="#F2ECDC"/>
+<rect x="36" y="36" width="1008" height="1278" fill="none" stroke="#1E2A22" stroke-width="3"/>
+<rect x="48" y="48" width="984" height="1254" fill="none" stroke="#1E2A22" stroke-width="1"/>
+<text x="540" y="122" font-family="Barlow SemiBold" font-size="24" fill="#2E5A3A" letter-spacing="7" text-anchor="middle">THE SCRATCH SHEET</text>
+<text x="540" y="214" font-family="DM Serif Display" font-size="84" fill="#1E2A22" text-anchor="middle">This Week's Card</text>
+<text x="540" y="266" font-family="Barlow SemiBold" font-size="24" fill="#6E6857" letter-spacing="4" text-anchor="middle" data-fit="880">__EVENT_NAME__</text>
+<rect x="80" y="320" width="920" height="680" fill="none" stroke="#1E2A22" stroke-width="2"/>
+<g stroke="#CFC5AC" stroke-width="2"><line x1="80" y1="490" x2="1000" y2="490"/><line x1="80" y1="660" x2="1000" y2="660"/><line x1="80" y1="830" x2="1000" y2="830"/><line x1="330" y1="320" x2="330" y2="1000"/></g>
+<text x="205" y="421" font-family="Barlow Condensed SemiBold" font-size="44" fill="#1E2A22" letter-spacing="5" text-anchor="middle">WIN</text>
+<text x="362" y="422" font-family="DM Serif Display" font-size="48" fill="#1E2A22" data-fit="610">__WIN_PLAYER__</text>
+<text x="205" y="591" font-family="Barlow Condensed SemiBold" font-size="44" fill="#1E2A22" letter-spacing="5" text-anchor="middle">VALUE</text>
+<text x="362" y="592" font-family="DM Serif Display" font-size="48" fill="#1E2A22" data-fit="610">__VALUE_PLAYER__</text>
+<text x="205" y="761" font-family="Barlow Condensed SemiBold" font-size="44" fill="#1E2A22" letter-spacing="5" text-anchor="middle">FADE</text>
+<text x="362" y="762" font-family="DM Serif Display" font-size="48" fill="#1E2A22" data-fit="610">__FADE_PLAYER__</text>
+<text x="205" y="931" font-family="Barlow Condensed SemiBold" font-size="44" fill="#1E2A22" letter-spacing="5" text-anchor="middle">SLEEPER</text>
+<text x="362" y="932" font-family="DM Serif Display" font-size="48" fill="#1E2A22" data-fit="610">__SLEEPER_PLAYER__</text>
+<path d="M138.7 370.7 L149.7 365.4 L161.3 360.6 L174.7 357.4 L188.4 354.6 L202.8 352.7 L217.8 352.8 L233.1 353.6 L247.7 356.3 L261.3 360.6 L271.6 367.2 L280.8 373.9 L287.0 381.7 L292.8 389.4 L295.0 397.7 L294.3 405.9 L295.4 414.2 L292.7 422.5 L287.4 430.5 L280.3 438.2 L270.1 444.7 L258.2 450.3 L245.1 455.1 L229.9 457.2 L214.7 458.2 L199.5 457.7 L185.0 455.5 L170.9 453.1 L157.8 449.3 L144.9 445.0 L134.0 439.3 L123.6 432.9 L115.5 425.4 L109.2 417.3 L106.7 408.4 L107.4 399.5 L109.4 390.6 L115.8 382.4 L124.9 375.1 L135.6 368.9 L147.8 363.8 L160.4 359.3 L173.7 355.5 L188.1 352.9 L203.0 350.3 L218.7 350.4 L234.7 351.1" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M233.3 366.6 L243.6 369.4 L252.5 373.2 L259.4 378.0 L265.4 382.8 L271.0 387.7 L274.8 393.0 L278.8 398.4 L280.4 404.2 L280.8 410.1 L279.7 416.1 L277.0 422.0 L271.3 427.4 L265.0 432.6 L256.2 436.6 L247.2 440.6 L235.8 442.2 L225.1 444.3 L213.7 444.3 L202.6 444.7 L191.7 443.7 L180.9 442.4 L169.9 440.9 L160.5 437.6 L151.0 434.3 L141.2 430.7 L134.6 425.5 L130.0 419.8 L125.1 414.0 L124.1 407.7 L126.7 401.5 L129.0 395.6 L133.9 390.1 L139.2 384.9 L145.3 379.9 L153.4 375.8 L161.2 371.4 L171.1 368.4 L181.2 365.5 L192.1 362.8 L204.1 362.2 L216.1 362.3 L228.0 363.5 L239.0 366.0 L249.0 369.5 L257.3 374.0 L265.5 378.3" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M132.9 540.7 L142.7 534.0 L155.3 528.5 L169.7 524.1 L186.1 522.3 L202.6 521.4 L219.0 522.4 L234.7 524.8 L249.7 528.1 L261.9 533.7 L274.0 538.9 L283.6 545.4 L292.5 552.1 L300.0 559.5 L306.3 567.4 L308.5 576.0 L306.8 584.6 L303.8 593.2 L296.5 601.1 L288.0 608.7 L275.5 614.6 L261.5 619.3 L246.6 622.8 L231.0 625.1 L215.3 626.8 L199.1 627.2 L183.1 626.1 L166.4 625.1 L151.0 621.6 L136.0 617.3 L123.7 611.1 L114.0 603.7 L107.2 595.5 L103.3 587.0 L102.8 578.3 L105.0 569.8 L107.0 561.4 L112.6 553.4 L119.5 545.7 L129.2 538.7 L140.5 532.2 L153.5 526.4 L169.2 522.8 L185.4 519.5 L202.8 518.9 L219.9 520.2 L236.2 522.8" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M122.9 707.6 L285.2 709.5 L282.2 782.0 L127.9 785.3 L138.4 701.5" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M118.0 946.9 L127.8 950.0 L137.6 944.2 L147.3 937.2 L157.1 950.4 L166.9 948.7 L176.7 941.6 L186.4 941.4 L196.2 952.4 L206.0 949.8 L215.8 937.2 L225.6 943.3 L235.3 952.8 L245.1 943.4 L254.9 937.3 L264.7 946.4 L274.4 952.6 L284.2 942.4 L294.0 941.1" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="96" y="1084" font-family="Permanent Marker" font-size="32" fill="#D3261F" transform="rotate(-2 96 1084)">circled twice = all in · boxed = stay away</text>
+<text x="96" y="1150" font-family="Barlow Medium" font-size="26" fill="#6E6857">Full breakdown in the newsletter.</text>
+<text x="96" y="1262" font-family="Barlow Condensed SemiBold" font-size="26" fill="#6E6857" letter-spacing="4">ATTEST</text>
+<line x1="186" y1="1264" x2="560" y2="1264" stroke="#6E6857" stroke-width="1.5"/>
+<text x="214" y="1252" font-family="Permanent Marker" font-size="44" fill="#D3261F" transform="rotate(-4 214 1252)">SS</text>
+<text x="984" y="1262" font-family="Barlow SemiBold" font-size="30" fill="#2E5A3A" text-anchor="end">@TheScratchSheet</text>
 </svg>

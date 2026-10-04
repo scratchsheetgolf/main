@@ -2,3 +2,6 @@ cairosvg==2.9.0
 requests
 anthropic
 tweepy
+
+# render.py measures text for auto-fit (already a cairosvg dependency; listed because render.py imports it directly)
+pillow
