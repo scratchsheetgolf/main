@@ -133,7 +133,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     return {"actions": actions_taken}
 
 
-def run_weekly_newsletter(tour: str = "pga"):
+def run_weekly_newsletter(tour: str = "pga", dry_run: bool = False):
     from newsletter import newsletter
     schedule = datagolf.get_schedule(tour=tour, upcoming_only=False)
     event_name = schedule.get("events", [{}])[0].get("event_name", "This Week")
@@ -141,7 +141,10 @@ def run_weekly_newsletter(tour: str = "pga"):
         week_label=event_name,
         sections=[{"heading": "Recap", "body_html": "<p>TODO: pull real recap content here.</p>"}],
     )
-    return newsletter.send_campaign(subject=f"The Scratch Sheet — {event_name}", html_content=html)
+    subject = f"The Scratch Sheet — {event_name}"
+    if dry_run:
+        return newsletter.preview(subject, html, os.path.join(OUTPUT_DIR, "newsletter_preview.html"))
+    return newsletter.send_campaign(subject=subject, html_content=html)
 
 
 if __name__ == "__main__":
@@ -160,4 +163,4 @@ if __name__ == "__main__":
     elif args.action == "live":
         print(run_live_poll(args.tour, dry_run=args.dry_run, event_tag=args.event_tag))
     elif args.action == "newsletter":
-        print(run_weekly_newsletter(args.tour))  # newsletter has no dry-run yet — low volume, lower risk
+        print(run_weekly_newsletter(args.tour, dry_run=args.dry_run))

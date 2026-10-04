@@ -12,7 +12,11 @@ Setup once you have an account:
   1. Mailchimp > Account > Extras > API keys -> generate one
   2. Note your server prefix from the key itself (e.g. key ending "-us21" -> us21)
   3. Create an Audience (list) in the Mailchimp UI, grab its List ID
-  4. Set env vars: MAILCHIMP_API_KEY, MAILCHIMP_SERVER_PREFIX, MAILCHIMP_LIST_ID
+  4. Set env vars: MAILCHIMP_API_KEY, MAILCHIMP_SERVER_PREFIX, MAILCHIMP_LIST_ID,
+     NEWSLETTER_REPLY_TO (a real address you read; sends are refused without it)
+
+Test with `python pipeline.py newsletter --dry-run`: builds the real digest and writes it to
+output/newsletter_preview.html without touching Mailchimp.
 """
 import os
 import requests
@@ -56,8 +60,35 @@ def compile_digest_html(week_label: str, sections: list) -> str:
     )
 
 
+def check_ready_to_send(html_content: str) -> list:
+    """Reasons a real send must not go out (empty list = OK). Checked before any API call."""
+    problems = []
+    if "TODO" in html_content:
+        problems.append("digest still contains placeholder 'TODO' content")
+    if not os.environ.get("NEWSLETTER_REPLY_TO"):
+        problems.append("NEWSLETTER_REPLY_TO not set (would fall back to noreply@example.com)")
+    return problems
+
+
+def preview(subject: str, html_content: str, out_path: str) -> dict:
+    """Dry run: writes the digest to an HTML file and reports what a real send would do. No Mailchimp calls."""
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+    return {
+        "status": "dry run, nothing sent",
+        "subject": subject,
+        "preview_file": out_path,
+        "would_send_to_list": LIST_ID or "(MAILCHIMP_LIST_ID not set)",
+        "blocking_problems": check_ready_to_send(html_content) or "none",
+    }
+
+
 def send_campaign(subject: str, html_content: str, from_name: str = "The Scratch Sheet") -> dict:
     """Creates a Mailchimp campaign, sets its content, and sends it immediately."""
+    problems = check_ready_to_send(html_content)
+    if problems:
+        raise RuntimeError("Refusing to send newsletter: " + "; ".join(problems))
     base = _base_url()
     auth = _auth()
 
@@ -71,7 +102,7 @@ def send_campaign(subject: str, html_content: str, from_name: str = "The Scratch
                 "subject_line": subject,
                 "title": subject,
                 "from_name": from_name,
-                "reply_to": os.environ.get("NEWSLETTER_REPLY_TO", "noreply@example.com"),
+                "reply_to": os.environ["NEWSLETTER_REPLY_TO"],
             },
         },
         timeout=20,
