@@ -4,6 +4,8 @@ brand/avatar.svg / .png     1000x1000 profile image: Sharpie "SS" circled twice.
                             inside the circle crop X / Instagram / TikTok apply, and the
                             strokes are heavy enough to read at 32-48 px.
 brand/wordmark.svg / .png   1500x500 (X header size): the mark + "The Scratch Sheet"
+brand/facebook_cover.svg / .png  1640x624 Facebook Page cover. Phones crop it to the centre
+                            ~1110 px (16:9), so the mark + name sit inside x 265-1375.
 
 Run with the venv python so the PNGs get rendered:  python tools/build_brand.py
 Needs the fonts in fonts/ installed (see render.py).
@@ -49,6 +51,13 @@ files = {
         f'<text x="120" y="440" font-family="Barlow Condensed SemiBold" font-size="26" fill="{PENCIL}" letter-spacing="5">ATTEST</text>\n'
         f'<line x1="210" y1="442" x2="560" y2="442" stroke="{PENCIL}" stroke-width="1.5"/>\n'
         f'<text x="1380" y="440" font-family="Barlow SemiBold" font-size="28" fill="{GREEN}" text-anchor="end">@TheScratchSheet</text>\n'),
+    "facebook_cover": svg(1640, 624,
+        f'<line x1="80" y1="150" x2="1560" y2="150" stroke="{INK}" stroke-width="3"/>\n'
+        f'<line x1="80" y1="474" x2="1560" y2="474" stroke="{INK}" stroke-width="3"/>\n'
+        + mark(437, 300, 0.34) +
+        f'<text x="584" y="334" font-family="DM Serif Display" font-size="92" fill="{INK}">The Scratch Sheet</text>\n'
+        f'<path d="{squiggle(594, 366, 640, 38, 7)}" {mk(9)}/>\n'
+        f'<text x="820" y="530" font-family="Barlow SemiBold" font-size="28" fill="{GREEN}" text-anchor="middle">@TheScratchSheet</text>\n'),
 }
 
 for name, content in files.items():
