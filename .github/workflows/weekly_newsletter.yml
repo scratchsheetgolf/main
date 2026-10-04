@@ -3,7 +3,12 @@ name: Weekly Newsletter
 on:
   # schedule:  # PAUSED until a local --dry-run passes; re-enable deliberately
   #    - cron: "0 14 * * 1"  # Monday 14:00 UTC, after the weekend's tournament wraps
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'true = build the digest and save it as an artifact without sending (safe to test). Scheduled runs always send.'
+        required: false
+        default: 'true'
 
 jobs:
   newsletter:
@@ -25,4 +30,16 @@ jobs:
           MAILCHIMP_API_KEY: ${{ secrets.MAILCHIMP_API_KEY }}
           MAILCHIMP_SERVER_PREFIX: ${{ secrets.MAILCHIMP_SERVER_PREFIX }}
           MAILCHIMP_LIST_ID: ${{ secrets.MAILCHIMP_LIST_ID }}
-        run: python pipeline.py newsletter --tour pga
+          NEWSLETTER_REPLY_TO: ${{ secrets.NEWSLETTER_REPLY_TO }}
+        run: |
+          FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"; fi
+          python pipeline.py newsletter --tour pga $FLAG
+
+      - name: Upload digest preview
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: newsletter-preview
+          path: output/newsletter_preview.html
+          if-no-files-found: ignore
