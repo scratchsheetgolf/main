@@ -10,7 +10,8 @@ templates/      the 5 SVG card templates (Marked-Up Scorecard, 1080x1350) — GE
 tools/
   build_markup.py  builds templates/ — edit this to change the cards, then run it
   marker.py        hand-drawn Sharpie circles/boxes/squiggles used by the builder
-brand/          logo: avatar.png (profile pic, 1000x1000) + wordmark.png (X header, 1500x500)
+brand/          logo: avatar.png (profile pic, 1000x1000), wordmark.png (X header, 1500x500),
+                facebook_cover.png (FB Page cover, 1640x624, phone-crop safe)
   -> built by tools/build_brand.py
 fonts/          the card fonts (OFL/Apache) — workflows install them; install locally too
 render.py       fills templates, auto-shrinks long text, colors scores, rasterizes to PNG
