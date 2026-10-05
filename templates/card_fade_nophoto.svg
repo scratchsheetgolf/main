@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+<!-- Scratch Sheet · playing card · FADE · no photo -->
+<rect width="1080" height="1350" fill="#F2ECDC"/>
+<rect x="100" y="59" width="880" height="1232" rx="40" fill="#FBF8F0" stroke="#1E2A22" stroke-width="4"/>
+<rect x="122" y="81" width="836" height="1188" rx="28" fill="none" stroke="#B3322B" stroke-width="2"/>
+<text x="152" y="143" font-family="Anton" font-size="46" fill="#D3261F" text-anchor="middle">F</text>
+<path d="M133.2 150.5 L174.5 153.3 L177.8 179.6 L129.5 181.2 L143.0 150.7" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<g transform="rotate(180 928 1183)"><text x="928" y="1159" font-family="Anton" font-size="46" fill="#D3261F" text-anchor="middle">F</text><path d="M909.2 1166.5 L950.5 1169.3 L953.8 1195.6 L905.5 1197.2 L919.0 1166.7" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<rect x="190.0" y="193" width="700" height="572" fill="#ECE5D3" stroke="#1E2A22" stroke-width="3"/>
+<text x="540.0" y="574.0" font-family="DM Serif Display" font-size="270" fill="#1E2A22" text-anchor="middle" data-fit="560">__INITIALS__</text>
+<path d="M360.0 363.6 L387.3 346.5 L416.1 330.5 L447.6 316.4 L482.2 304.7 L519.7 297.2 L558.7 297.9 L597.2 302.2 L634.3 310.3 L667.1 324.7 L698.7 339.8 L725.5 358.7 L742.8 382.5 L762.6 404.4 L772.8 429.2 L786.7 453.6 L790.2 479.7 L790.2 506.2 L783.5 532.6 L773.1 558.8 L758.9 585.0 L731.1 604.9 L702.9 624.3 L668.5 638.0 L631.6 646.9 L594.3 653.3 L556.0 652.5 L518.5 653.3 L482.4 646.7 L446.2 640.4 L409.6 632.4 L377.6 617.6 L347.0 600.8 L318.4 581.4 L296.3 557.9 L285.4 530.8 L274.4 503.8 L275.3 475.7 L285.9 448.8 L295.4 422.6 L315.8 399.6 L333.9 376.3 L357.8 355.6 L386.0 337.7 L416.4 321.2 L449.3 305.7 L487.3 297.8" fill="none" stroke="#D3261F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="170.0" y="783" width="740" height="92" fill="#2E5A3A"/>
+<text x="540.0" y="847" font-family="DM Serif Display" font-size="58" fill="#F2ECDC" text-anchor="middle" data-fit="700">__PLAYER__</text>
+<text x="540.0" y="911" font-family="Barlow Condensed SemiBold" font-size="28" fill="#B3322B" letter-spacing="7" text-anchor="middle" data-fit="760">FADE PICK · __EVENT__</text>
+<g font-family="Barlow Condensed SemiBold" font-size="22" fill="#6E6857" letter-spacing="4" text-anchor="middle"><text x="290.0" y="961">MODEL WIN</text><text x="540.0" y="961">BOOKS WIN</text><text x="790.0" y="961">ODDS</text></g>
+<g font-family="Anton" font-size="60" fill="#1E2A22" text-anchor="middle"><text x="290.0" y="1033" data-fit="220">__MODEL_WIN__</text><text x="540.0" y="1033" data-fit="220">__BOOKS_WIN__</text><text x="790.0" y="1033" data-fit="220">__ODDS__</text></g>
+<line x1="170" y1="1059" x2="910" y2="1059" stroke="#CFC5AC" stroke-width="2"/>
+<g font-family="Barlow Condensed SemiBold" font-size="23" fill="#1E2A22" letter-spacing="2" text-anchor="middle"><text x="240.0" y="1095">OTT __SG_OTT__</text><text x="440.0" y="1095">APP __SG_APP__</text><text x="640.0" y="1095">ARG __SG_ARG__</text><text x="840.0" y="1095">PUTT __SG_PUTT__</text></g>
+<g font-family="Barlow Condensed SemiBold" font-size="21" fill="#B3322B" text-anchor="middle"><text x="240.0" y="1125">__RANK_OTT__</text><text x="440.0" y="1125">__RANK_APP__</text><text x="640.0" y="1125">__RANK_ARG__</text><text x="840.0" y="1125">__RANK_PUTT__</text></g>
+<text x="540.0" y="1191" font-family="Permanent Marker" font-size="27" fill="#D3261F" text-anchor="middle" transform="rotate(-2 540.0 1191)" data-fit="700">__NOTE__</text>
+</svg>

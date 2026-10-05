@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from data import datagolf, state, transform
 from content import content
 from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
-                    render_pick_detail, render_stat_list, render_closer)
+                    render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand)
 from distribute import image_host, post_x, post_meta, post_tiktok
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
@@ -132,48 +132,76 @@ def _note(facts: str) -> str:
 
 def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, cover_path: str, caption: str) -> dict:
     """Instagram preview carousel as a numbered set in output/carousel_<tour>/ (posted by hand):
-    01 cover (picks card), 02-05 one slide per pick, 06 course fit, 07 favorites, 08 closer, + caption.txt."""
+    01 hand (the four playing cards fanned), 02 picks card, 03-06 one playing card per pick,
+    07 course fit, 08 favorites, 09 closer, + caption.txt. A second full set with the photos in the
+    brand duotone goes to output/carousel_<tour>/brand/ so the two looks can be A/B tested week to week."""
     import shutil
+    from tools import player_photos
     out_dir = os.path.join(OUTPUT_DIR, f"carousel_{tour}")
-    os.makedirs(out_dir, exist_ok=True)
+    brand_dir = os.path.join(out_dir, "brand")
+    os.makedirs(brand_dir, exist_ok=True)
     event_line = f"{tour_label(tour)}{event_name.upper()}"
-    files = [os.path.join(out_dir, "01_cover.png")]
-    shutil.copyfile(cover_path, files[0])
+    slides = {}          # name -> {"color": path, "brand": path}
+
+    def shared(name, path):
+        shutil.copyfile(path, os.path.join(brand_dir, name))
+        slides[name] = {"color": path, "brand": os.path.join(brand_dir, name)}
 
     skills = datagolf.get_skill_ratings()
-    for i, slot in enumerate(("win", "value", "fade", "sleeper"), start=2):
+    credits = []
+    for i, slot in enumerate(("win", "value", "fade", "sleeper"), start=3):
         pick = picks[slot]
         profile = transform.skill_profile(skills, pick["dg_id"])
-        path = os.path.join(out_dir, f"{i:02d}_{slot}.png")
-        render_pick_detail(slot, pick["name"], event_line, f"{pick['model_win']:.1%}",
-                           f"{pick['market_win']:.1%}" if pick.get("market_win") else "—",
-                           transform.format_odds(pick.get("median_odds")), profile,
-                           _note(transform.pick_facts(slot, pick, event_name, profile)), path)
-        files.append(path)
+        note = _note(transform.pick_facts(slot, pick, event_name, profile))
+        photo, entry = player_photos.lookup(pick["name"])
+        if entry:
+            credits.append(f"{pick['name']}: {player_photos.credit(entry)[len('Photo: '):]} ({entry.get('source_page', '')})")
+        name = f"{i:02d}_{slot}.png"
+        slides[name] = {}
+        for style, folder in (("color", out_dir), ("brand", brand_dir)):
+            path = os.path.join(folder, name)
+            render_playing_card(slot, pick["name"], event_line, f"{pick['model_win']:.1%}",
+                                f"{pick['market_win']:.1%}" if pick.get("market_win") else "—",
+                                transform.format_odds(pick.get("median_odds")), profile, note, path,
+                                photo, player_photos.credit(entry) if entry else "", style=style)
+            slides[name][style] = path
+
+    card_names = [n for n in slides]
+    for style, folder in (("color", out_dir), ("brand", brand_dir)):
+        render_hand([slides[n][style] for n in card_names], f"{event_line} · WIN · VALUE · FADE · SLEEPER",
+                    os.path.join(folder, "01_hand.png"))
+    slides["01_hand.png"] = {"color": os.path.join(out_dir, "01_hand.png"), "brand": os.path.join(brand_dir, "01_hand.png")}
+    path = os.path.join(out_dir, "02_picks.png")
+    shutil.copyfile(cover_path, path)
+    shared("02_picks.png", path)
 
     fit = transform.course_fit_boost(preds)
     if fit:
         facts = (f"{event_name}: players whose win chance rises most when DataGolf adds course history and fit "
                  "to its baseline model, in percentage points: " + "; ".join(f"{n} {v}" for n, v, _ in fit) + ".")
-        path = os.path.join(out_dir, "06_course_fit.png")
+        path = os.path.join(out_dir, "07_course_fit.png")
         render_stat_list("Who the Course Suits", "WIN CHANCE ADDED BY COURSE HISTORY + FIT (DATAGOLF)", "BOOST",
                          [(n, v) for n, v, _ in fit], _note(facts), path)
-        files.append(path)
+        shared("07_course_fit.png", path)
 
     favs = transform.favorites(preds)
     facts = f"{event_name}: DataGolf model win chances, top 5: " + "; ".join(f"{n} {v}" for n, v in favs) + "."
-    path = os.path.join(out_dir, "07_favorites.png")
+    path = os.path.join(out_dir, "08_favorites.png")
     render_stat_list("The Favorites", f"DATAGOLF MODEL WIN CHANCE · {event_line}", "WIN %", favs, _note(facts), path)
-    files.append(path)
+    shared("08_favorites.png", path)
 
-    path = os.path.join(out_dir, "08_closer.png")
+    path = os.path.join(out_dir, "09_closer.png")
     render_closer(event_line, path)
-    files.append(path)
+    shared("09_closer.png", path)
 
+    text = f"{caption}\n\n{IG_HASHTAGS.get(tour, '#golf')}\n"
+    if credits:   # CC BY-SA photos: attribution + license link travel with the post
+        text += "\nPhotos (Wikimedia Commons; cards shared under the same licenses):\n" + "\n".join(credits) + "\n"
     caption_path = os.path.join(out_dir, "caption.txt")
-    with open(caption_path, "w", encoding="utf-8") as f:
-        f.write(f"{caption}\n\n{IG_HASHTAGS.get(tour, '#golf')}\n")
-    return {"carousel_dir": out_dir, "slides": [os.path.basename(x) for x in files], "caption_file": caption_path}
+    for folder in (out_dir, brand_dir):
+        with open(os.path.join(folder, "caption.txt"), "w", encoding="utf-8") as f:
+            f.write(text)
+    return {"carousel_dir": out_dir, "brand_dir": brand_dir, "slides": sorted(slides), "caption_file": caption_path}
 
 
 def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag: str = "", draft: bool = False):
