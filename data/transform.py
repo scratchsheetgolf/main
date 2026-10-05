@@ -261,3 +261,58 @@ def pick_results(saved_picks: dict, event_results: dict) -> list:
         if p:
             out.append({"slot": slot, "name": p["name"], "finish": by_id.get(p.get("dg_id"), "not in results")})
     return out
+
+
+
+# ---- Weekly Intel Drop (off-week stat card) ----
+
+INTEL_ROTATION = ["underrated", "sg_app", "sg_ott", "sg_putt", "sg_arg"]
+SG_LABELS = {"sg_app": "APPROACH", "sg_ott": "OFF THE TEE", "sg_putt": "PUTTING", "sg_arg": "AROUND THE GREEN"}
+SG_PLAIN = {"sg_app": "approach play", "sg_ott": "driving", "sg_putt": "putting", "sg_arg": "short game"}
+
+
+def _intel_underrated(rankings: dict):
+    """Biggest gap between DataGolf rank and world ranking, among DataGolf's top 50."""
+    best = None
+    for r in rankings.get("rankings") or []:
+        dg, owgr = r.get("datagolf_rank"), r.get("owgr_rank")
+        if not isinstance(dg, int) or not isinstance(owgr, int) or owgr <= 0 or dg > 50:
+            continue
+        gap = owgr - dg
+        if gap > 0 and (best is None or gap > best[0]):
+            best = (gap, r)
+    if not best:
+        return None
+    gap, r = best
+    name = display_name(r.get("player_name", ""))
+    return {"kind": "underrated", "stat": str(gap),
+            "what_it_means": f"{name.upper()}: DATAGOLF #{r['datagolf_rank']}, WORLD #{r['owgr_rank']}",
+            "facts": (f"{name} is ranked #{r['datagolf_rank']} in the DataGolf rankings (a skill-based rating) "
+                      f"but #{r['owgr_rank']} in the Official World Golf Ranking: a gap of {gap} places. "
+                      f"Primary tour: {r.get('primary_tour', 'unknown')}."),
+            "summary": f"{name}: DataGolf #{r['datagolf_rank']} vs world #{r['owgr_rank']} ({gap} places)"}
+
+
+def _intel_sg_leader(skills: dict, cat: str):
+    rows = [r for r in skills.get("players") or [] if isinstance(r.get(cat), (int, float))]
+    if not rows:
+        return None
+    r = max(rows, key=lambda x: x[cat])
+    name = display_name(r.get("player_name", ""))
+    value = f"{r[cat]:+.2f}"
+    return {"kind": cat, "stat": value,
+            "what_it_means": f"{name.upper()}: SG {SG_LABELS[cat]} PER ROUND",
+            "facts": (f"{name} leads DataGolf's current skill ratings in strokes gained {SG_PLAIN[cat]}: "
+                      f"{value} strokes per round vs an average tour player. No one rated is better at it right now."),
+            "summary": f"{name}: best {SG_PLAIN[cat]} in DataGolf's skill ratings ({value} per round)"}
+
+
+def weekly_intel(rankings: dict, skills: dict, week: int) -> dict:
+    """This week's Intel Drop, rotating through INTEL_ROTATION by ISO week; falls through to the next
+    angle if one has no usable data. Returns {"kind", "stat", "what_it_means", "facts", "summary"}."""
+    for i in range(len(INTEL_ROTATION)):
+        kind = INTEL_ROTATION[(week + i) % len(INTEL_ROTATION)]
+        pick = _intel_underrated(rankings) if kind == "underrated" else _intel_sg_leader(skills, kind)
+        if pick:
+            return pick
+    raise PicksError("no usable data in rankings or skill ratings for an Intel Drop")

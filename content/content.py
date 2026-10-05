@@ -253,6 +253,19 @@ def generate_intel_caption(stat_context: str, n: int = 3):
     return {**best, "alternatives": rest}
 
 
+def generate_supporting_line(facts: str, n: int = 3):
+    """One short marker-style line under a stat card whose number and headline were set in code.
+    Returns options (best first) or None on SKIP."""
+    system = (
+        _brand_system("the one-line comment under a stat card") + "\n\n"
+        "The big number and the headline are already on the card. Write SUPPORTING: one short, "
+        "normal-case line of color that makes a golf fan care about the stat. Don't repeat the headline."
+    )
+    options = _ask("supporting line", system, facts, {"SUPPORTING": LIMITS["intel"]["SUPPORTING"]}, n,
+                   temperature=0.9, max_tokens=400)
+    return None if options is None else [o["SUPPORTING"] for o in options]
+
+
 def generate_caption_options(post_type: str, image_summary: str, event_tag: str = "", n: int = 3):
     """Caption options to post alongside a card, best first; None if the model chose SKIP.
 

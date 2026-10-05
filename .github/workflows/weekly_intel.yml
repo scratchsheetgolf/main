@@ -1,0 +1,74 @@
+name: Weekly Intel Drop
+
+# Off-week stat card from DataGolf rankings / skill ratings (DataGolf updates them weekly).
+# Same posting rules as picks/live: manual runs default to dry run; otherwise a draft
+# (card + caption attached to the run) unless the AUTO_POST repo variable is "true".
+on:
+  # schedule:  # PAUSED until manual drafts look right; Wednesday 15:00 UTC when enabled
+  #    - cron: "0 15 * * 3"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'true = dry run (nothing saved). false = draft, or a real post only if AUTO_POST is true.'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write
+
+jobs:
+  intel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install card fonts
+        run: |
+          mkdir -p ~/.local/share/fonts
+          cp fonts/*.ttf ~/.local/share/fonts/
+          fc-cache -f
+          fc-list : family | grep -E "Anton|DM Serif Display|Permanent Marker|Barlow" || { echo "card fonts missing"; exit 1; }
+
+      - name: Configure git identity for auto-commits
+        run: |
+          git config user.name "scratch-sheet-bot"
+          git config user.email "bot@users.noreply.github.com"
+
+      - name: Generate Intel Drop
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+          TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          POST_PLATFORMS: ${{ vars.POST_PLATFORMS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FLAG="--draft"
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"
+          elif [ "${{ vars.AUTO_POST }}" = "true" ]; then FLAG=""; fi
+          echo "mode: ${FLAG:-real post}"
+          python pipeline.py intel $FLAG
+
+      - name: Attach post drafts (card + caption) to this run
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: post-drafts-intel
+          path: |
+            output/*.png
+            output/*.txt
+          if-no-files-found: ignore
+          retention-days: 14

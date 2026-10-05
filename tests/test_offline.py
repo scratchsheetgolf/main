@@ -137,6 +137,8 @@ class PipelineDryRunTests(unittest.TestCase):
         if "KICKER" in system:
             return "\n".join(f"OPTION {i}\nLINE1: TAKE {i}\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k{i}"
                              for i in (1, 2, 3)).replace("TAKE 1", "TAKE ONE").replace("TAKE 2", "TAKE TWO").replace("TAKE 3", "TAKE THREE").replace("k1", "ka").replace("k2", "kb").replace("k3", "kc")
+        if "SUPPORTING" in system:
+            return "OPTION 1\nSUPPORTING: the irons are just unfair right now\nOPTION 2\nSUPPORTING: other line"
         if "CAPTION" in system:
             return "OPTION 1\nCAPTION: Caption alpha.\nOPTION 2\nCAPTION: Caption beta.\nOPTION 3\nCAPTION: Caption gamma."
         return "Fake recap paragraph one.\nFake recap paragraph two."
@@ -495,6 +497,43 @@ class MultiTourTests(PipelineDryRunTests):
         self.assertTrue(out["skill_ratings"]["ok"])
         self.assertEqual(out["skill_ratings"]["rows"], 1)
         self.assertEqual(out["pre_tournament"]["event_name"], "Fake Invitational")
+
+RANKINGS = {"rankings": [
+    {"dg_id": 1, "player_name": "Top, Guy", "datagolf_rank": 1, "owgr_rank": 1, "primary_tour": "PGA"},
+    {"dg_id": 2, "player_name": "Rahm, Jon", "datagolf_rank": 3, "owgr_rank": 73, "primary_tour": "LIV"},
+    {"dg_id": 3, "player_name": "Unranked, Al", "datagolf_rank": 5, "owgr_rank": None, "primary_tour": "LIV"},
+    {"dg_id": 4, "player_name": "Deep, Field", "datagolf_rank": 80, "owgr_rank": 900, "primary_tour": "KFT"}]}
+SKILLS = {"players": [
+    {"dg_id": 1, "player_name": "Top, Guy", "sg_app": 1.42, "sg_ott": 0.8, "sg_putt": 0.2, "sg_arg": 0.3},
+    {"dg_id": 5, "player_name": "Putter, Pete", "sg_app": 0.1, "sg_ott": 0.1, "sg_putt": 1.05, "sg_arg": 0.4}]}
+
+
+class WeeklyIntelTests(PipelineDryRunTests):
+    def test_underrated_uses_top_50_with_real_world_rank(self):
+        pick = transform.weekly_intel(RANKINGS, SKILLS, week=0)     # rotation slot 0 = underrated
+        self.assertEqual(pick["stat"], "70")                        # 73 - 3; skips None OWGR and DG #80
+        self.assertEqual(pick["what_it_means"], "JON RAHM: DATAGOLF #3, WORLD #73")
+        self.assertIn("#73", pick["facts"])
+
+    def test_rotation_and_sg_leaders(self):
+        self.assertEqual(transform.weekly_intel(RANKINGS, SKILLS, week=1)["stat"], "+1.42")   # sg_app
+        putt = transform.weekly_intel(RANKINGS, SKILLS, week=3)
+        self.assertEqual((putt["stat"], putt["what_it_means"]), ("+1.05", "PETE PUTTER: SG PUTTING PER ROUND"))
+
+    def test_falls_through_when_an_angle_has_no_data(self):
+        pick = transform.weekly_intel({"rankings": []}, SKILLS, week=0)   # no rankings -> next angle
+        self.assertEqual(pick["kind"], "sg_app")
+
+    def test_intel_dry_run_renders_card_with_model_line(self):
+        with mock.patch.object(datagolf, "get_dg_rankings", return_value=RANKINGS, create=True), \
+             mock.patch.object(datagolf, "get_skill_ratings", return_value=SKILLS, create=True), \
+             mock.patch.object(pipeline, "render_intel_stat") as ri:
+            out = pipeline.run_weekly_intel(dry_run=True, week=1)
+        kw = ri.call_args.kwargs
+        self.assertEqual((kw["stat"], kw["supporting_line"]), ("+1.42", "the irons are just unfair right now"))
+        self.assertIn("Guy Top", out["intel"])
+        with open(out["caption_file"], encoding="utf-8") as f:
+            self.assertIn("(card line) other line", f.read())
 
 if __name__ == "__main__":
     unittest.main()
