@@ -34,8 +34,10 @@ def footer():
             f'<text x="984" y="1262" font-family="Barlow SemiBold" font-size="30" fill="{GREEN}" text-anchor="end">@TheScratchSheet</text>\n</svg>\n')
 
 
-def hole_strip(y, first=1):
-    pars = [4, 4, 3, 5, 4, 3, 4, 5, 4]
+def hole_strip(y, first=1, blank=False):
+    """Decorative scorecard strip. blank=True leaves the PAR row empty: on the live alert, made-up pars
+    next to a real "THRU 15" would read as the actual course."""
+    pars = [""] * 9 if blank else [4, 4, 3, 5, 4, 3, 4, 5, 4]
     s = [f'<g font-family="Barlow Condensed SemiBold" text-anchor="middle">',
          f'<rect x="96" y="{y}" width="888" height="96" fill="none" stroke="{INK}" stroke-width="2"/>',
          f'<rect x="96" y="{y}" width="888" height="48" fill="{GREEN}"/>',
@@ -126,7 +128,7 @@ lv = [head("live alert"),
       f'<text font-family="Anton" font-size="130" fill="{PAPER}" data-fit="880"><tspan x="92" y="450">__EVENT_LINE_1__</tspan><tspan x="92" y="590">__EVENT_LINE_2__</tspan></text>\n',
       frame_inner(),
       f'<text x="98" y="890" font-family="Permanent Marker" font-size="36" fill="{SHARPIE}" transform="rotate(-2 98 890)" data-fit="880">__REACTION__</text>\n',
-      hole_strip(1040, 10),
+      hole_strip(1040, 10, blank=True),
       footer()]
 open(f"{OUT}/live_alert.svg", "w").write("".join(lv))
 # ---------- carousel: one slide per pick (four variants, one Sharpie mark each) ----------

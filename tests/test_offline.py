@@ -605,6 +605,58 @@ class PreviewCarouselTests(PipelineDryRunTests):
                                       "TEST", os.path.join(d, "hand.png"))
             self.assertTrue(os.path.exists(hand))
 
+    def _live(self, rows, rnd=2):
+        return {"info": {"event_name": "Fake Invitational", "current_round": rnd}, "data": rows}
+
+    def test_detect_big_hole_inferred_from_one_hole(self):
+        before = self._live([
+            {"dg_id": 1, "player_name": "Lead, Al", "current_pos": "1", "current_score": -10, "today": -3, "thru": 12},
+            {"dg_id": 2, "player_name": "Chase, Bo", "current_pos": "2", "current_score": -8, "today": -2, "thru": 14}])
+        after = self._live([
+            {"dg_id": 1, "player_name": "Lead, Al", "current_pos": "T1", "current_score": -10, "today": -3, "thru": 12},
+            {"dg_id": 2, "player_name": "Chase, Bo", "current_pos": "T1", "current_score": -10, "today": -4, "thru": 15}])
+        moments = transform.detect_moments(after, transform.live_scores(before))
+        self.assertEqual([m["kind"] for m in moments], ["big_hole"])
+        m = moments[0]
+        self.assertEqual((m["name"], m["drop"], m["hole_moment"]), ("Bo Chase", 2, "ROUND 2 · THRU 15"))
+        self.assertIn("do NOT call it an eagle", m["facts"])
+        self.assertEqual(transform.detect_moments(after, transform.live_scores(before), [m["key"]]), [])
+
+    def test_two_holes_between_polls_is_not_a_big_hole(self):
+        before = self._live([{"dg_id": 2, "player_name": "Chase, Bo", "current_pos": "2", "current_score": -8, "today": -2, "thru": 13}])
+        after = self._live([{"dg_id": 2, "player_name": "Chase, Bo", "current_pos": "1", "current_score": -10, "today": -4, "thru": 15}])
+        self.assertEqual(transform.detect_moments(after, transform.live_scores(before)), [])
+
+    def test_detect_charge_and_collapse(self):
+        before = self._live([
+            {"dg_id": 1, "player_name": "Lead, Al", "current_pos": "1", "current_score": -10, "today": 2, "thru": 10},
+            {"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "5", "current_score": -12, "today": -5, "thru": 11}])
+        after = self._live([
+            {"dg_id": 1, "player_name": "Lead, Al", "current_pos": "2", "current_score": -9, "today": 3, "thru": 11},
+            {"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -13, "today": -6, "thru": 12}])
+        kinds = {m["kind"]: m for m in transform.detect_moments(after, transform.live_scores(before))}
+        self.assertEqual(set(kinds), {"charge", "collapse"})
+        self.assertIn("-6 for round 2", kinds["charge"]["facts"])
+        self.assertEqual(transform.moment_fallback(kinds["collapse"])[:2], ("LEAD IS", "SLIPPING"))
+
+    def test_live_poll_posts_one_capped_alert(self):
+        state_now = {"event_name": "Fake Invitational", "leader_name": "Hot Cy", "last_leaderboard_post_ts": 9e12,
+                     "live_scores": {"3": {"name": "Cy Hot", "pos": "1", "score": -11, "today": -4, "thru": 10, "rank": 1}}}
+        live = self._live([{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}])
+        reaction = {"event_line_1": "CY GOES", "event_line_2": "THREE UNDER", "reaction": "eagle-plus chaos", "alternatives": []}
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=live), \
+             mock.patch.object(state, "load", return_value=state_now), \
+             mock.patch.object(state, "save") as saved, \
+             mock.patch.object(content, "generate_live_reaction", return_value=reaction), \
+             mock.patch.object(pipeline, "render_live_alert") as card:
+            out = pipeline.run_live_poll(dry_run=True)
+        acts = dict(out["actions"])
+        self.assertIn("live_alert", acts)
+        kw = card.call_args.kwargs
+        # the writer's option said "eagle" on an inferred moment -> rejected, data-only lines used
+        self.assertEqual((kw["event_line_1"], kw["event_line_2"]), ("HOT GOES", "3 UNDER ON ONE"))
+        self.assertEqual(saved.call_args.args[0]["alerts"]["sent"], ["hole:3:2:11"])
+
     def test_carousel_failure_does_not_block_picks_card(self):
         with mock.patch.object(datagolf, "get_skill_ratings", side_effect=RuntimeError("down")):
             out = pipeline.run_pretournament_picks(dry_run=True)

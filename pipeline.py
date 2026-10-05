@@ -246,6 +246,37 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
     return result
 
 
+MAX_LIVE_ALERTS = 3   # per round, per tour
+
+
+def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool):
+    """Render + post one Live Alert card. Lines come from the writer (checked: numbers must be in the facts,
+    and no eagle/ace wording when the moment was inferred); data-only fallback lines otherwise."""
+    facts = f"Tour: {TOUR_NAMES.get(tour, tour)}. Event: {event_name}.\n{m['facts']}"
+    options = []
+    try:
+        res = content.generate_live_reaction(facts)
+        if res:
+            options = [res] + res.get("alternatives", [])
+    except Exception as e:
+        if not (dry_run or draft):
+            print(f"live alert writer failed ({type(e).__name__}); using data-only lines", file=sys.stderr)
+    if m.get("inferred"):
+        options = [o for o in options if not any(w in " ".join((o["event_line_1"], o["event_line_2"], o["reaction"])).lower()
+                                                  for w in transform.INFERRED_HOLE_WORDS)]
+    if options:
+        best = options[0]
+        line1, line2, reaction = best["event_line_1"], best["event_line_2"], best["reaction"]
+    else:
+        line1, line2, reaction = transform.moment_fallback(m)
+    image_path = os.path.join(OUTPUT_DIR, "live_alert.png")
+    render_live_alert(hole_moment=tour_label(tour) + m["hole_moment"], event_line_1=line1.upper(),
+                      event_line_2=line2.upper(), reaction=reaction, out_path=image_path)
+    alt_notes = [f"{o['event_line_1']} / {o['event_line_2']} — {o['reaction']}" for o in options[1:]]
+    caption = f"{m['name']}: {reaction}" if reaction else m["name"]
+    return _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft, alternatives=alt_notes)
+
+
 def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_run: bool = False,
                   event_tag: str = "", draft: bool = False):
     """Called every 5 minutes during live tournament rounds (matches DataGolf's
@@ -299,7 +330,25 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
             actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run,
                                                                draft=draft, alternatives=alt_notes)))
 
-    # Trigger 2: leaderboard snapshot — throttled to once per min_leaderboard_gap_minutes,
+    # Trigger 2: big moments (big hole / charge / collapse) -> Live Alert card. Capped so the account
+    # doesn't read like a bot: at most one per poll, 20 min apart, MAX_LIVE_ALERTS per round.
+    alerts = prev.get("alerts") if prev.get("event_name") == event_name else None
+    if not alerts or alerts.get("round") != current_round:
+        alerts = {"round": current_round, "sent": [], "last_ts": 0}
+    prev_scores = prev.get("live_scores") if prev.get("event_name") == event_name else {}
+    moments = [] if final else transform.detect_moments(live, prev_scores, alerts["sent"])
+    gap_ok = (time_module.time() - alerts.get("last_ts", 0)) / 60 >= 20
+    if moments and len(alerts["sent"]) < MAX_LIVE_ALERTS and gap_ok:
+        m = moments[0]
+        actions_taken.append(("live_alert", _live_alert(m, tour, event_name, dry_run, draft)))
+        alerts["sent"].append(m["key"])
+        if not dry_run:
+            alerts["last_ts"] = time_module.time()
+    elif moments:
+        actions_taken.append(("live_alert", f"held: {len(moments)} moment(s), cap {len(alerts['sent'])}/"
+                                            f"{MAX_LIVE_ALERTS} or under 20 min since the last alert"))
+
+    # Trigger 3: leaderboard snapshot — throttled to once per min_leaderboard_gap_minutes,
     # NOT every poll. A poll that doesn't clear the gap just updates state and exits.
     now = time_module.time()
     last_post_ts = prev.get("last_leaderboard_post_ts", 0)
@@ -333,7 +382,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
 
     state.save({**prev, "event_name": event_name, "leader_name": current_leader,
                 "last_leaderboard_post_ts": last_post_ts,
-                "standings": transform.standings_snapshot(live)}, commit=not dry_run, tour=tour)
+                "standings": transform.standings_snapshot(live),
+                "live_scores": transform.live_scores(live), "alerts": alerts}, commit=not dry_run, tour=tour)
     return {"actions": actions_taken}
 
 
