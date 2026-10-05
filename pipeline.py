@@ -210,7 +210,9 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
     render_closer(event_line, path)
     shared("09_closer.png", path)
 
-    text = f"{caption}\n\n{IG_HASHTAGS.get(tour, '#golf')}\n"
+    tags = IG_HASHTAGS.get(tour, "#golf")
+    body = " ".join(w for w in caption.split(" ") if w not in tags.split())   # no tag twice
+    text = f"{body}\n\n{tags}\n"
     song, *backups = song_suggestions(IG_SONGS_PREVIEW)
     text += f"\nSong (add in the Instagram app): {song}. Backups: {'; '.join(backups)}\n"
     if credits:   # CC BY-SA photos: attribution + license link travel with the post
@@ -240,7 +242,8 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
         out_path=image_path,
     )
     caption, alternatives = _caption(
-        "weekly picks", f"Tour: {TOUR_NAMES.get(tour, tour)}\n" + transform.picks_summary(event_name, picks), event_tag,
+        "weekly picks", f"Tour: {TOUR_NAMES.get(tour, tour)}\n" + transform.picks_summary(event_name, picks),
+        f"{event_tag} #golfpicks".strip(),
         fallback=f"{event_name} picks. Win: {picks['win']['name']}. Value: {picks['value']['name']}. "
                  f"Fade: {picks['fade']['name']}. Sleeper: {picks['sleeper']['name']}.",
         allow_fallback=dry_run or draft,
