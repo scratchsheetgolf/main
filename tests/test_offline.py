@@ -516,7 +516,9 @@ class WeeklyIntelTests(PipelineDryRunTests):
         self.assertIn("#73", pick["facts"])
 
     def test_rotation_and_sg_leaders(self):
-        self.assertEqual(transform.weekly_intel(RANKINGS, SKILLS, week=1)["stat"], "+1.42")   # sg_app
+        app = transform.weekly_intel(RANKINGS, SKILLS, week=1)                                  # sg_app
+        self.assertEqual(app["stat"], "+1.42")
+        self.assertIn("Second is Pete Putter at +0.10, so the lead is 1.32", app["facts"])   # comparisons grounded
         putt = transform.weekly_intel(RANKINGS, SKILLS, week=3)
         self.assertEqual((putt["stat"], putt["what_it_means"]), ("+1.05", "PETE PUTTER: SG PUTTING PER ROUND"))
 

@@ -145,7 +145,8 @@ def _ask(task: str, system: str, facts: str, limits: dict, n: int, temperature: 
         + "\n\nHard limits (characters, counting spaces): "
         + ", ".join(f"{f} <= {lim}" for f, lim in limits.items())
         + ".\nUse only numbers that appear in the FACTS. Don't claim anything about history the FACTS "
-          "don't state: no firsts, records, streaks, career or 'again'. If the facts are too thin for a "
+          "don't state: no firsts, records, streaks, career or 'again'. Compare players only using numbers "
+          "in the FACTS (no 'nobody's close' unless the numbers show it). If the facts are too thin for a "
           "good one, output just: SKIP"
     )
     user = f"FACTS:\n{facts}"
