@@ -83,6 +83,23 @@ def ungrounded_numbers(text: str, facts: str) -> list:
     return [n for n in _NUMBER.findall(text) if n not in allowed]
 
 
+# Words that assert history the facts never contain ("his first PGA Tour win" was invented on the first
+# real run). Rejected unless the word appears in the facts themselves.
+HISTORY_CLAIMS = ["first", "maiden", "career", "record", "records", "debut", "streak", "again",
+                  "back-to-back", "historic", "history", "ever", "never", "all-time", "consecutive", "straight"]
+
+
+def unsupported_claims(text: str, facts: str) -> list:
+    """History/record words in text that the facts don't support."""
+    low_text, low_facts = text.lower(), facts.lower()
+    found = []
+    for word in HISTORY_CLAIMS:
+        pattern = r"(?<!\w)" + re.escape(word) + r"(?!\w)"  # "first-time" counts as "first"
+        if re.search(pattern, low_text) and not re.search(pattern, low_facts):
+            found.append(word)
+    return found
+
+
 def _parse_options(raw: str, fields: list) -> list:
     """Split 'OPTION n' blocks into dicts of the requested fields."""
     blocks = re.split(r"(?im)^\s*OPTION\s*\d*\s*:?\s*$", raw)
@@ -107,9 +124,13 @@ def _problems(opt: dict, limits: dict, facts: str) -> list:
             out.append(f"{field} missing")
         elif len(value) > limit:
             out.append(f"{field} is {len(value)} characters (max {limit}): {value!r}")
-    invented = ungrounded_numbers(" ".join(opt.values()), facts)
+    text = " ".join(opt.values())
+    invented = ungrounded_numbers(text, facts)
     if invented:
         out.append(f"uses numbers not in the facts: {', '.join(invented)}")
+    claims = unsupported_claims(text, facts)
+    if claims:
+        out.append(f"claims history the facts don't support ({', '.join(claims)}): no firsts, records, streaks or career talk")
     return out
 
 
@@ -123,7 +144,8 @@ def _ask(task: str, system: str, facts: str, limits: dict, n: int, temperature: 
         + "\n".join(f"OPTION {i + 1}\n{fmt}" for i in range(n))
         + "\n\nHard limits (characters, counting spaces): "
         + ", ".join(f"{f} <= {lim}" for f, lim in limits.items())
-        + ".\nUse only numbers that appear in the FACTS. If the facts are too thin for a "
+        + ".\nUse only numbers that appear in the FACTS. Don't claim anything about history the FACTS "
+          "don't state: no firsts, records, streaks, career or 'again'. If the facts are too thin for a "
           "good one, output just: SKIP"
     )
     user = f"FACTS:\n{facts}"
@@ -278,6 +300,9 @@ def generate_newsletter_recap(facts: str) -> str:
         invented = ungrounded_numbers(text, facts)
         if invented:
             issues.append(f"uses numbers not in the facts: {', '.join(invented)}")
+        claims = unsupported_claims(text, facts)
+        if claims:
+            issues.append(f"claims history the facts don't support ({', '.join(claims)})")
         if not issues:
             return text
         feedback = "\n\nYour last answer was rejected:\n- " + "\n- ".join(issues) + "\nTry again."

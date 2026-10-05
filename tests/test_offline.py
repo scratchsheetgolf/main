@@ -264,6 +264,15 @@ class ContentCheckTests(unittest.TestCase):
         self.assertEqual(content.ungrounded_numbers("leads at -14, 2 clear", self.FACTS), [])
         self.assertEqual(content.ungrounded_numbers("his 3rd win, 65% of fairways", self.FACTS), ["3", "65"])
 
+    def test_rejects_invented_history_claims(self):
+        self.assertEqual(content.unsupported_claims("He just won his first PGA Tour event", self.FACTS), ["first"])
+        self.assertEqual(content.unsupported_claims("a first-time winner", self.FACTS), ["first"])
+        self.assertEqual(content.unsupported_claims("back-to-back wins", self.FACTS), ["back-to-back"])
+        self.assertEqual(content.unsupported_claims("his first win", "Note: first PGA Tour win"), [])
+        caption = "OPTION 1\nCAPTION: His first PGA Tour win, two clear.\nOPTION 2\nCAPTION: Wire to wire, two clear."
+        opts, _ = self.run_with([caption], content.generate_caption_options, "final leaderboard", self.FACTS)
+        self.assertEqual(opts, ["Wire to wire, two clear."])
+
     def test_recap_rejects_invented_numbers(self):
         with mock.patch.object(content, "_generate", side_effect=["He shot 63 on Sunday.", "He closed it out."]):
             self.assertEqual(content.generate_newsletter_recap(self.FACTS), "He closed it out.")
