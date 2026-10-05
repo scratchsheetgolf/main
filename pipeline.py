@@ -81,12 +81,10 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
     Picks come from data/transform.choose_picks (DataGolf model vs sportsbook consensus);
     they're saved to state so Monday's newsletter can report how they finished."""
     preds = datagolf.get_pre_tournament_predictions(tour=tour)
+    event_name = preds.get("event_name") or "THIS WEEK'S EVENT"
+    event = transform.check_picks_window(event_name, datagolf.get_schedule(tour=tour, upcoming_only=False))
     outrights = datagolf.get_outright_odds(market="win", tour=tour)
     picks = transform.choose_picks(preds, outrights)
-
-    event_name = preds.get("event_name") or "THIS WEEK'S EVENT"
-    _, upcoming = transform.last_completed_and_next(datagolf.get_schedule(tour=tour, upcoming_only=True))
-    event = upcoming or {}
 
     image_path = os.path.join(OUTPUT_DIR, "weekly_picks.png")
     render_weekly_picks(

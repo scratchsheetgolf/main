@@ -96,6 +96,14 @@ class TransformTests(unittest.TestCase):
         last, nxt = transform.last_completed_and_next(SCHEDULE, TODAY)
         self.assertEqual((last["event_id"], nxt["event_id"]), ("91", "92"))
 
+    def test_picks_refused_once_event_started(self):
+        ev = transform.check_picks_window("Fake Invitational", SCHEDULE, TODAY)
+        self.assertEqual(ev["event_id"], "92")
+        with self.assertRaises(transform.PicksError):
+            transform.check_picks_window("Fake Classic", SCHEDULE, TODAY)        # already started
+        with self.assertRaises(transform.PicksError):
+            transform.check_picks_window("Unknown Open", SCHEDULE, TODAY)        # not in schedule
+
     def test_top_finishers_sorts_ties_and_cuts(self):
         top = transform.top_finishers(RESULTS)
         self.assertEqual([t["pos"] for t in top], ["1", "T2", "T2", "4", "5"])
