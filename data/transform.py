@@ -149,6 +149,65 @@ def check_picks_window(event_name: str, schedule: dict, today: date = None) -> d
             return ev
     raise PicksError(f"{event_name} (from the predictions) isn't in the schedule; can't confirm it hasn't started")
 
+
+def sorted_leaderboard(live: dict) -> list:
+    """The in-play feed's rows in leaderboard order. The feed is NOT sorted by position (first real
+    run's 'top 5' read -26, -5, -5, -16, -19), so sort by position, then score; CUT/WD/DQ last."""
+    def key(r):
+        rank = _finish_rank(r.get("current_pos", ""))
+        try:
+            score = int(r.get("current_score"))
+        except (TypeError, ValueError):
+            score = 10_000
+        return (rank, score)
+    return sorted(live.get("data") or [], key=key)
+
+
+def is_final(live: dict) -> bool:
+    """True once the event is over: round 4+ and everyone near the top has finished (thru 'F')."""
+    info = live.get("info") or {}
+    try:
+        rnd = int(info.get("current_round") or 0)
+    except (TypeError, ValueError):
+        rnd = 0
+    top = sorted_leaderboard(live)[:10]
+    # the docs' example shows thru "F"; the real feed (Bank of Utah, 2026-10-04) sends thru 18 when done
+    return rnd >= 4 and bool(top) and all(str(r.get("thru", "")).strip().upper() in ("F", "18") for r in top)
+
+
+def standings_snapshot(live: dict, top_n: int = 70) -> dict:
+    """What the live poll saves to state each run, so Monday's recap has final standings even when
+    historical-event-data isn't on the plan and the feed has moved on to the next event."""
+    info = live.get("info") or {}
+    rows = sorted_leaderboard(live)[:top_n]
+    return {"event_name": info.get("event_name"), "round": info.get("current_round"),
+            "final": is_final(live),
+            "event_stats": [{"dg_id": r.get("dg_id"), "player_name": r.get("player_name", ""),
+                             "fin_text": str(r.get("current_pos", "")),
+                             "score": format_to_par(r.get("current_score"))} for r in rows]}
+
+
+def lead_change_facts(live: dict, prev_leader: str) -> str:
+    """Plain-text facts for a lead-change hot take, from the in-play feed. Gives the writer real numbers
+    (round, scores, margin) to work with; content.py rejects any number that isn't in here."""
+    info = live.get("info") or {}
+    rows = sorted_leaderboard(live)
+    lead = rows[0]
+    lines = [f"Event: {info.get('event_name', '')}, round {info.get('current_round', '?')}",
+             f"New leader: {display_name(lead.get('player_name', ''))} at {format_to_par(lead.get('current_score'))}"
+             + (f", thru {lead['thru']}" if lead.get("thru") not in (None, "") else "")]
+    if len(rows) > 1:
+        second = rows[1]
+        try:
+            margin = int(second.get("current_score")) - int(lead.get("current_score"))
+            margin_text = "tied" if margin == 0 else f"{margin} shot{'s' if margin != 1 else ''} clear"
+        except (TypeError, ValueError):
+            margin_text = ""
+        lines.append(f"Next: {display_name(second.get('player_name', ''))} at "
+                     f"{format_to_par(second.get('current_score'))}" + (f" ({margin_text})" if margin_text else ""))
+    lines.append(f"Previous leader: {prev_leader}")
+    return "\n".join(lines)
+
 # ---- Schedule / recap ----
 
 def last_completed_and_next(schedule: dict, today: date = None):
@@ -162,13 +221,23 @@ def last_completed_and_next(schedule: dict, today: date = None):
         except ValueError:
             continue
         status = (ev.get("status") or "").lower()
-        if status == "completed" or (status != "upcoming" and start < today):
-            done.append((start, ev))
-        elif start >= today or status == "upcoming":
-            upcoming.append((start, ev))
+        winner = (ev.get("winner") or "").strip()
+        if status == "completed" or (winner and winner.upper() != "TBD"):
+            done.append((start, ev))      # finished: only these get recapped
+        elif start >= today:
+            upcoming.append((start, ev))  # not started yet (an in-progress event is neither)
     last = max(done, key=lambda t: t[0])[1] if done else None
     nxt = min(upcoming, key=lambda t: t[0])[1] if upcoming else None
     return last, nxt
+
+
+def results_from_live(live: dict, event_name: str):
+    """Fallback when historical-event-data isn't on the plan (403): the in-play feed's final standings,
+    in the same shape as get_event_results. None unless the feed is for event_name."""
+    info = live.get("info") or {}
+    if (info.get("event_name") or "").strip().lower() != (event_name or "").strip().lower():
+        return None
+    return {**standings_snapshot(live, top_n=10_000), "source": "live feed final standings"}
 
 
 def _finish_rank(fin_text: str) -> int:
@@ -179,7 +248,8 @@ def _finish_rank(fin_text: str) -> int:
 def top_finishers(event_results: dict, n: int = 5) -> list:
     """[{'pos': 'T2', 'name': 'Justin Rose'}] from historical-event-data/events."""
     rows = sorted(event_results.get("event_stats") or [], key=lambda r: _finish_rank(r.get("fin_text")))
-    return [{"pos": str(r.get("fin_text", "")), "name": display_name(r.get("player_name", ""))} for r in rows[:n]]
+    return [{"pos": str(r.get("fin_text", "")), "name": display_name(r.get("player_name", "")),
+             "score": r.get("score", "")} for r in rows[:n]]
 
 
 def pick_results(saved_picks: dict, event_results: dict) -> list:

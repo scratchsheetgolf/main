@@ -132,10 +132,13 @@ class PipelineDryRunTests(unittest.TestCase):
             p.stop()
         self.tmp.cleanup()
 
-    def fake_llm(self, system, user, max_tokens=300):
+    def fake_llm(self, system, user, max_tokens=300, temperature=1.0):
         self.llm_prompts.append(user)
-        if "LINE1" in system and "KICKER" in system:
-            return "LINE1: A\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: k"
+        if "KICKER" in system:
+            return "\n".join(f"OPTION {i}\nLINE1: TAKE {i}\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k{i}"
+                             for i in (1, 2, 3)).replace("TAKE 1", "TAKE ONE").replace("TAKE 2", "TAKE TWO").replace("TAKE 3", "TAKE THREE").replace("k1", "ka").replace("k2", "kb").replace("k3", "kc")
+        if "CAPTION" in system:
+            return "OPTION 1\nCAPTION: Caption alpha.\nOPTION 2\nCAPTION: Caption beta.\nOPTION 3\nCAPTION: Caption gamma."
         return "Fake recap paragraph one.\nFake recap paragraph two."
 
     def test_picks_dry_run(self):
@@ -152,7 +155,8 @@ class PipelineDryRunTests(unittest.TestCase):
             pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
         kwargs = rl.call_args.kwargs
         self.assertEqual(kwargs["event"], "FAKE INVITATIONAL")
-        self.assertEqual(kwargs["players"][0], {"name": "Test Player00", "score": "-14"})
+        self.assertEqual(kwargs["players"][0], {"pos": "1", "name": "Test Player00", "score": "-14"})
+        self.assertEqual(kwargs["round_label"], "ROUND 4 · LIVE")
         self.assertEqual([p["score"] for p in kwargs["players"][3:]], ["E", "+3"])
 
     def test_newsletter_dry_run_reports_picks(self):
@@ -220,6 +224,177 @@ class DraftModeTests(PipelineDryRunTests):
         pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=60)
         out = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=60)
         self.assertIn("skipped", out["actions"][-1][1])
+
+class ContentCheckTests(unittest.TestCase):
+    """The checks that make a small model safe to use: limits, grounded numbers, retry, SKIP."""
+
+    FACTS = "Event: Fake Open, round 4\nNew leader: Test Player at -14\nNext: Other Guy at -12 (2 shots clear)"
+
+    def run_with(self, replies, fn, *args):
+        with mock.patch.object(content, "_generate", side_effect=list(replies)) as gen:
+            return fn(*args), gen
+
+    def test_keeps_valid_options_and_drops_bad_ones(self):
+        raw = ("OPTION 1\nLINE1: THIS LINE IS WAY TOO LONG FOR THE CARD\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k\n"
+               "OPTION 2\nLINE1: TWO CLEAR\nLINE2: AT 14 UNDER\nLINE3: AND COUNTING\nLINE4: FOLKS.\nKICKER: — calm\n"
+               "OPTION 3\nLINE1: LEADS BY 9\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k")
+        take, gen = self.run_with([raw], content.generate_hot_take, self.FACTS)
+        self.assertEqual(take["lines"][0], "TWO CLEAR")      # too-long and invented-"9" options dropped
+        self.assertEqual(take["alternatives"], [])
+        self.assertEqual(gen.call_count, 1)
+
+    def test_retries_once_with_feedback_then_succeeds(self):
+        bad = "OPTION 1\nLINE1: LEADS BY 9 NOW\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k"
+        good = "OPTION 1\nLINE1: TWO CLEAR\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k"
+        take, gen = self.run_with([bad, good], content.generate_hot_take, self.FACTS)
+        self.assertEqual(take["lines"][0], "TWO CLEAR")
+        retry_prompt = gen.call_args_list[1].args[1]
+        self.assertIn("numbers not in the facts: 9", retry_prompt)
+
+    def test_gives_up_after_one_retry(self):
+        bad = "OPTION 1\nLINE1: LEADS BY 9\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k"
+        with self.assertRaises(content.ContentError):
+            self.run_with([bad, bad], content.generate_hot_take, self.FACTS)
+
+    def test_skip_returns_none(self):
+        take, _ = self.run_with(["SKIP"], content.generate_hot_take, self.FACTS)
+        self.assertIsNone(take)
+
+    def test_numbers_check(self):
+        self.assertEqual(content.ungrounded_numbers("leads at -14, 2 clear", self.FACTS), [])
+        self.assertEqual(content.ungrounded_numbers("his 3rd win, 65% of fairways", self.FACTS), ["3", "65"])
+
+    def test_rejects_invented_history_claims(self):
+        self.assertEqual(content.unsupported_claims("He just won his first PGA Tour event", self.FACTS), ["first"])
+        self.assertEqual(content.unsupported_claims("a first-time winner", self.FACTS), ["first"])
+        self.assertEqual(content.unsupported_claims("back-to-back wins", self.FACTS), ["back-to-back"])
+        self.assertEqual(content.unsupported_claims("his first win", "Note: first PGA Tour win"), [])
+        caption = "OPTION 1\nCAPTION: His first PGA Tour win, two clear.\nOPTION 2\nCAPTION: Wire to wire, two clear."
+        opts, _ = self.run_with([caption], content.generate_caption_options, "final leaderboard", self.FACTS)
+        self.assertEqual(opts, ["Wire to wire, two clear."])
+
+    def test_recap_rejects_invented_numbers(self):
+        with mock.patch.object(content, "_generate", side_effect=["He shot 63 on Sunday.", "He closed it out."]):
+            self.assertEqual(content.generate_newsletter_recap(self.FACTS), "He closed it out.")
+
+    def test_lead_change_facts_have_real_numbers(self):
+        facts = transform.lead_change_facts(LIVE, "Test Player01")
+        self.assertIn("round 4", facts)
+        self.assertIn("Test Player00 at -14", facts)
+        self.assertIn("3 shots clear", facts)
+        self.assertIn("Previous leader: Test Player01", facts)
+
+
+class AlternativesInDraftTests(DraftModeTests):
+    def test_caption_alternatives_written_to_draft(self):
+        out = pipeline.run_pretournament_picks(draft=True)
+        self.assertEqual(out["would_post_caption"], "Caption alpha.")
+        with open(out["caption_file"], encoding="utf-8") as f:
+            text = f.read()
+        self.assertIn("- Caption beta.", text)
+        self.assertIn("- Caption gamma.", text)
+
+    def test_alternative_hot_take_cards_rendered(self):
+        state.save({"event_name": "Fake Invitational", "leader_name": "Test Player01"}, commit=False)
+        pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=600)
+        for name in ("hot_take_live.png", "hot_take_live_alt1.png", "hot_take_live_alt2.png"):
+            self.assertTrue(os.path.exists(os.path.join(self.tmp.name, name)), name)
+        self.assertIn("round 4", self.llm_prompts[0])   # the hot-take writer (first call) got real numbers
+
+class RealSdkAndFallbackTests(PipelineDryRunTests):
+    def test_generate_call_matches_installed_sdk_signature(self):
+        """Mocks with autospec of the real SDK method, so a removed keyword (like temperature in
+        anthropic 1.x) raises TypeError here instead of in production."""
+        self.patches[2].stop()  # use the real content._generate
+        fake = mock.MagicMock()
+        fake.content = [mock.MagicMock(type="text", text="ok")]
+        with mock.patch.object(type(content.client.messages), "create", autospec=True, return_value=fake) as create:
+            self.assertEqual(content._generate("sys", "hi", max_tokens=10, temperature=0.3), "ok")
+        self.assertEqual(create.call_args.kwargs["extra_body"], {"temperature": 0.3})
+        self.patches[2].start()
+
+    def test_in_progress_event_is_not_recapped(self):
+        sched = {"schedule": SCHEDULE["schedule"] + [
+            {"event_id": "93", "event_name": "Fake Midweek", "start_date": (TODAY - timedelta(days=2)).isoformat(),
+             "status": "in progress", "winner": "TBD"}]}
+        last, nxt = transform.last_completed_and_next(sched, TODAY)
+        self.assertEqual((last["event_id"], nxt["event_id"]), ("91", "92"))
+
+    def test_recap_falls_back_to_live_feed_when_results_forbidden(self):
+        live_final = {"info": {"event_name": "Fake Classic"}, "data": [
+            {"dg_id": 1005, "player_name": "Player05, Test", "current_pos": "1", "current_score": -20},
+            {"dg_id": 1000, "player_name": "Player00, Test", "current_pos": "T2", "current_score": -18}]}
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")), \
+             mock.patch.object(datagolf, "get_live_in_play", return_value=live_final):
+            out = pipeline.run_weekly_newsletter(dry_run=True)
+        with open(out["preview_file"], encoding="utf-8") as f:
+            self.assertIn("<b>1</b> Test Player05", f.read())
+
+    def test_recap_skipped_when_no_results_anywhere(self):
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")):
+            out = pipeline.run_weekly_newsletter(dry_run=True)   # LIVE fixture is a different event
+        with open(out["preview_file"], encoding="utf-8") as f:
+            html = f.read()
+        self.assertNotIn("recap", html)
+        self.assertIn("Up next", html)
+
+    def test_recap_uses_standings_saved_by_live_poll(self):
+        state.save({"standings": {"event_name": "Fake Classic", "event_stats": [
+            {"dg_id": 1009, "player_name": "Player09, Test", "fin_text": "1"},
+            {"dg_id": 1000, "player_name": "Player00, Test", "fin_text": "T2"}]}}, commit=False)
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")):
+            out = pipeline.run_weekly_newsletter(dry_run=True)
+        with open(out["preview_file"], encoding="utf-8") as f:
+            self.assertIn("<b>1</b> Test Player09", f.read())
+
+    def test_unsorted_feed_is_put_in_leaderboard_order(self):
+        unsorted = {"info": {"event_name": "Fake Invitational", "current_round": 4}, "data": [
+            {"dg_id": 1, "player_name": "Cut, Guy", "current_pos": "CUT", "current_score": 4},
+            {"dg_id": 2, "player_name": "Third, Tied", "current_pos": "T3", "current_score": -10},
+            {"dg_id": 3, "player_name": "Leader, The", "current_pos": "1", "current_score": -26},
+            {"dg_id": 4, "player_name": "Second, Solo", "current_pos": "2", "current_score": -19},
+            {"dg_id": 5, "player_name": "Third, Other", "current_pos": "T3", "current_score": -10}]}
+        order = [r["dg_id"] for r in transform.sorted_leaderboard(unsorted)]
+        self.assertEqual(order[:2], [3, 4])
+        self.assertEqual(order[-1], 1)
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=unsorted), \
+             mock.patch.object(pipeline, "render_leaderboard") as rl:
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
+        players = rl.call_args.kwargs["players"]
+        self.assertEqual([p["pos"] for p in players], ["1", "2", "T3", "T3", "CUT"])
+        self.assertEqual(players[0]["name"], "The Leader")
+
+    def test_final_round_labelled_final(self):
+        done = {"info": {"event_name": "Fake Invitational", "current_round": 4}, "data": [
+            {**r, "thru": "F"} for r in LIVE["data"]]}
+        self.assertTrue(transform.is_final(done))
+        self.assertFalse(transform.is_final(LIVE))
+        real_shape = {"info": {"current_round": 4}, "data": [{**r, "thru": 18} for r in LIVE["data"]]}
+        self.assertTrue(transform.is_final(real_shape))     # what the live feed actually sent
+        mid_round = {"info": {"current_round": 4}, "data": [{**r, "thru": 12} for r in LIVE["data"]]}
+        self.assertFalse(transform.is_final(mid_round))
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=done), \
+             mock.patch.object(pipeline, "render_leaderboard") as rl:
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
+        self.assertEqual(rl.call_args.kwargs["round_label"], "FINAL")
+        self.assertIn("FINAL results", self.llm_prompts[-1])
+
+    def test_recap_shows_scores_from_live_standings(self):
+        live_final = {"info": {"event_name": "Fake Classic", "current_round": 4}, "data": [
+            {"dg_id": 1005, "player_name": "Player05, Test", "current_pos": "1", "current_score": -20, "thru": "F"}]}
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")), \
+             mock.patch.object(datagolf, "get_live_in_play", return_value=live_final):
+            out = pipeline.run_weekly_newsletter(dry_run=True)
+        with open(out["preview_file"], encoding="utf-8") as f:
+            self.assertIn("<b>1</b> Test Player05 -20", f.read())
+        self.assertIn("1 Test Player05 (-20)", self.llm_prompts[-1])
+
+    def test_live_poll_saves_standings(self):
+        with mock.patch.object(pipeline, "render_leaderboard"):
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
+        saved = state.load()["standings"]
+        self.assertEqual(saved["event_name"], "Fake Invitational")
+        self.assertEqual(saved["event_stats"][0]["fin_text"], "1")
 
 if __name__ == "__main__":
     unittest.main()

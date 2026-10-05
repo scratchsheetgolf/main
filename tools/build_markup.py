@@ -68,7 +68,7 @@ lb = [head("leaderboard"), frame_inner(),
       f'<line x1="180" y1="366" x2="180" y2="1116"/><line x1="820" y1="366" x2="820" y2="1116"/></g>\n',
       f'<rect x="80" y="366" width="920" height="750" fill="none" stroke="{INK}" stroke-width="2"/>\n']
 for i, r in enumerate(rows, 1):
-    lb.append(f'<text x="130" y="{r+21}" font-family="DM Serif Display" font-size="60" fill="{INK}" text-anchor="middle">{i}</text>\n')
+    lb.append(f'<text x="130" y="{r+21}" font-family="DM Serif Display" font-size="60" fill="{INK}" text-anchor="middle" data-fit="92">__POS_{i}__</text>\n')
     lb.append(f'<text x="212" y="{r+18}" font-family="DM Serif Display" font-size="50" fill="{INK}" data-fit="590">__PLAYER_{i}__</text>\n')
     lb.append(f'<text x="910" y="{r+25}" font-family="Anton" font-size="72" fill="{RED}" text-anchor="middle" data-fit="140" data-score="{INK}">__SCORE_{i}__</text>\n')
 lb.append(f'<path d="{circle(910, 441, 72, 56, 4)}" {MK}/>\n')

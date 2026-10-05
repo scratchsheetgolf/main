@@ -114,10 +114,13 @@ def _escape_xml(text: str) -> str:
 
 
 def render_leaderboard(event: str, round_label: str, players: list, out_path: str) -> str:
-    """players: list of up to 5 dicts like {"name": "Scottie Scheffler", "score": "-12"}"""
-    players = (players + [{"name": "", "score": ""}] * 5)[:5]
+    """players: up to 5 dicts like {"name": "Scottie Scheffler", "score": "-12", "pos": "T2"}.
+    "pos" is optional (defaults to 1-5); pass real positions so ties show as T2."""
+    n = len(players[:5])
+    players = (players[:5] + [{"name": "", "score": "", "pos": ""}] * 5)[:5]
     tokens = {"event": event, "round": round_label}
     for i, p in enumerate(players, start=1):
+        tokens[f"pos_{i}"] = p.get("pos", str(i) if i <= n else "")
         tokens[f"player_{i}"] = p.get("name", "")
         tokens[f"score_{i}"] = p.get("score", "")
     return _fill_and_render("leaderboard.svg", tokens, out_path)
