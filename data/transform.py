@@ -208,6 +208,96 @@ def lead_change_facts(live: dict, prev_leader: str) -> str:
     lines.append(f"Previous leader: {prev_leader}")
     return "\n".join(lines)
 
+def _score_int(v):
+    """-12 / "-12" / "+3" / "E" -> int; anything else -> None."""
+    text = str(v).strip().upper() if v is not None else ""
+    if text == "E":
+        return 0
+    try:
+        return int(text.replace("+", ""))
+    except ValueError:
+        return None
+
+
+def _thru_int(v):
+    """Holes completed this round: "F"/"18" -> 18, "7" -> 7, not started -> 0."""
+    text = str(v if v is not None else "").strip().upper()
+    if text == "F":
+        return 18
+    digits = "".join(ch for ch in text if ch.isdigit())
+    return int(digits) if digits else 0
+
+
+def live_scores(live: dict) -> dict:
+    """Compact per-player state the live poll keeps between runs to spot big moments."""
+    out = {}
+    for rank, r in enumerate(sorted_leaderboard(live), start=1):
+        score = _score_int(r.get("current_score"))
+        if r.get("dg_id") is None or score is None:
+            continue
+        out[str(r["dg_id"])] = {"name": display_name(r.get("player_name", "")), "pos": str(r.get("current_pos", "")),
+                                "score": score, "today": _score_int(r.get("today")),
+                                "thru": _thru_int(r.get("thru")), "rank": rank}
+    return out
+
+
+INFERRED_HOLE_WORDS = ["eagle", "albatross", "double eagle", "ace", "hole-in-one", "hole in one", "holed out"]
+
+
+def detect_moments(live: dict, prev_scores: dict, already_sent=()) -> list:
+    """Big moments since the last poll, best first. Each: {key, kind, name, hole_moment, facts, inferred}.
+    The in-play feed has totals per player, not hole-by-hole scores, so a single-hole move is INFERRED
+    from two polls with exactly one hole played between them; the card never names the hole or calls it
+    an eagle/ace (we don't know the par). Kinds:
+      big_hole  2+ under on one hole, player inside the top 30
+      charge    6+ under for the round, inside the top 10
+      collapse  top 3 at the last poll, now 3+ over for the round"""
+    info = live.get("info") or {}
+    rnd = info.get("current_round") or "?"
+    now = live_scores(live)
+    leader = next(iter(sorted(now.values(), key=lambda x: x["rank"])), None)
+    moments = []
+    for dg, cur in now.items():
+        prev = (prev_scores or {}).get(dg)
+        where = f"now {cur['pos']} at {format_to_par(cur['score'])}"
+        lead_line = (f"Leader: {leader['name']} at {format_to_par(leader['score'])}."
+                     if leader and leader["name"] != cur["name"] else "He leads the tournament.")
+        if prev and cur["thru"] - prev["thru"] == 1 and prev["score"] - cur["score"] >= 2 and cur["rank"] <= 30:
+            drop = prev["score"] - cur["score"]
+            moments.append({
+                "key": f"hole:{dg}:{rnd}:{cur['thru']}", "kind": "big_hole", "priority": 3 if drop >= 3 else 2, "drop": drop,
+                "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}", "inferred": True,
+                "facts": (f"{cur['name']} just played one hole in {drop} under par: his total went from "
+                          f"{format_to_par(prev['score'])} to {format_to_par(cur['score'])} with one more hole "
+                          f"completed (thru {cur['thru']}, round {rnd}), {where}. {lead_line} The feed doesn't say "
+                          "which hole it was or its par, so do NOT name the hole and do NOT call it an eagle, ace, "
+                          "albatross or hole-in-one; say how many under he went on one hole.")})
+        today = cur["today"]
+        if today is not None and today <= -6 and cur["rank"] <= 10 and cur["thru"] < 18:
+            moments.append({
+                "key": f"charge:{dg}:{rnd}", "kind": "charge", "priority": 1, "inferred": False,
+                "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}",
+                "facts": (f"{cur['name']} is {format_to_par(today)} for round {rnd} through {cur['thru']} holes, "
+                          f"{where}. {lead_line}")})
+        if prev and prev["rank"] <= 3 and today is not None and today >= 3:
+            moments.append({
+                "key": f"collapse:{dg}:{rnd}", "kind": "collapse", "priority": 1, "inferred": False,
+                "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}",
+                "facts": (f"{cur['name']} was {prev['pos']} at the last check but is {format_to_par(today)} for "
+                          f"round {rnd} through {cur['thru']} holes, {where}. {lead_line}")})
+    moments = [m for m in moments if m["key"] not in set(already_sent)]
+    return sorted(moments, key=lambda m: (-m["priority"], now[m["key"].split(":")[1]]["rank"]))
+
+
+def moment_fallback(m: dict) -> tuple:
+    """Card lines straight from the data, for when the writer fails or SKIPs."""
+    last = m["name"].split()[-1].upper()
+    if m["kind"] == "big_hole":
+        return (f"{last} GOES", f"{m['drop']} UNDER ON ONE", "one hole, whole new leaderboard.")
+    if m["kind"] == "charge":
+        return (f"{last} IS", "ON A HEATER", "somebody check the scorecard.")
+    return (f"{last} IS", "SLIPPING", "golf giveth, golf taketh away.")
+
 # ---- Schedule / recap ----
 
 def last_completed_and_next(schedule: dict, today: date = None):
