@@ -297,13 +297,20 @@ def _intel_sg_leader(skills: dict, cat: str):
     rows = [r for r in skills.get("players") or [] if isinstance(r.get(cat), (int, float))]
     if not rows:
         return None
-    r = max(rows, key=lambda x: x[cat])
+    ranked = sorted(rows, key=lambda x: x[cat], reverse=True)
+    r = ranked[0]
     name = display_name(r.get("player_name", ""))
     value = f"{r[cat]:+.2f}"
+    runner_up = ""
+    if len(ranked) > 1:
+        r2 = ranked[1]
+        gap = r[cat] - r2[cat]
+        runner_up = (f" Second is {display_name(r2.get('player_name', ''))} at {r2[cat]:+.2f}, "
+                     f"so the lead is {gap:.2f} strokes per round.")
     return {"kind": cat, "stat": value,
             "what_it_means": f"{name.upper()}: SG {SG_LABELS[cat]} PER ROUND",
             "facts": (f"{name} leads DataGolf's current skill ratings in strokes gained {SG_PLAIN[cat]}: "
-                      f"{value} strokes per round vs an average tour player. No one rated is better at it right now."),
+                      f"{value} strokes per round vs an average tour player.{runner_up}"),
             "summary": f"{name}: best {SG_PLAIN[cat]} in DataGolf's skill ratings ({value} per round)"}
 
 
