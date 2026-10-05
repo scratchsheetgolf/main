@@ -61,8 +61,9 @@ def get_dg_rankings() -> dict:
     return _get("preds/get-dg-rankings")
 
 
-def get_pre_tournament_predictions(tour: str = "pga") -> dict:
-    return _get("preds/pre-tournament", {"tour": tour})
+def get_pre_tournament_predictions(tour: str = "pga", odds_format: str = "decimal") -> dict:
+    """Lists players under "baseline" and "baseline_history_fit"; win/top_5/... are odds in odds_format."""
+    return _get("preds/pre-tournament", {"tour": tour, "odds_format": odds_format})
 
 
 def get_skill_ratings(display: str = "value") -> dict:
@@ -72,7 +73,8 @@ def get_skill_ratings(display: str = "value") -> dict:
 # ---- Live (use during active rounds, poll every 5 min) ----
 
 def get_live_in_play(tour: str = "pga") -> dict:
-    """Live updating finish probabilities — closest thing to a live leaderboard feed."""
+    """Live finish probabilities + leaderboard. Shape: {"info": {"event_name", "current_round", ...},
+    "data": [{"player_name": "Last, First", "current_pos": "T2", "current_score": -14, ...}]}"""
     return _get("preds/in-play", {"tour": tour})
 
 
@@ -87,8 +89,17 @@ def get_live_hole_stats(tour: str = "pga") -> dict:
 
 # ---- Betting tools (handy for Weekly Picks / Intel Stat content) ----
 
-def get_outright_odds(market: str = "win", tour: str = "pga") -> dict:
-    return _get("betting-tools/outrights", {"market": market, "tour": tour})
+def get_outright_odds(market: str = "win", tour: str = "pga", odds_format: str = "decimal") -> dict:
+    """{"odds": [{"player_name", "dg_id", "datagolf": {...}, "<book>": odds, ...}]} — one column per sportsbook."""
+    return _get("betting-tools/outrights", {"market": market, "tour": tour, "odds_format": odds_format})
+
+
+# ---- Results (for the newsletter recap) ----
+
+def get_event_results(event_id: str, year: int, tour: str = "pga") -> dict:
+    """Final finishes: {"event_name", "event_stats": [{"dg_id", "player_name", "fin_text": "T2", ...}]}.
+    PGA Tour only per DataGolf's docs."""
+    return _get("historical-event-data/events", {"tour": tour, "event_id": event_id, "year": year})
 
 
 if __name__ == "__main__":
