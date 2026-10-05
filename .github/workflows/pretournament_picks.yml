@@ -82,5 +82,6 @@ jobs:
           path: |
             output/*.png
             output/*.txt
+            output/carousel_*/
           if-no-files-found: ignore
           retention-days: 14
