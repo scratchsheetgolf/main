@@ -113,7 +113,7 @@ class PipelineDryRunTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.patches = [
-            mock.patch.object(state, "STATE_PATH", os.path.join(self.tmp.name, "state.json")),
+            mock.patch.object(state, "STATE_DIR", self.tmp.name),
             mock.patch.object(pipeline, "OUTPUT_DIR", self.tmp.name),
             mock.patch.object(content, "_generate", side_effect=self.fake_llm),
             mock.patch.object(datagolf, "get_schedule", return_value=SCHEDULE),
@@ -451,6 +451,50 @@ class XCheckTests(unittest.TestCase):
         with mock.patch.multiple(post_x, API_KEY="k ", API_SECRET="s", ACCESS_TOKEN="42-t", ACCESS_SECRET="a"):
             with self.assertRaisesRegex(RuntimeError, "whitespace"):
                 post_x.check()
+
+class MultiTourTests(PipelineDryRunTests):
+    def test_tours_keep_separate_state(self):
+        pipeline.run_pretournament_picks(dry_run=True, tour="pga")
+        state.save({"leader_name": "Someone Euro"}, commit=False, tour="euro")
+        self.assertIn("last_picks", state.load("pga"))
+        self.assertNotIn("last_picks", state.load("euro"))
+        self.assertEqual(state.load("euro")["leader_name"], "Someone Euro")
+        self.assertNotEqual(state.state_path("pga"), state.state_path("euro"))
+        self.assertTrue(state.state_path("pga").endswith("_last_snapshot.json"))   # PGA keeps the original file name
+
+    def test_dp_world_cards_and_captions_name_the_tour(self):
+        with mock.patch.object(pipeline, "render_weekly_picks") as rp:
+            pipeline.run_pretournament_picks(dry_run=True, tour="euro")
+        self.assertTrue(rp.call_args.kwargs["event_name"].startswith("DP WORLD TOUR · "))
+        self.assertIn("Tour: DP World Tour", self.llm_prompts[-1])
+        with mock.patch.object(pipeline, "render_leaderboard") as rl:
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0, tour="euro")
+        self.assertEqual(rl.call_args.kwargs["round_label"], "DP WORLD TOUR · ROUND 4 · LIVE")
+        with mock.patch.object(pipeline, "render_leaderboard") as rl:
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0, tour="pga")
+        self.assertEqual(rl.call_args.kwargs["round_label"], "ROUND 4 · LIVE")   # PGA cards unchanged
+
+    def test_state_push_retries_after_a_rejected_push(self):
+        results = iter([mock.Mock(returncode=0),                      # add
+                        mock.Mock(returncode=0),                      # commit
+                        mock.Mock(returncode=0), mock.Mock(returncode=1),   # pull, push rejected
+                        mock.Mock(returncode=0), mock.Mock(returncode=0)])  # pull, push ok
+        with mock.patch.object(state.subprocess, "run", side_effect=lambda *a, **k: next(results)) as run:
+            state.save({"x": 1}, commit=True, tour="euro")
+        cmds = [c.args[0][:2] for c in run.call_args_list]
+        self.assertEqual(cmds.count(["git", "push"]), 2)
+        self.assertIn(["git", "pull"], cmds)
+
+    def test_probe_reports_each_endpoint_without_raising(self):
+        with mock.patch.object(datagolf, "get_dg_rankings", side_effect=RuntimeError("403 Forbidden key=SECRET")), \
+             mock.patch.object(datagolf, "get_skill_ratings", return_value={"players": [{"player_name": "A", "sg_app": 1}]}), \
+             mock.patch.object(datagolf, "API_KEY", "SECRET"):
+            out = pipeline.probe("euro")
+        self.assertFalse(out["dg_rankings"]["ok"])
+        self.assertNotIn("SECRET", out["dg_rankings"]["error"])
+        self.assertTrue(out["skill_ratings"]["ok"])
+        self.assertEqual(out["skill_ratings"]["rows"], 1)
+        self.assertEqual(out["pre_tournament"]["event_name"], "Fake Invitational")
 
 if __name__ == "__main__":
     unittest.main()

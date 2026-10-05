@@ -19,6 +19,13 @@ from distribute import image_host, post_x, post_meta, post_tiktok
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 
+TOUR_NAMES = {"pga": "PGA Tour", "euro": "DP World Tour", "alt": "LIV Golf", "kft": "Korn Ferry Tour"}
+
+
+def tour_label(tour: str) -> str:
+    """Prefix shown on cards for non-PGA tours ("DP WORLD TOUR · "); empty for the PGA Tour."""
+    return "" if tour == "pga" else f"{TOUR_NAMES.get(tour, tour).upper()} · "
+
 
 ALL_PLATFORMS = {"x", "facebook", "instagram", "tiktok"}
 
@@ -121,24 +128,24 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
 
     image_path = os.path.join(OUTPUT_DIR, "weekly_picks.png")
     render_weekly_picks(
-        event_name=event_name.upper(),
+        event_name=f"{tour_label(tour)}{event_name.upper()}",
         win=picks["win"]["name"], value=picks["value"]["name"],
         fade=picks["fade"]["name"], sleeper=picks["sleeper"]["name"],
         out_path=image_path,
     )
     caption, alternatives = _caption(
-        "weekly picks", transform.picks_summary(event_name, picks), event_tag,
+        "weekly picks", f"Tour: {TOUR_NAMES.get(tour, tour)}\n" + transform.picks_summary(event_name, picks), event_tag,
         fallback=f"{event_name} picks. Win: {picks['win']['name']}. Value: {picks['value']['name']}. "
                  f"Fade: {picks['fade']['name']}. Sleeper: {picks['sleeper']['name']}.",
         allow_fallback=dry_run or draft,
     )
-    prev = state.load()
+    prev = state.load(tour)
     state.save({**prev, "last_picks": {
         "event_name": event_name,
         "event_id": event.get("event_id"),
         "year": (event.get("start_date") or "")[:4] or None,
         "picks": picks,
-    }}, commit=not dry_run)
+    }}, commit=not dry_run, tour=tour)
     result = _post_everywhere(image_path, caption, tiktok_title=f"{event_name} picks",
                               dry_run=dry_run, draft=draft, alternatives=alternatives)
     if dry_run or draft:
@@ -155,7 +162,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     import time as time_module
 
     live = datagolf.get_live_in_play(tour=tour)
-    prev = state.load()
+    prev = state.load(tour)
     actions_taken = []
 
     # shape per DataGolf docs: {"info": {"event_name", ...}, "data": [{"player_name": "Last, First",
@@ -178,7 +185,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     # Trigger 1: leader change -> Hot Take (always worth posting, this is rare by definition)
     if current_leader and prev_leader and current_leader != prev_leader:
         try:
-            take = content.generate_hot_take(transform.lead_change_facts(live, prev_leader))
+            take = content.generate_hot_take(f"Tour: {TOUR_NAMES.get(tour, tour)}\n"
+                                             + transform.lead_change_facts(live, prev_leader))
         except Exception as e:
             if not (dry_run or draft):
                 raise
@@ -211,12 +219,13 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                 for p in current_leaderboard[:5]]
         image_path = os.path.join(OUTPUT_DIR, "leaderboard_live.png")
         render_leaderboard(event=event_name.upper(),
-                           round_label="FINAL" if final else (f"ROUND {current_round} · LIVE" if current_round else "LIVE"),
+                           round_label=tour_label(tour) + ("FINAL" if final else (f"ROUND {current_round} · LIVE" if current_round else "LIVE")),
                             players=top5, out_path=image_path)
         caption, alternatives = _caption(
             "final leaderboard" if final else "live leaderboard",
-            (f"{event_name} FINAL results (the event is over), top 5: " if final
-             else f"{event_name} round {current_round}, in progress, top 5: ")
+            f"{TOUR_NAMES.get(tour, tour)}. "
+            + (f"{event_name} FINAL results (the event is over), top 5: " if final
+               else f"{event_name} round {current_round}, in progress, top 5: ")
             + "; ".join(f"{p['pos']} {p['name']} {p['score']}" for p in top5), event_tag,
             fallback=(f"{event_name} final: {current_leader} wins." if final
                       else f"{event_name} leaderboard: {current_leader} leads."),
@@ -231,7 +240,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
 
     state.save({**prev, "event_name": event_name, "leader_name": current_leader,
                 "last_leaderboard_post_ts": last_post_ts,
-                "standings": transform.standings_snapshot(live)}, commit=not dry_run)
+                "standings": transform.standings_snapshot(live)}, commit=not dry_run, tour=tour)
     return {"actions": actions_taken}
 
 
@@ -251,7 +260,7 @@ def _event_results(event: dict, tour: str):
             return live
     except Exception as e:
         print(f"live feed unavailable ({e})", file=sys.stderr)
-    saved = state.load().get("standings") or {}
+    saved = state.load(tour).get("standings") or {}
     if (saved.get("event_name") or "").strip().lower() == event["event_name"].strip().lower() and saved.get("event_stats"):
         return {**saved, "source": "standings saved by the live poll"}
     return None
@@ -269,7 +278,7 @@ def _recap_sections(tour: str) -> tuple:
               "skipping the recap section", file=sys.stderr)
     if last and results is not None:
         top5 = transform.top_finishers(results)
-        saved = state.load().get("last_picks") or {}
+        saved = state.load(tour).get("last_picks") or {}
         ours = transform.pick_results(saved, results) if str(saved.get("event_id")) == str(last["event_id"]) else []
         facts = [f"Event: {last['event_name']} at {last.get('course', '')}",
                  "Top finishers: " + "; ".join(f"{t['pos']} {t['name']}" + (f" ({t['score']})" if t["score"] else "")
@@ -306,10 +315,42 @@ def run_weekly_newsletter(tour: str = "pga", dry_run: bool = False):
     return newsletter.send_campaign(subject=subject, html_content=html)
 
 
+def probe(tour: str = "pga") -> dict:
+    """Which DataGolf endpoints this plan can use, and their top-level shape (no player data printed).
+    Run once per tour on GitHub (needs the key): python pipeline.py probe --tour euro"""
+    checks = {
+        "schedule": lambda: datagolf.get_schedule(tour=tour, upcoming_only=True),
+        "pre_tournament": lambda: datagolf.get_pre_tournament_predictions(tour=tour),
+        "outrights_win": lambda: datagolf.get_outright_odds(market="win", tour=tour),
+        "in_play": lambda: datagolf.get_live_in_play(tour=tour),
+        "dg_rankings": datagolf.get_dg_rankings,
+        "skill_ratings": datagolf.get_skill_ratings,
+    }
+    out = {}
+    for name, fn in checks.items():
+        try:
+            data = fn()
+            summary = {"ok": True, "keys": sorted(data)[:12] if isinstance(data, dict) else type(data).__name__}
+            for k in ("event_name", "last_updated", "current_round"):
+                if isinstance(data, dict) and k in data:
+                    summary[k] = data[k]
+            if isinstance(data, dict) and isinstance(data.get("info"), dict):
+                summary["event_name"] = data["info"].get("event_name")
+            rows = next((v for v in (data.values() if isinstance(data, dict) else []) if isinstance(v, list)), None)
+            if rows is not None:
+                summary["rows"] = len(rows)
+                if rows and isinstance(rows[0], dict):
+                    summary["row_fields"] = sorted(rows[0])[:20]
+            out[name] = summary
+        except Exception as e:
+            out[name] = {"ok": False, "error": str(e)[:160].replace(datagolf.API_KEY or "<none>", "***")}
+    return out
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["picks", "live", "newsletter"])
+    parser.add_argument("action", choices=["picks", "live", "newsletter", "probe"])
     parser.add_argument("--tour", default="pga")
     parser.add_argument("--dry-run", action="store_true",
                          help="Run against real data/APIs but print what would be posted instead of posting it.")
@@ -324,5 +365,8 @@ if __name__ == "__main__":
         print(run_pretournament_picks(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
     elif args.action == "live":
         print(run_live_poll(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
+    elif args.action == "probe":
+        import json
+        print(json.dumps(probe(args.tour), indent=2, default=str))
     elif args.action == "newsletter":
         print(run_weekly_newsletter(args.tour, dry_run=args.dry_run or args.draft))

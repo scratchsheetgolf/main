@@ -1,0 +1,31 @@
+name: Probe DataGolf
+
+# Manual only. Reports which DataGolf endpoints this plan can use for a tour, with each
+# response's top-level shape (no player data, nothing posted). Use before adding a tour
+# or a new content type.
+on:
+  workflow_dispatch:
+    inputs:
+      tour:
+        description: 'pga, euro (DP World), alt (LIV), kft'
+        required: false
+        default: 'euro'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Probe
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python pipeline.py probe --tour "${{ github.event.inputs.tour }}"
