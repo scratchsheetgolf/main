@@ -149,6 +149,28 @@ def check_picks_window(event_name: str, schedule: dict, today: date = None) -> d
             return ev
     raise PicksError(f"{event_name} (from the predictions) isn't in the schedule; can't confirm it hasn't started")
 
+
+def lead_change_facts(live: dict, prev_leader: str) -> str:
+    """Plain-text facts for a lead-change hot take, from the in-play feed. Gives the writer real numbers
+    (round, scores, margin) to work with; content.py rejects any number that isn't in here."""
+    info = live.get("info") or {}
+    rows = live.get("data") or []
+    lead = rows[0]
+    lines = [f"Event: {info.get('event_name', '')}, round {info.get('current_round', '?')}",
+             f"New leader: {display_name(lead.get('player_name', ''))} at {format_to_par(lead.get('current_score'))}"
+             + (f", thru {lead['thru']}" if lead.get("thru") not in (None, "") else "")]
+    if len(rows) > 1:
+        second = rows[1]
+        try:
+            margin = int(second.get("current_score")) - int(lead.get("current_score"))
+            margin_text = "tied" if margin == 0 else f"{margin} shot{'s' if margin != 1 else ''} clear"
+        except (TypeError, ValueError):
+            margin_text = ""
+        lines.append(f"Next: {display_name(second.get('player_name', ''))} at "
+                     f"{format_to_par(second.get('current_score'))}" + (f" ({margin_text})" if margin_text else ""))
+    lines.append(f"Previous leader: {prev_leader}")
+    return "\n".join(lines)
+
 # ---- Schedule / recap ----
 
 def last_completed_and_next(schedule: dict, today: date = None):

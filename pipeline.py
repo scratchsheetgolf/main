@@ -21,7 +21,7 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 
 
 def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "",
-                     dry_run: bool = False, draft: bool = False):
+                     dry_run: bool = False, draft: bool = False, alternatives: list = None):
     """Posts the same image+caption to all four platforms. Each call is wrapped
     so one platform's failure (e.g. TikTok still pre-audit) doesn't block the rest.
 
@@ -35,6 +35,9 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
         caption_path = os.path.splitext(local_image_path)[0] + ".txt"
         with open(caption_path, "w", encoding="utf-8") as f:
             f.write(f"{caption}\n\nTikTok title: {tiktok_title}\n")
+            if alternatives:
+                f.write("\nOther options (swap in by hand if better):\n")
+                f.write("".join(f"- {alt}\n" for alt in alternatives))
         return {
             "DRY_RUN" if dry_run else "DRAFT": True,
             "would_post_image": local_image_path,
@@ -64,16 +67,21 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
     return results
 
 
-def _caption(post_type: str, summary: str, event_tag: str, fallback: str, allow_fallback: bool) -> str:
-    """Claude-written caption. In dry-run/draft mode a failure (e.g. no ANTHROPIC_API_KEY yet)
-    falls back to a plain factual caption so the card still gets made; real posts re-raise."""
+def _caption(post_type: str, summary: str, event_tag: str, fallback: str, allow_fallback: bool):
+    """(caption, alternatives). Claude writes a few options; the first is used, the rest go in the
+    draft for a person to choose from. If the model says SKIP, the plain factual fallback is used.
+    In dry-run/draft mode an error (e.g. no ANTHROPIC_API_KEY yet) also falls back; real posts re-raise."""
+    plain = f"{fallback} {event_tag}".strip()
     try:
-        return content.generate_social_caption(post_type, summary, event_tag=event_tag)
+        options = content.generate_caption_options(post_type, summary, event_tag=event_tag)
     except Exception as e:
         if not allow_fallback:
             raise
         print(f"caption generation failed ({type(e).__name__}); using plain fallback caption", file=sys.stderr)
-        return f"{fallback} {event_tag}".strip()
+        return plain, []
+    if not options:
+        return plain, []
+    return options[0], options[1:]
 
 
 def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag: str = "", draft: bool = False):
@@ -93,7 +101,7 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
         fade=picks["fade"]["name"], sleeper=picks["sleeper"]["name"],
         out_path=image_path,
     )
-    caption = _caption(
+    caption, alternatives = _caption(
         "weekly picks", transform.picks_summary(event_name, picks), event_tag,
         fallback=f"{event_name} picks. Win: {picks['win']['name']}. Value: {picks['value']['name']}. "
                  f"Fade: {picks['fade']['name']}. Sleeper: {picks['sleeper']['name']}.",
@@ -106,7 +114,8 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
         "year": (event.get("start_date") or "")[:4] or None,
         "picks": picks,
     }}, commit=not dry_run)
-    result = _post_everywhere(image_path, caption, tiktok_title=f"{event_name} picks", dry_run=dry_run, draft=draft)
+    result = _post_everywhere(image_path, caption, tiktok_title=f"{event_name} picks",
+                              dry_run=dry_run, draft=draft, alternatives=alternatives)
     if dry_run or draft:
         result["picks"] = {slot: f"{p['name']} — {p['why']}" for slot, p in picks.items()}
     return result
@@ -138,16 +147,25 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     # Trigger 1: leader change -> Hot Take (always worth posting, this is rare by definition)
     if current_leader and prev_leader and current_leader != prev_leader:
         try:
-            take = content.generate_hot_take(f"{current_leader} has taken the lead, passing {prev_leader}.")
+            take = content.generate_hot_take(transform.lead_change_facts(live, prev_leader))
         except Exception as e:
             if not (dry_run or draft):
                 raise
-            take = None
-            actions_taken.append(("hot_take", f"skipped: hot take needs the Claude API ({type(e).__name__})"))
-        if take:
+            take = False
+            actions_taken.append(("hot_take", f"skipped: hot take generation failed ({type(e).__name__})"))
+        if take is None:
+            actions_taken.append(("hot_take", "skipped: model judged the facts too thin (SKIP)"))
+        elif take:
             image_path = os.path.join(OUTPUT_DIR, "hot_take_live.png")
             render_hot_take(lines=take["lines"], kicker=take["kicker"], out_path=image_path)
-            actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run, draft=draft)))
+            alt_notes = []
+            if dry_run or draft:  # render the other options too, so a person can post the best card
+                for i, alt in enumerate(take["alternatives"], start=1):
+                    alt_path = os.path.join(OUTPUT_DIR, f"hot_take_live_alt{i}.png")
+                    render_hot_take(lines=alt["lines"], kicker=alt["kicker"], out_path=alt_path)
+                    alt_notes.append(f"{os.path.basename(alt_path)}: {' / '.join(alt['lines'])} {alt['kicker']}")
+            actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run,
+                                                               draft=draft, alternatives=alt_notes)))
 
     # Trigger 2: leaderboard snapshot — throttled to once per min_leaderboard_gap_minutes,
     # NOT every poll. A poll that doesn't clear the gap just updates state and exits.
@@ -162,12 +180,14 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         image_path = os.path.join(OUTPUT_DIR, "leaderboard_live.png")
         render_leaderboard(event=event_name.upper(), round_label="LIVE",
                             players=top5, out_path=image_path)
-        caption = _caption(
-            "live leaderboard", f"current top 5, leader {current_leader}", event_tag,
+        caption, alternatives = _caption(
+            "live leaderboard",
+            f"{event_name} live top 5: " + "; ".join(f"{p['name']} {p['score']}" for p in top5), event_tag,
             fallback=f"{event_name} leaderboard: {current_leader} leads.",
             allow_fallback=dry_run or draft,
         )
-        actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft)))
+        actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft,
+                                                              alternatives=alternatives)))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
     else:

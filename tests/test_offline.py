@@ -132,10 +132,13 @@ class PipelineDryRunTests(unittest.TestCase):
             p.stop()
         self.tmp.cleanup()
 
-    def fake_llm(self, system, user, max_tokens=300):
+    def fake_llm(self, system, user, max_tokens=300, temperature=1.0):
         self.llm_prompts.append(user)
-        if "LINE1" in system and "KICKER" in system:
-            return "LINE1: A\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: k"
+        if "KICKER" in system:
+            return "\n".join(f"OPTION {i}\nLINE1: TAKE {i}\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k{i}"
+                             for i in (1, 2, 3)).replace("TAKE 1", "TAKE ONE").replace("TAKE 2", "TAKE TWO").replace("TAKE 3", "TAKE THREE").replace("k1", "ka").replace("k2", "kb").replace("k3", "kc")
+        if "CAPTION" in system:
+            return "OPTION 1\nCAPTION: Caption alpha.\nOPTION 2\nCAPTION: Caption beta.\nOPTION 3\nCAPTION: Caption gamma."
         return "Fake recap paragraph one.\nFake recap paragraph two."
 
     def test_picks_dry_run(self):
@@ -220,6 +223,73 @@ class DraftModeTests(PipelineDryRunTests):
         pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=60)
         out = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=60)
         self.assertIn("skipped", out["actions"][-1][1])
+
+class ContentCheckTests(unittest.TestCase):
+    """The checks that make a small model safe to use: limits, grounded numbers, retry, SKIP."""
+
+    FACTS = "Event: Fake Open, round 4\nNew leader: Test Player at -14\nNext: Other Guy at -12 (2 shots clear)"
+
+    def run_with(self, replies, fn, *args):
+        with mock.patch.object(content, "_generate", side_effect=list(replies)) as gen:
+            return fn(*args), gen
+
+    def test_keeps_valid_options_and_drops_bad_ones(self):
+        raw = ("OPTION 1\nLINE1: THIS LINE IS WAY TOO LONG FOR THE CARD\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k\n"
+               "OPTION 2\nLINE1: TWO CLEAR\nLINE2: AT 14 UNDER\nLINE3: AND COUNTING\nLINE4: FOLKS.\nKICKER: — calm\n"
+               "OPTION 3\nLINE1: LEADS BY 9\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k")
+        take, gen = self.run_with([raw], content.generate_hot_take, self.FACTS)
+        self.assertEqual(take["lines"][0], "TWO CLEAR")      # too-long and invented-"9" options dropped
+        self.assertEqual(take["alternatives"], [])
+        self.assertEqual(gen.call_count, 1)
+
+    def test_retries_once_with_feedback_then_succeeds(self):
+        bad = "OPTION 1\nLINE1: LEADS BY 9 NOW\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k"
+        good = "OPTION 1\nLINE1: TWO CLEAR\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k"
+        take, gen = self.run_with([bad, good], content.generate_hot_take, self.FACTS)
+        self.assertEqual(take["lines"][0], "TWO CLEAR")
+        retry_prompt = gen.call_args_list[1].args[1]
+        self.assertIn("numbers not in the facts: 9", retry_prompt)
+
+    def test_gives_up_after_one_retry(self):
+        bad = "OPTION 1\nLINE1: LEADS BY 9\nLINE2: B\nLINE3: C\nLINE4: D\nKICKER: — k"
+        with self.assertRaises(content.ContentError):
+            self.run_with([bad, bad], content.generate_hot_take, self.FACTS)
+
+    def test_skip_returns_none(self):
+        take, _ = self.run_with(["SKIP"], content.generate_hot_take, self.FACTS)
+        self.assertIsNone(take)
+
+    def test_numbers_check(self):
+        self.assertEqual(content.ungrounded_numbers("leads at -14, 2 clear", self.FACTS), [])
+        self.assertEqual(content.ungrounded_numbers("his 3rd win, 65% of fairways", self.FACTS), ["3", "65"])
+
+    def test_recap_rejects_invented_numbers(self):
+        with mock.patch.object(content, "_generate", side_effect=["He shot 63 on Sunday.", "He closed it out."]):
+            self.assertEqual(content.generate_newsletter_recap(self.FACTS), "He closed it out.")
+
+    def test_lead_change_facts_have_real_numbers(self):
+        facts = transform.lead_change_facts(LIVE, "Test Player01")
+        self.assertIn("round 4", facts)
+        self.assertIn("Test Player00 at -14", facts)
+        self.assertIn("3 shots clear", facts)
+        self.assertIn("Previous leader: Test Player01", facts)
+
+
+class AlternativesInDraftTests(DraftModeTests):
+    def test_caption_alternatives_written_to_draft(self):
+        out = pipeline.run_pretournament_picks(draft=True)
+        self.assertEqual(out["would_post_caption"], "Caption alpha.")
+        with open(out["caption_file"], encoding="utf-8") as f:
+            text = f.read()
+        self.assertIn("- Caption beta.", text)
+        self.assertIn("- Caption gamma.", text)
+
+    def test_alternative_hot_take_cards_rendered(self):
+        state.save({"event_name": "Fake Invitational", "leader_name": "Test Player01"}, commit=False)
+        pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=600)
+        for name in ("hot_take_live.png", "hot_take_live_alt1.png", "hot_take_live_alt2.png"):
+            self.assertTrue(os.path.exists(os.path.join(self.tmp.name, name)), name)
+        self.assertIn("round 4", self.llm_prompts[0])   # the hot-take writer (first call) got real numbers
 
 if __name__ == "__main__":
     unittest.main()

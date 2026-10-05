@@ -7,11 +7,24 @@ data-formatting. Everything else (leaderboard numbers, stat call-outs) should
 come straight from DataGolf — only feed the model real numbers, never let it
 invent stats. That's both an accuracy requirement and an FTC/advertising-claims
 safety net for anything that touches betting language.
+
+How every generator works (built for a small, cheap model):
+  1. ask for several OPTIONS in a fixed KEY: value format, with worked examples
+  2. check each option in code: required fields, the card's real character
+     limits, and that every number in it appears in the facts given
+  3. if none pass, ask once more, quoting what was wrong
+  4. the model may answer SKIP when the facts are too thin -> returns None
+The first valid option is used; the rest come back as "alternatives" so a
+person posting by hand can pick a better one.
 """
 import os
+import re
+
 import anthropic
 
-MODEL = "claude-sonnet-4-6"
+MODEL = "claude-haiku-4-5"  # $1 / $5 per MTok; fine for short, fact-fed writing.
+# If hot takes read flat, try "claude-sonnet-5-5" ($2 / $10): it always thinks first, and thinking
+# counts against max_tokens, so raise the max_tokens values below (to ~4000) when switching.
 VOICE_DOC_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "brand_voice.md")
 
 client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env automatically
@@ -20,6 +33,19 @@ FALLBACK_VOICE = (
     "Sharp, opinionated, golf-savvy. Confident takes, dry humor, no hedging. "
     "Talks like a smart friend who watches every round, not a press release."
 )
+
+# Character limits = what fits the cards at full size (templates/*.svg via tools/build_markup.py).
+LIMITS = {
+    "hot_take": {"LINE1": 20, "LINE2": 20, "LINE3": 20, "LINE4": 20, "KICKER": 62},
+    "live": {"LINE1": 16, "LINE2": 16, "REACTION": 50},
+    "intel": {"STAT": 6, "MEANS": 48, "SUPPORTING": 55},
+    "caption": {"CAPTION": 240},  # X allows 280; leaves room for an event hashtag
+}
+RECAP_MAX_WORDS = 130
+
+
+class ContentError(Exception):
+    """No option passed the checks, even after one retry."""
 
 
 def _load_voice() -> str:
@@ -33,136 +59,227 @@ def _load_voice() -> str:
         return FALLBACK_VOICE
 
 
-def _generate(system: str, user: str, max_tokens: int = 300) -> str:
+def _generate(system: str, user: str, max_tokens: int = 300, temperature: float = 1.0) -> str:
     resp = client.messages.create(
         model=MODEL,
         max_tokens=max_tokens,
+        temperature=temperature,
         system=system,
         messages=[{"role": "user", "content": user}],
     )
-    return resp.content[0].text.strip()
+    return "".join(b.text for b in resp.content if b.type == "text").strip()
 
 
-def generate_hot_take(context: str) -> dict:
-    """
-    context: a plain-text summary of what's happening (e.g. "Scottie Scheffler
-    has won 4 of his last 6 starts and currently leads by 3 after 54 holes").
+# ---- checking ----
 
-    Returns {"lines": [4 strings], "kicker": str} sized for the Hot Take template.
-    """
-    voice = _load_voice()
-    system = (
-        f"You write social posts for a golf content brand called The Scratch Sheet.\n\n"
-        f"BRAND VOICE:\n{voice}\n\n"
-        "You will be given real, factual context about current golf events. Write ONE "
-        "punchy hot take based only on that context — never invent stats or scores not "
-        "given to you. Output EXACTLY in this format, nothing else:\n"
-        "LINE1: ...\nLINE2: ...\nLINE3: ...\nLINE4: ...\nKICKER: ...\n\n"
-        "Each LINE should be short (2-5 words, ALL CAPS reads well since it's set in a big "
-        "bold display font) and the four lines together form one complete thought/sentence. "
-        "If the take describes a specific shot or moment, it MUST state the outcome/result, "
-        "not just the action — 'Bryson hit driver off the deck' is an incomplete setup with "
-        "no punchline; 'Bryson hit driver off the deck and nearly holed it' is a complete take. "
-        "KICKER is a short italic one-liner underneath, normal case. The KICKER must logically "
-        "agree with the LINE content: if the take is a personal reaction/opinion, the kicker "
-        "should be a personal aside (not 'just facts'); if the take is itself a stated fact or "
-        "stat, the kicker can lean into that. Don't let them contradict each other."
-    )
-    raw = _generate(system, context, max_tokens=200)
-    lines, kicker = [], ""
-    for line in raw.splitlines():
-        if line.startswith("LINE"):
-            lines.append(line.split(":", 1)[1].strip())
-        elif line.startswith("KICKER:"):
-            kicker = line.split(":", 1)[1].strip()
-    return {"lines": lines[:4], "kicker": kicker}
+_NUMBER = re.compile(r"\d+(?:\.\d+)?")
 
 
-def generate_live_reaction(moment_description: str) -> dict:
-    """For the Live Alert template — short reaction to something that just happened."""
-    voice = _load_voice()
-    system = (
-        f"You write live reaction posts for a golf content brand called The Scratch Sheet.\n\n"
-        f"BRAND VOICE:\n{voice}\n\n"
-        "You'll be given a factual description of something that just happened in a live "
-        "round. Output EXACTLY:\nLINE1: ...\nLINE2: ...\nREACTION: ...\n\n"
-        "LINE1/LINE2 together describe what happened, short and punchy (these render huge "
-        "and bold — think headline, not sentence). REACTION is a short italic one-liner, "
-        "your genuine in-the-moment reaction."
-    )
-    raw = _generate(system, moment_description, max_tokens=150)
-    out = {"event_line_1": "", "event_line_2": "", "reaction": ""}
-    for line in raw.splitlines():
-        if line.startswith("LINE1:"):
-            out["event_line_1"] = line.split(":", 1)[1].strip()
-        elif line.startswith("LINE2:"):
-            out["event_line_2"] = line.split(":", 1)[1].strip()
-        elif line.startswith("REACTION:"):
-            out["reaction"] = line.split(":", 1)[1].strip()
+def ungrounded_numbers(text: str, facts: str) -> list:
+    """Numbers in text that don't appear in facts ('11th' counts as 11; '-14' as 14)."""
+    allowed = set(_NUMBER.findall(facts))
+    return [n for n in _NUMBER.findall(text) if n not in allowed]
+
+
+def _parse_options(raw: str, fields: list) -> list:
+    """Split 'OPTION n' blocks into dicts of the requested fields."""
+    blocks = re.split(r"(?im)^\s*OPTION\s*\d*\s*:?\s*$", raw)
+    options = []
+    for block in blocks:
+        opt = {}
+        for line in block.splitlines():
+            key, sep, value = line.partition(":")
+            key = key.strip().upper()
+            if sep and key in fields and key not in opt:
+                opt[key] = value.strip()
+        if opt:
+            options.append(opt)
+    return options
+
+
+def _problems(opt: dict, limits: dict, facts: str) -> list:
+    out = []
+    for field, limit in limits.items():
+        value = opt.get(field, "")
+        if not value:
+            out.append(f"{field} missing")
+        elif len(value) > limit:
+            out.append(f"{field} is {len(value)} characters (max {limit}): {value!r}")
+    invented = ungrounded_numbers(" ".join(opt.values()), facts)
+    if invented:
+        out.append(f"uses numbers not in the facts: {', '.join(invented)}")
     return out
 
 
-def generate_intel_caption(stat_context: str) -> dict:
-    """For the Intel Stat template — turns a raw stat into a headline + supporting line."""
-    voice = _load_voice()
-    system = (
-        f"You write data-driven golf content for a brand called The Scratch Sheet.\n\n"
-        f"BRAND VOICE:\n{voice}\n\n"
-        "You'll be given one real stat. Output EXACTLY:\nSTAT: ...\nMEANS: ...\nSUPPORTING: ...\n\n"
-        "STAT is the number itself, formatted for display (e.g. '0.41' or '6-for-6'). "
-        "MEANS is a short bold headline explaining what it is (ALL CAPS reads well, <8 words). "
-        "SUPPORTING is one short italic line of color/context."
+def _ask(task: str, system: str, facts: str, limits: dict, n: int, temperature: float, max_tokens: int):
+    """Returns a list of valid options (best first), or None if the model chose SKIP."""
+    fields = list(limits)
+    fmt = "\n".join(f"{f}: ..." for f in fields)
+    instructions = (
+        f"{system}\n\n"
+        f"Write {n} different options. Output EXACTLY this, nothing else:\n"
+        + "\n".join(f"OPTION {i + 1}\n{fmt}" for i in range(n))
+        + "\n\nHard limits (characters, counting spaces): "
+        + ", ".join(f"{f} <= {lim}" for f, lim in limits.items())
+        + ".\nUse only numbers that appear in the FACTS. If the facts are too thin for a "
+          "good one, output just: SKIP"
     )
-    raw = _generate(system, stat_context, max_tokens=150)
-    out = {"stat": "", "what_it_means": "", "supporting_line": ""}
-    for line in raw.splitlines():
-        if line.startswith("STAT:"):
-            out["stat"] = line.split(":", 1)[1].strip()
-        elif line.startswith("MEANS:"):
-            out["what_it_means"] = line.split(":", 1)[1].strip()
-        elif line.startswith("SUPPORTING:"):
-            out["supporting_line"] = line.split(":", 1)[1].strip()
-    return out
+    user = f"FACTS:\n{facts}"
+    feedback = ""
+    for attempt in range(2):
+        raw = _generate(instructions, user + feedback, max_tokens=max_tokens, temperature=temperature)
+        if raw.strip().upper().startswith("SKIP"):
+            return None
+        options = _parse_options(raw, fields)
+        valid = [o for o in options if not _problems(o, limits, facts)]
+        if valid:
+            return valid
+        issues = [p for o in options for p in _problems(o, limits, facts)] or ["no OPTION blocks in the expected format"]
+        feedback = ("\n\nYour last answer was rejected:\n- " + "\n- ".join(issues[:8])
+                    + "\nTry again, fixing those problems.")
+    raise ContentError(f"{task}: no option passed the checks after a retry ({'; '.join(issues[:4])})")
 
 
-def generate_social_caption(post_type: str, image_summary: str, event_tag: str = "") -> str:
-    """Short caption text to accompany the image when posting to each platform.
+# ---- worked examples (from config/brand_voice.md, in the exact output format) ----
+
+HOT_TAKE_EXAMPLES = """GOOD EXAMPLES (style only — their facts are made up, never reuse them):
+LINE1: SCOTTIE'S MAKING
+LINE2: THIS LOOK
+LINE3: STUPID EASY
+LINE4: AGAIN.
+KICKER: — not a hot take, just facts at this point
+
+LINE1: BRYSON HIT DRIVER
+LINE2: OFF THE DECK ON 17
+LINE3: ...AND NEARLY
+LINE4: HOLED IT.
+KICKER: — rewatched this four times before posting
+
+LINE1: RORY 3-PUTTED
+LINE2: FROM 12 FEET.
+LINE3: WE'VE ALL BEEN
+LINE4: THERE, RORY.
+KICKER: — sympathy follow for every weekend golfer reading this
+
+LINE1: THIS COURSE IS
+LINE2: EATING THE FIELD
+LINE3: ALIVE AND IT'S
+LINE4: KIND OF GLORIOUS.
+KICKER: — half the field under 70, the other half in therapy
+
+BAD (don't do this):
+- "BRYSON HIT DRIVER OFF THE DECK" with no outcome: a setup with no punchline. State what happened.
+- A personal-reaction take with a "just facts" kicker: take and kicker must agree.
+- Hedging ("some might say..."): commit to the take."""
+
+
+def _brand_system(role: str) -> str:
+    return f"You write {role} for a golf content brand called The Scratch Sheet.\n\nBRAND VOICE:\n{_load_voice()}"
+
+
+# ---- generators ----
+
+def generate_hot_take(context: str, n: int = 3):
+    """
+    context: plain-text facts about what's happening (e.g. "Scottie Scheffler has taken the lead,
+    passing Rory McIlroy."). Returns {"lines": [4], "kicker": str, "alternatives": [...]},
+    or None if the model judged the facts too thin.
+    """
+    system = (
+        _brand_system("hot-take social cards") + "\n\n" + HOT_TAKE_EXAMPLES + "\n\n"
+        "Each option is ONE take: four short ALL-CAPS lines that read as one sentence (they're set "
+        "huge in a condensed display font), then a normal-case KICKER one-liner starting with '— '. "
+        "If it describes a shot or moment, state the outcome. The KICKER must agree with the take."
+    )
+    options = _ask("hot take", system, context, LIMITS["hot_take"], n, temperature=1.0, max_tokens=700)
+    if options is None:
+        return None
+    to_take = lambda o: {"lines": [o["LINE1"], o["LINE2"], o["LINE3"], o["LINE4"]], "kicker": o["KICKER"]}
+    best, *rest = [to_take(o) for o in options]
+    return {**best, "alternatives": rest}
+
+
+def generate_live_reaction(moment_description: str, n: int = 3):
+    """For the Live Alert card. Returns {"event_line_1", "event_line_2", "reaction", "alternatives"} or None."""
+    system = (
+        _brand_system("live reaction cards") + "\n\n"
+        "LINE1 and LINE2 together say what just happened, like a headline split over two huge lines. "
+        "REACTION is your in-the-moment one-liner, normal case."
+    )
+    options = _ask("live reaction", system, moment_description, LIMITS["live"], n, temperature=1.0, max_tokens=500)
+    if options is None:
+        return None
+    conv = lambda o: {"event_line_1": o["LINE1"], "event_line_2": o["LINE2"], "reaction": o["REACTION"]}
+    best, *rest = [conv(o) for o in options]
+    return {**best, "alternatives": rest}
+
+
+def generate_intel_caption(stat_context: str, n: int = 3):
+    """For the Intel Drop card. Returns {"stat", "what_it_means", "supporting_line", "alternatives"} or None."""
+    system = (
+        _brand_system("data-driven stat cards") + "\n\n"
+        "STAT is the number itself, formatted for display (e.g. '0.41'). MEANS is a short ALL-CAPS "
+        "headline saying what it is. SUPPORTING is one short line of color, normal case."
+    )
+    options = _ask("intel stat", system, stat_context, LIMITS["intel"], n, temperature=0.7, max_tokens=500)
+    if options is None:
+        return None
+    conv = lambda o: {"stat": o["STAT"], "what_it_means": o["MEANS"], "supporting_line": o["SUPPORTING"]}
+    best, *rest = [conv(o) for o in options]
+    return {**best, "alternatives": rest}
+
+
+def generate_caption_options(post_type: str, image_summary: str, event_tag: str = "", n: int = 3):
+    """Caption options to post alongside a card, best first; None if the model chose SKIP.
 
     event_tag: an optional real event hashtag (e.g. "#USOpen") to append during
     majors/big events when search volume is genuinely elevated. This isn't the
     "no hashtag spam" rule being violated — a correct, relevant event tag during
     the actual event is accurate tagging, not spam. Leave blank for normal weeks.
     """
-    voice = _load_voice()
     system = (
-        f"You write captions to accompany golf content images for The Scratch Sheet.\n\n"
-        f"BRAND VOICE:\n{voice}\n\nKeep it under 2 sentences. No hashtag spam (max 2 "
-        "relevant hashtags, only if it genuinely fits the voice). No emojis unless the "
-        "voice doc explicitly calls for them."
+        _brand_system("captions for social cards") + "\n\n"
+        f"The post is a {post_type} card. Each CAPTION is under 2 sentences. No hashtags (one may be "
+        "added separately), no emojis unless the voice doc calls for them, no engagement bait."
     )
-    user = f"Post type: {post_type}\nWhat the image shows: {image_summary}"
-    caption = _generate(system, user, max_tokens=100)
-    if event_tag:
-        caption = f"{caption} {event_tag}"
-    return caption
+    options = _ask("caption", system, image_summary, LIMITS["caption"], n, temperature=0.8, max_tokens=500)
+    if options is None:
+        return None
+    return [f"{o['CAPTION']} {event_tag}".strip() for o in options]
 
+
+def generate_social_caption(post_type: str, image_summary: str, event_tag: str = "") -> str:
+    """Single best caption (kept for callers that want one string). Raises ContentError on SKIP."""
+    options = generate_caption_options(post_type, image_summary, event_tag)
+    if not options:
+        raise ContentError("caption: model chose SKIP")
+    return options[0]
 
 
 def generate_newsletter_recap(facts: str) -> str:
     """Two short paragraphs recapping last week, written ONLY from the facts given.
     facts: plain text built by pipeline.py from DataGolf results (winner, top 5, how our picks finished).
     Returns plain text; the caller escapes it into HTML. Tables of numbers are built in code, not here."""
-    voice = _load_voice()
     system = (
-        f"You write the weekly recap for The Scratch Sheet's golf newsletter.\n\n"
-        f"BRAND VOICE:\n{voice}\n\n"
-        "You'll be given factual results from last week's tournament, and how our published "
-        "picks finished. Write two short paragraphs (under 120 words total): what happened, "
-        "then an honest line on our picks — own the misses as confidently as the hits. Use ONLY "
-        "the facts given: no scores, stats, shots or storylines that aren't in them. Plain text, "
-        "no headings, no markdown."
+        _brand_system("the weekly recap in the newsletter") + "\n\n"
+        f"Write two short paragraphs, {RECAP_MAX_WORDS} words at most in total: what happened, then an "
+        "honest line on our picks — own the misses as confidently as the hits. Use ONLY the facts given: "
+        "no scores, stats, shots or storylines that aren't in them. Plain text, no headings, no markdown."
     )
-    return _generate(system, facts, max_tokens=300)
+    feedback = ""
+    for _ in range(2):
+        text = _generate(system, f"FACTS:\n{facts}{feedback}", max_tokens=400, temperature=0.3)
+        issues = []
+        if len(text.split()) > RECAP_MAX_WORDS:
+            issues.append(f"{len(text.split())} words (max {RECAP_MAX_WORDS})")
+        invented = ungrounded_numbers(text, facts)
+        if invented:
+            issues.append(f"uses numbers not in the facts: {', '.join(invented)}")
+        if not issues:
+            return text
+        feedback = "\n\nYour last answer was rejected:\n- " + "\n- ".join(issues) + "\nTry again."
+    raise ContentError(f"recap: failed checks after a retry ({'; '.join(issues)})")
+
 
 if __name__ == "__main__":
     if not os.environ.get("ANTHROPIC_API_KEY"):
