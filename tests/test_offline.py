@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import pipeline  # noqa: E402
 from content import content  # noqa: E402
 from data import datagolf, state, transform  # noqa: E402
+import render  # noqa: E402
 
 BOOKS = ["bet365", "draftkings", "fanduel", "pinnacle", "betmgm"]
 TODAY = date.today()
@@ -570,14 +571,39 @@ class PreviewCarouselTests(PipelineDryRunTests):
     def test_picks_run_builds_numbered_carousel(self):
         out = pipeline.run_pretournament_picks(dry_run=True)
         car = out["carousel"]
-        self.assertEqual(car["slides"], ["01_cover.png", "02_win.png", "03_value.png", "04_fade.png",
-                                         "05_sleeper.png", "07_favorites.png", "08_closer.png"])
-        for name in car["slides"]:
-            self.assertTrue(os.path.exists(os.path.join(car["carousel_dir"], name)), name)
+        self.assertEqual(car["slides"], ["01_hand.png", "02_picks.png", "03_win.png", "04_value.png", "05_fade.png",
+                                         "06_sleeper.png", "08_favorites.png", "09_closer.png"])
+        for folder in (car["carousel_dir"], car["brand_dir"]):
+            for name in car["slides"] + ["caption.txt"]:
+                self.assertTrue(os.path.exists(os.path.join(folder, name)), (folder, name))
         with open(car["caption_file"], encoding="utf-8") as f:
             self.assertIn("#pgatour", f.read())
         win_facts = next(p for p in self.llm_prompts if "is our WIN pick" in p)
         self.assertIn("Strokes gained per round (world rank)", win_facts)
+
+    def test_photo_library_lookup_and_credit(self):
+        from tools import player_photos
+        photo, entry = player_photos.lookup("Ludvig Aberg")          # matches "Ludvig Åberg"
+        self.assertTrue(photo and os.path.exists(photo))
+        self.assertTrue(player_photos.credit(entry).startswith("Photo: "))
+        self.assertEqual(player_photos.lookup("Test Player00"), (None, None))
+
+    def test_playing_card_photo_and_initials(self):
+        import tempfile
+        from tools import player_photos
+        photo, entry = player_photos.lookup("Scottie Scheffler")
+        with tempfile.TemporaryDirectory() as d:
+            for style in ("color", "brand"):
+                out = render.render_playing_card("win", "Scottie Scheffler", "TEST", "20.0%", "18.0%", "4-1",
+                                                 {}, "note", os.path.join(d, f"{style}.png"), photo,
+                                                 player_photos.credit(entry), style=style)
+                self.assertTrue(os.path.exists(out))
+            out = render.render_playing_card("fade", "J.J. Spaun", "TEST", "1.0%", "2.0%", "49-1", {}, "note",
+                                             os.path.join(d, "none.png"))
+            self.assertTrue(os.path.exists(out))
+            hand = render.render_hand([os.path.join(d, n) for n in ("color.png", "brand.png", "none.png")],
+                                      "TEST", os.path.join(d, "hand.png"))
+            self.assertTrue(os.path.exists(hand))
 
     def test_carousel_failure_does_not_block_picks_card(self):
         with mock.patch.object(datagolf, "get_skill_ratings", side_effect=RuntimeError("down")):

@@ -199,4 +199,79 @@ cl = [head("closer"), frame_inner(), hole_strip(96, 10),
       f'<text x="540" y="990" font-family="Permanent Marker" font-size="38" fill="{SHARPIE}" text-anchor="middle" transform="rotate(-2 540 990)">win or lose, we post how these did</text>\n',
       footer()]
 open(f"{OUT}/closer.svg", "w").write("".join(cl))
+# ---------- carousel: playing cards (true 5:7 card on the 4:5 frame) ----------
+# Photo variant: __PHOTO__ is a data: URI filled by render.py (photo pre-cropped to 700x572 window,
+# natural color or brand duotone). No-photo variant: the player's initials in the window.
+CX, CY, CW, CH = 100, 59, 880, 1232
+CPW, CPH = 700, 572
+CARD_BG = "#FBF8F0"
+
+
+def card_mark(slot, x, y, s=0.85):
+    if slot == "W":
+        return f'<path d="{circle(x, y, 30*s, 19*s, 51)}" {MK}/><path d="{circle(x, y, 22*s, 13*s, 52, 1.08, -1.2)}" {MK}/>'
+    if slot == "V":
+        return f'<path d="{circle(x, y, 30*s, 19*s, 53)}" {MK}/>'
+    if slot == "F":
+        return f'<path d="{box(x - 26*s, y - 16*s, 52*s, 32*s, 54)}" {MK}/>'
+    return f'<path d="{squiggle(x - 28*s, y, 56*s, 55, 5)}" {MK}/>'
+
+
+def playing_card(slot, label, photo):
+    L, R, T, B = CX, CX + CW, CY, CY + CH
+    mid = CX + CW / 2
+    px, py = mid - CPW / 2, T + 134
+    out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">\n',
+           f'<!-- Scratch Sheet · playing card · {label} · {"photo" if photo else "no photo"} -->\n',
+           f'<rect width="{W}" height="{H}" fill="{PAPER}"/>\n',
+           f'<rect x="{L}" y="{T}" width="{CW}" height="{CH}" rx="40" fill="{CARD_BG}" stroke="{INK}" stroke-width="4"/>\n',
+           f'<rect x="{L + 22}" y="{T + 22}" width="{CW - 44}" height="{CH - 44}" rx="28" fill="none" stroke="{RED}" stroke-width="2"/>\n',
+           f'<text x="{L + 52}" y="{T + 84}" font-family="Anton" font-size="46" fill="{SHARPIE}" text-anchor="middle">{slot}</text>\n',
+           card_mark(slot, L + 52, T + 108) + "\n",
+           f'<g transform="rotate(180 {R - 52} {B - 108})"><text x="{R - 52}" y="{B - 132}" font-family="Anton" font-size="46" '
+           f'fill="{SHARPIE}" text-anchor="middle">{slot}</text>{card_mark(slot, R - 52, B - 108)}</g>\n']
+    if photo:
+        out += [f'<image x="{px}" y="{py}" width="{CPW}" height="{CPH}" preserveAspectRatio="xMidYMid slice" href="__PHOTO__"/>\n',
+                f'<rect x="{px}" y="{py}" width="{CPW}" height="{CPH}" fill="none" stroke="{INK}" stroke-width="3"/>\n',
+                f'<rect x="{px + 3}" y="{py + CPH - 30}" width="{CPW - 6}" height="27" fill="{INK}" fill-opacity="0.55"/>\n',
+                f'<text x="{px + CPW - 12}" y="{py + CPH - 11}" font-family="Barlow SemiBold" font-size="15" fill="{PAPER}" '
+                f'text-anchor="end" data-fit="660">__CREDIT__</text>\n']
+    else:
+        out += [f'<rect x="{px}" y="{py}" width="{CPW}" height="{CPH}" fill="#ECE5D3" stroke="{INK}" stroke-width="3"/>\n',
+                f'<text x="{mid}" y="{py + CPH / 2 + 95}" font-family="DM Serif Display" font-size="270" fill="{INK}" '
+                f'text-anchor="middle" data-fit="560">__INITIALS__</text>\n',
+                f'<path d="{circle(mid, py + CPH / 2, 250, 175, 56, 1.1)}" {MK}/>\n']
+    t3 = [mid - 250, mid, mid + 250]
+    cols = [mid - 300, mid - 100, mid + 100, mid + 300]
+    out += [f'<rect x="{px - 20}" y="{py + CPH + 18}" width="{CPW + 40}" height="92" fill="{GREEN}"/>\n',
+            f'<text x="{mid}" y="{py + CPH + 82}" font-family="DM Serif Display" font-size="58" fill="{PAPER}" text-anchor="middle" data-fit="700">__PLAYER__</text>\n',
+            f'<text x="{mid}" y="{py + CPH + 146}" font-family="Barlow Condensed SemiBold" font-size="28" fill="{RED}" letter-spacing="7" '
+            f'text-anchor="middle" data-fit="760">{label} PICK · __EVENT__</text>\n',
+            f'<g font-family="Barlow Condensed SemiBold" font-size="22" fill="{PENCIL}" letter-spacing="4" text-anchor="middle">'
+            f'<text x="{t3[0]}" y="{B - 330}">MODEL WIN</text><text x="{t3[1]}" y="{B - 330}">BOOKS WIN</text><text x="{t3[2]}" y="{B - 330}">ODDS</text></g>\n',
+            f'<g font-family="Anton" font-size="60" fill="{INK}" text-anchor="middle">'
+            f'<text x="{t3[0]}" y="{B - 258}" data-fit="220">__MODEL_WIN__</text><text x="{t3[1]}" y="{B - 258}" data-fit="220">__BOOKS_WIN__</text>'
+            f'<text x="{t3[2]}" y="{B - 258}" data-fit="220">__ODDS__</text></g>\n',
+            f'<line x1="{L + 70}" y1="{B - 232}" x2="{R - 70}" y2="{B - 232}" stroke="{RULE}" stroke-width="2"/>\n',
+            '<g font-family="Barlow Condensed SemiBold" font-size="23" fill="' + INK + '" letter-spacing="2" text-anchor="middle">'
+            + "".join(f'<text x="{x}" y="{B - 196}">{k} __SG_{k}__</text>' for x, k in zip(cols, ["OTT", "APP", "ARG", "PUTT"])) + '</g>\n',
+            '<g font-family="Barlow Condensed SemiBold" font-size="21" fill="' + RED + '" text-anchor="middle">'
+            + "".join(f'<text x="{x}" y="{B - 166}">__RANK_{k}__</text>' for x, k in zip(cols, ["OTT", "APP", "ARG", "PUTT"])) + '</g>\n',
+            f'<text x="{mid}" y="{B - 100}" font-family="Permanent Marker" font-size="27" fill="{SHARPIE}" text-anchor="middle" '
+            f'transform="rotate(-2 {mid} {B - 100})" data-fit="700">__NOTE__</text>\n</svg>\n']
+    return "".join(out)
+
+
+for slot, label in [("W", "WIN"), ("V", "VALUE"), ("F", "FADE"), ("S", "SLEEPER")]:
+    for photo in (True, False):
+        open(f"{OUT}/card_{label.lower()}{'' if photo else '_nophoto'}.svg", "w").write(playing_card(slot, label, photo))
+
+# ---------- carousel: "This Week's Hand" cover background (cards composited in render.py) ----------
+hd = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">\n',
+      f'<rect width="{W}" height="{H}" fill="{PAPER}"/>\n',
+      f'<rect x="36" y="36" width="1008" height="1278" fill="none" stroke="{INK}" stroke-width="3"/>\n',
+      f'<text x="540" y="200" font-family="Anton" font-size="120" fill="{INK}" text-anchor="middle">THIS WEEK\'S HAND</text>\n',
+      f'<text x="540" y="256" font-family="Barlow SemiBold" font-size="28" fill="{PENCIL}" letter-spacing="6" text-anchor="middle" data-fit="900">__EVENT__</text>\n',
+      f'<text x="540" y="1250" font-family="Permanent Marker" font-size="40" fill="{SHARPIE}" text-anchor="middle" transform="rotate(-2 540 1250)">swipe for the reads</text>\n</svg>\n']
+open(f"{OUT}/hand_cover.svg", "w").write("".join(hd))
 print("built", sorted(os.listdir(OUT)))

@@ -183,6 +183,71 @@ def render_closer(event: str, out_path: str) -> str:
     """Carousel closing slide ("RECEIPTS SUNDAY.")."""
     return _fill_and_render("closer.svg", {"event": event}, out_path)
 
+
+SLOT_TEMPLATES = {"win": "card_win", "value": "card_value", "fade": "card_fade", "sleeper": "card_sleeper"}
+CARD_BOX = (100, 59, 980, 1291)   # the 5:7 card's bounds on the 1080x1350 slide (see tools/build_markup.py)
+
+
+def _photo_data_uri(photo_path: str, style: str) -> str:
+    """Library photo (already cropped to the card window) as a JPEG data: URI; style "brand" = duotone
+    in the card inks so photos from different sources read as one deck."""
+    import base64
+    import io
+    from PIL import Image, ImageEnhance, ImageOps
+    im = Image.open(photo_path).convert("RGB")
+    if style == "brand":
+        g = ImageOps.autocontrast(ImageOps.grayscale(im), cutoff=1)
+        im = ImageEnhance.Contrast(ImageOps.colorize(g, black="#1E2A22", white="#F2ECDC", mid="#7E8A70")).enhance(1.08)
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=86)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def render_playing_card(slot: str, player: str, event: str, model_win: str, books_win: str, odds: str,
+                        skills: dict, note: str, out_path: str, photo_path: str = None, credit: str = "",
+                        style: str = "color") -> str:
+    """Carousel playing card for one pick. With photo_path (from tools/player_photos.lookup) the photo fills
+    the window with its credit; without one, the player's initials do. style: "color" or "brand"."""
+    tokens = {"player": player, "event": event, "model_win": model_win, "books_win": books_win,
+              "odds": odds, "note": note}
+    for key in ("OTT", "APP", "ARG", "PUTT"):
+        value, rank = skills.get(key, ("—", "—"))
+        tokens[f"sg_{key}"] = value
+        tokens[f"rank_{key}"] = rank
+    if photo_path:
+        tokens["photo"] = _photo_data_uri(photo_path, style)
+        tokens["credit"] = credit
+        template = f"{SLOT_TEMPLATES[slot]}.svg"
+    else:
+        tokens["initials"] = "".join(part[0] for part in player.replace(".", " ").split() if part[:1].isalpha())[:3].upper()
+        template = f"{SLOT_TEMPLATES[slot]}_nophoto.svg"
+    return _fill_and_render(template, tokens, out_path)
+
+
+def render_hand(card_paths: list, event: str, out_path: str) -> str:
+    """'This Week's Hand' cover: the rendered playing cards cut out and fanned like a poker hand."""
+    import io
+    from PIL import Image, ImageDraw
+    bg_path = out_path + ".bg.png"
+    _fill_and_render("hand_cover.svg", {"event": event}, bg_path)
+    bg = Image.open(bg_path).convert("RGBA")
+    os.remove(bg_path)
+    scale = bg.width / 1080
+    box = tuple(int(v * scale) for v in CARD_BOX)
+    n = len(card_paths)
+    angles = [-15, -5, 5, 15][:n] if n == 4 else [(-15 + 30 * i / max(n - 1, 1)) for i in range(n)]
+    xs = [330, 470, 610, 750][:n] if n == 4 else [int(330 + 420 * i / max(n - 1, 1)) for i in range(n)]
+    for path, angle, x in zip(card_paths, angles, xs):
+        card = Image.open(path).convert("RGBA").crop(box)
+        mask = Image.new("L", card.size, 0)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, card.width - 1, card.height - 1), radius=int(40 * scale), fill=255)
+        card.putalpha(mask)
+        card = card.resize((int(400 * scale), int(560 * scale)), Image.LANCZOS)
+        rotated = card.rotate(-angle, expand=True, resample=Image.BICUBIC)
+        bg.alpha_composite(rotated, (int(x * scale) - rotated.width // 2, int((340 + abs(angle) * 3) * scale)))
+    bg.convert("RGB").save(out_path)
+    return out_path
+
 if __name__ == "__main__":
     # smoke test with mock data
     render_leaderboard(
