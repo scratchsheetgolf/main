@@ -315,6 +315,32 @@ def run_weekly_newsletter(tour: str = "pga", dry_run: bool = False):
     return newsletter.send_campaign(subject=subject, html_content=html)
 
 
+def run_weekly_intel(dry_run: bool = False, draft: bool = False, week: int = None, event_tag: str = ""):
+    """Off-week Intel Drop card from DataGolf rankings / skill ratings (updated weekly), rotating angles
+    by ISO week. The number and headline come from the data; Claude writes only the comment line."""
+    import datetime
+    week = week if week is not None else datetime.date.today().isocalendar()[1]
+    intel = transform.weekly_intel(datagolf.get_dg_rankings(), datagolf.get_skill_ratings(), week)
+    try:
+        lines = content.generate_supporting_line(intel["facts"])
+    except Exception as e:
+        if not (dry_run or draft):
+            raise
+        print(f"supporting line failed ({type(e).__name__}); leaving it blank", file=sys.stderr)
+        lines = None
+    image_path = os.path.join(OUTPUT_DIR, "intel_drop.png")
+    render_intel_stat(stat=intel["stat"], what_it_means=intel["what_it_means"],
+                      supporting_line=(lines or [""])[0], out_path=image_path)
+    caption, alternatives = _caption("intel drop stat card", intel["facts"], event_tag,
+                                     fallback=intel["summary"] + ".", allow_fallback=dry_run or draft)
+    if lines and len(lines) > 1:
+        alternatives = alternatives + [f"(card line) {l}" for l in lines[1:]]
+    result = _post_everywhere(image_path, caption, tiktok_title=intel["summary"][:90],
+                              dry_run=dry_run, draft=draft, alternatives=alternatives)
+    result["intel"] = intel["summary"]
+    return result
+
+
 def probe(tour: str = "pga") -> dict:
     """Which DataGolf endpoints this plan can use, and their top-level shape (no player data printed).
     Run once per tour on GitHub (needs the key): python pipeline.py probe --tour euro"""
@@ -350,7 +376,7 @@ def probe(tour: str = "pga") -> dict:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["picks", "live", "newsletter", "probe"])
+    parser.add_argument("action", choices=["picks", "live", "newsletter", "probe", "intel"])
     parser.add_argument("--tour", default="pga")
     parser.add_argument("--dry-run", action="store_true",
                          help="Run against real data/APIs but print what would be posted instead of posting it.")
@@ -365,6 +391,8 @@ if __name__ == "__main__":
         print(run_pretournament_picks(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
     elif args.action == "live":
         print(run_live_poll(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
+    elif args.action == "intel":
+        print(run_weekly_intel(dry_run=args.dry_run, draft=args.draft, event_tag=args.event_tag))
     elif args.action == "probe":
         import json
         print(json.dumps(probe(args.tour), indent=2, default=str))
