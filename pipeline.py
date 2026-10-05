@@ -14,7 +14,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 from data import datagolf, state, transform
 from content import content
-from render import render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks
+from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
+                    render_pick_detail, render_stat_list, render_closer)
 from distribute import image_host, post_x, post_meta, post_tiktok
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
@@ -116,6 +117,65 @@ def _caption(post_type: str, summary: str, event_tag: str, fallback: str, allow_
     return options[0], options[1:]
 
 
+IG_HASHTAGS = {"pga": "#golf #pgatour #golfpicks", "euro": "#golf #dpworldtour #golfpicks"}
+
+
+def _note(facts: str) -> str:
+    """Marker note for a carousel slide; blank if generation fails (slides are posted by hand)."""
+    try:
+        lines = content.generate_supporting_line(facts)
+        return lines[0] if lines else ""
+    except Exception as e:
+        print(f"carousel note failed ({type(e).__name__}); leaving it blank", file=sys.stderr)
+        return ""
+
+
+def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, cover_path: str, caption: str) -> dict:
+    """Instagram preview carousel as a numbered set in output/carousel_<tour>/ (posted by hand):
+    01 cover (picks card), 02-05 one slide per pick, 06 course fit, 07 favorites, 08 closer, + caption.txt."""
+    import shutil
+    out_dir = os.path.join(OUTPUT_DIR, f"carousel_{tour}")
+    os.makedirs(out_dir, exist_ok=True)
+    event_line = f"{tour_label(tour)}{event_name.upper()}"
+    files = [os.path.join(out_dir, "01_cover.png")]
+    shutil.copyfile(cover_path, files[0])
+
+    skills = datagolf.get_skill_ratings()
+    for i, slot in enumerate(("win", "value", "fade", "sleeper"), start=2):
+        pick = picks[slot]
+        profile = transform.skill_profile(skills, pick["dg_id"])
+        path = os.path.join(out_dir, f"{i:02d}_{slot}.png")
+        render_pick_detail(slot, pick["name"], event_line, f"{pick['model_win']:.1%}",
+                           f"{pick['market_win']:.1%}" if pick.get("market_win") else "—",
+                           transform.format_odds(pick.get("median_odds")), profile,
+                           _note(transform.pick_facts(slot, pick, event_name, profile)), path)
+        files.append(path)
+
+    fit = transform.course_fit_boost(preds)
+    if fit:
+        facts = (f"{event_name}: players whose win chance rises most when DataGolf adds course history and fit "
+                 "to its baseline model, in percentage points: " + "; ".join(f"{n} {v}" for n, v, _ in fit) + ".")
+        path = os.path.join(out_dir, "06_course_fit.png")
+        render_stat_list("Who the Course Suits", "WIN CHANCE ADDED BY COURSE HISTORY + FIT (DATAGOLF)", "BOOST",
+                         [(n, v) for n, v, _ in fit], _note(facts), path)
+        files.append(path)
+
+    favs = transform.favorites(preds)
+    facts = f"{event_name}: DataGolf model win chances, top 5: " + "; ".join(f"{n} {v}" for n, v in favs) + "."
+    path = os.path.join(out_dir, "07_favorites.png")
+    render_stat_list("The Favorites", f"DATAGOLF MODEL WIN CHANCE · {event_line}", "WIN %", favs, _note(facts), path)
+    files.append(path)
+
+    path = os.path.join(out_dir, "08_closer.png")
+    render_closer(event_line, path)
+    files.append(path)
+
+    caption_path = os.path.join(out_dir, "caption.txt")
+    with open(caption_path, "w", encoding="utf-8") as f:
+        f.write(f"{caption}\n\n{IG_HASHTAGS.get(tour, '#golf')}\n")
+    return {"carousel_dir": out_dir, "slides": [os.path.basename(x) for x in files], "caption_file": caption_path}
+
+
 def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag: str = "", draft: bool = False):
     """Run once, the morning the field is set (Tue/Wed of tournament week).
     Picks come from data/transform.choose_picks (DataGolf model vs sportsbook consensus);
@@ -148,6 +208,11 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
     }}, commit=not dry_run, tour=tour)
     result = _post_everywhere(image_path, caption, tiktok_title=f"{event_name} picks",
                               dry_run=dry_run, draft=draft, alternatives=alternatives)
+    try:
+        result["carousel"] = build_picks_carousel(tour, event_name, preds, picks, image_path, caption)
+    except Exception as e:  # the picks card above stands on its own
+        print(f"carousel failed ({type(e).__name__}: {e}); picks card unaffected", file=sys.stderr)
+        result["carousel"] = f"FAILED: {e}"
     if dry_run or draft:
         result["picks"] = {slot: f"{p['name']} — {p['why']}" for slot, p in picks.items()}
     return result

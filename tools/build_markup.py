@@ -129,4 +129,74 @@ lv = [head("live alert"),
       hole_strip(1040, 10),
       footer()]
 open(f"{OUT}/live_alert.svg", "w").write("".join(lv))
+# ---------- carousel: one slide per pick (four variants, one Sharpie mark each) ----------
+def pick_mark(slot):
+    if slot == "win":
+        return f'<path d="{circle(540, 300, 150, 66, 41)}" {MK}/>\n<path d="{circle(540, 300, 128, 52, 42, 1.08, -1.2)}" {MK}/>\n'
+    if slot == "value":
+        return f'<path d="{circle(540, 300, 160, 66, 43)}" {MK}/>\n'
+    if slot == "fade":
+        return f'<path d="{box(400, 248, 280, 104, 44)}" {MK}/>\n'
+    return f'<path d="{squiggle(410, 352, 260, 45, 9)}" {MK}/>\n'
+
+
+SKILL_ROWS = [("OFF THE TEE", "OTT"), ("APPROACH", "APP"), ("AROUND THE GREEN", "ARG"), ("PUTTING", "PUTT")]
+for slot, label in [("win", "WIN"), ("value", "VALUE"), ("fade", "FADE"), ("sleeper", "SLEEPER")]:
+    pk = [head(f"pick {slot}"), frame_inner(), topline("THIS WEEK'S CARD"),
+          f'<text x="540" y="324" font-family="Barlow Condensed SemiBold" font-size="72" fill="{INK}" letter-spacing="10" text-anchor="middle">{label}</text>\n',
+          pick_mark(slot),
+          f'<text x="540" y="500" font-family="DM Serif Display" font-size="92" fill="{INK}" text-anchor="middle" data-fit="880">__PLAYER__</text>\n',
+          f'<text x="540" y="552" font-family="Barlow SemiBold" font-size="24" fill="{PENCIL}" letter-spacing="4" text-anchor="middle" data-fit="880">__EVENT__</text>\n',
+          # odds row: three cells
+          f'<rect x="96" y="596" width="888" height="150" fill="none" stroke="{INK}" stroke-width="2"/>\n',
+          f'<rect x="96" y="596" width="888" height="44" fill="{GREEN}"/>\n',
+          f'<g stroke="{RULE}" stroke-width="2"><line x1="392" y1="640" x2="392" y2="746"/><line x1="688" y1="640" x2="688" y2="746"/></g>\n',
+          f'<g font-family="Barlow Condensed SemiBold" font-size="24" fill="{PAPER}" letter-spacing="4" text-anchor="middle">'
+          '<text x="244" y="627">MODEL WIN %</text><text x="540" y="627">BOOKS WIN %</text><text x="836" y="627">BOOKS ODDS</text></g>\n',
+          f'<g font-family="Anton" font-size="64" fill="{INK}" text-anchor="middle">'
+          '<text x="244" y="722" data-fit="270">__MODEL_WIN__</text><text x="540" y="722" data-fit="270">__BOOKS_WIN__</text>'
+          '<text x="836" y="722" data-fit="270">__ODDS__</text></g>\n',
+          # skill profile: four rows
+          f'<text x="96" y="806" font-family="Barlow Condensed SemiBold" font-size="26" fill="{PENCIL}" letter-spacing="4">STROKES GAINED PER ROUND · WORLD RANK</text>\n',
+          f'<rect x="96" y="822" width="888" height="280" fill="none" stroke="{INK}" stroke-width="2"/>\n',
+          f'<g stroke="{RULE}" stroke-width="2"><line x1="96" y1="892" x2="984" y2="892"/><line x1="96" y1="962" x2="984" y2="962"/>'
+          '<line x1="96" y1="1032" x2="984" y2="1032"/><line x1="640" y1="822" x2="640" y2="1102"/><line x1="820" y1="822" x2="820" y2="1102"/></g>\n']
+    for i, (name, key) in enumerate(SKILL_ROWS):
+        y = 868 + i * 70
+        pk.append(f'<text x="124" y="{y}" font-family="Barlow Condensed SemiBold" font-size="32" fill="{INK}" letter-spacing="3">{name}</text>\n')
+        pk.append(f'<text x="730" y="{y + 2}" font-family="Anton" font-size="40" fill="{INK}" text-anchor="middle">__SG_{key}__</text>\n')
+        pk.append(f'<text x="902" y="{y + 2}" font-family="Barlow Condensed SemiBold" font-size="34" fill="{RED}" text-anchor="middle">__RANK_{key}__</text>\n')
+    pk.append(f'<text x="98" y="1180" font-family="Permanent Marker" font-size="32" fill="{SHARPIE}" transform="rotate(-2 98 1180)" data-fit="880">__NOTE__</text>\n')
+    pk.append(footer())
+    open(f"{OUT}/pick_{slot}.svg", "w").write("".join(pk))
+
+# ---------- carousel: generic top-5 list ----------
+lrows = [456, 576, 696, 816, 936]
+sl = [head("stat list"), frame_inner(), topline("THIS WEEK'S CARD"),
+      f'<text x="540" y="268" font-family="DM Serif Display" font-size="76" fill="{INK}" text-anchor="middle" data-fit="880">__TITLE__</text>\n',
+      f'<text x="540" y="320" font-family="Barlow SemiBold" font-size="24" fill="{PENCIL}" letter-spacing="3" text-anchor="middle" data-fit="880">__SUBTITLE__</text>\n',
+      f'<rect x="80" y="352" width="920" height="54" fill="{GREEN}"/>\n',
+      f'<g font-family="Barlow Condensed SemiBold" font-size="26" fill="{PAPER}" letter-spacing="4"><text x="130" y="388" text-anchor="middle">POS</text>'
+      f'<text x="212" y="388">PLAYER</text><text x="890" y="388" text-anchor="middle" data-fit="200">__HEADER__</text></g>\n',
+      f'<g stroke="{RULE}" stroke-width="2">' + "".join(f'<line x1="80" y1="{r + 60}" x2="1000" y2="{r + 60}"/>' for r in lrows[:-1]) +
+      f'<line x1="180" y1="406" x2="180" y2="996"/><line x1="780" y1="406" x2="780" y2="996"/></g>\n',
+      f'<rect x="80" y="406" width="920" height="590" fill="none" stroke="{INK}" stroke-width="2"/>\n']
+for i, r in enumerate(lrows, 1):
+    sl.append(f'<text x="130" y="{r + 20}" font-family="DM Serif Display" font-size="52" fill="{INK}" text-anchor="middle">{i}</text>\n')
+    sl.append(f'<text x="212" y="{r + 18}" font-family="DM Serif Display" font-size="46" fill="{INK}" data-fit="550">__NAME_{i}__</text>\n')
+    sl.append(f'<text x="890" y="{r + 22}" font-family="Anton" font-size="56" fill="{RED}" text-anchor="middle" data-fit="200">__VALUE_{i}__</text>\n')
+sl.append(f'<path d="{circle(890, 456, 92, 50, 46)}" {MK}/>\n')
+sl.append(f'<text x="98" y="1090" font-family="Permanent Marker" font-size="30" fill="{SHARPIE}" transform="rotate(-2 98 1090)" data-fit="880">__NOTE__</text>\n')
+sl.append(footer())
+open(f"{OUT}/stat_list.svg", "w").write("".join(sl))
+
+# ---------- carousel: closing slide ----------
+cl = [head("closer"), frame_inner(), hole_strip(96, 10),
+      f'<text x="540" y="560" font-family="Anton" font-size="200" fill="{INK}" text-anchor="middle">RECEIPTS</text>\n',
+      f'<text x="540" y="760" font-family="Anton" font-size="200" fill="{INK}" text-anchor="middle">SUNDAY.</text>\n',
+      f'<path d="{squiggle(250, 800, 580, 47, 7)}" {MK}/>\n',
+      f'<text x="540" y="890" font-family="Barlow SemiBold" font-size="26" fill="{PENCIL}" letter-spacing="4" text-anchor="middle" data-fit="880">__EVENT__</text>\n',
+      f'<text x="540" y="990" font-family="Permanent Marker" font-size="38" fill="{SHARPIE}" text-anchor="middle" transform="rotate(-2 540 990)">win or lose, we post how these did</text>\n',
+      footer()]
+open(f"{OUT}/closer.svg", "w").write("".join(cl))
 print("built", sorted(os.listdir(OUT)))

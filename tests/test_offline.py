@@ -150,7 +150,7 @@ class PipelineDryRunTests(unittest.TestCase):
         self.assertTrue(os.path.exists(out["would_post_image"]))
         saved = state.load()["last_picks"]
         self.assertEqual((saved["event_id"], saved["year"]), ("92", SCHEDULE["schedule"][1]["start_date"][:4]))
-        self.assertIn("VALUE: Test Player07", self.llm_prompts[-1])  # caption is fed the real picks
+        self.assertTrue(any("VALUE: Test Player07" in p for p in self.llm_prompts))  # caption is fed the real picks
 
     def test_live_dry_run_formats_names_and_scores(self):
         with mock.patch.object(pipeline, "render_leaderboard") as rl:
@@ -536,6 +536,54 @@ class WeeklyIntelTests(PipelineDryRunTests):
         self.assertIn("Guy Top", out["intel"])
         with open(out["caption_file"], encoding="utf-8") as f:
             self.assertIn("(card line) other line", f.read())
+
+class PreviewCarouselTests(PipelineDryRunTests):
+    def setUp(self):
+        super().setUp()
+        skills = {"players": [{"dg_id": 1000 + i, "player_name": f"Player{i:02d}, Test",
+                               "sg_ott": 1.0 - i * 0.02, "sg_app": 0.5 + (0.3 if i == 7 else 0), "sg_arg": 0.1,
+                               "sg_putt": 0.2 - i * 0.01} for i in range(40)]}
+        self.skills = mock.patch.object(datagolf, "get_skill_ratings", return_value=skills, create=True)
+        self.skills.start()
+
+    def tearDown(self):
+        self.skills.stop()
+        super().tearDown()
+
+    def test_helpers(self):
+        self.assertEqual(transform.format_odds(30.0), "29-1")
+        self.assertEqual(transform.format_odds(1.8), "0.8-1")
+        prof = transform.skill_profile(datagolf.get_skill_ratings(), 1007)
+        self.assertEqual(prof["APP"], ("+0.80", "#1"))        # player 7 has the best approach
+        self.assertEqual(prof["OTT"], ("+0.86", "#8"))
+        preds, _ = fake_field()
+        self.assertEqual(transform.favorites(preds)[0], ("Test Player00", "16.7%"))
+        self.assertEqual(transform.course_fit_boost(preds), [])   # fixture models identical -> no slide
+
+    def test_course_fit_uses_model_difference(self):
+        preds, _ = fake_field()
+        fit = [dict(r) for r in preds["baseline_history_fit"]]
+        fit[5]["win"] = 10.0                                   # 26 -> 10 decimal: +6.2 pts for player 5
+        boost = transform.course_fit_boost({**preds, "baseline_history_fit": fit})
+        self.assertEqual(boost[0][:2], ("Test Player05", "+6.2 pts"))
+
+    def test_picks_run_builds_numbered_carousel(self):
+        out = pipeline.run_pretournament_picks(dry_run=True)
+        car = out["carousel"]
+        self.assertEqual(car["slides"], ["01_cover.png", "02_win.png", "03_value.png", "04_fade.png",
+                                         "05_sleeper.png", "07_favorites.png", "08_closer.png"])
+        for name in car["slides"]:
+            self.assertTrue(os.path.exists(os.path.join(car["carousel_dir"], name)), name)
+        with open(car["caption_file"], encoding="utf-8") as f:
+            self.assertIn("#pgatour", f.read())
+        win_facts = next(p for p in self.llm_prompts if "is our WIN pick" in p)
+        self.assertIn("Strokes gained per round (world rank)", win_facts)
+
+    def test_carousel_failure_does_not_block_picks_card(self):
+        with mock.patch.object(datagolf, "get_skill_ratings", side_effect=RuntimeError("down")):
+            out = pipeline.run_pretournament_picks(dry_run=True)
+        self.assertTrue(out["DRY_RUN"])
+        self.assertTrue(str(out["carousel"]).startswith("FAILED"))
 
 if __name__ == "__main__":
     unittest.main()

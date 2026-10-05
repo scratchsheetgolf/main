@@ -155,6 +155,34 @@ def render_live_alert(hole_moment: str, event_line_1: str, event_line_2: str, re
     return _fill_and_render("live_alert.svg", tokens, out_path)
 
 
+
+def render_pick_detail(slot: str, player: str, event: str, model_win: str, books_win: str, odds: str,
+                       skills: dict, note: str, out_path: str) -> str:
+    """Carousel slide for one pick. slot: win/value/fade/sleeper (picks the Sharpie mark).
+    skills: {"OTT"|"APP"|"ARG"|"PUTT": ("+0.45", "#12")}; missing keys render as em dashes."""
+    tokens = {"player": player, "event": event, "model_win": model_win, "books_win": books_win,
+              "odds": odds, "note": note}
+    for key in ("OTT", "APP", "ARG", "PUTT"):
+        value, rank = skills.get(key, ("—", "—"))
+        tokens[f"sg_{key}"] = value
+        tokens[f"rank_{key}"] = rank
+    return _fill_and_render(f"pick_{slot}.svg", tokens, out_path)
+
+
+def render_stat_list(title: str, subtitle: str, header: str, rows: list, note: str, out_path: str) -> str:
+    """Carousel top-5 list. rows: up to 5 (name, value) pairs; the top value gets the Sharpie circle."""
+    rows = (list(rows)[:5] + [("", "")] * 5)[:5]
+    tokens = {"title": title, "subtitle": subtitle, "header": header, "note": note}
+    for i, (name, value) in enumerate(rows, start=1):
+        tokens[f"name_{i}"] = name
+        tokens[f"value_{i}"] = value
+    return _fill_and_render("stat_list.svg", tokens, out_path)
+
+
+def render_closer(event: str, out_path: str) -> str:
+    """Carousel closing slide ("RECEIPTS SUNDAY.")."""
+    return _fill_and_render("closer.svg", {"event": event}, out_path)
+
 if __name__ == "__main__":
     # smoke test with mock data
     render_leaderboard(

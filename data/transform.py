@@ -323,3 +323,80 @@ def weekly_intel(rankings: dict, skills: dict, week: int) -> dict:
         if pick:
             return pick
     raise PicksError("no usable data in rankings or skill ratings for an Intel Drop")
+
+
+
+# ---- Tuesday preview carousel ----
+
+SKILL_KEYS = {"OTT": "sg_ott", "APP": "sg_app", "ARG": "sg_arg", "PUTT": "sg_putt"}
+SKILL_NAMES = {"OTT": "off the tee", "APP": "approach", "ARG": "around the green", "PUTT": "putting"}
+
+
+def format_odds(decimal_odds) -> str:
+    """Median decimal odds -> fractional-style '29-1' (short prices keep a decimal: '0.8-1')."""
+    if not decimal_odds:
+        return "—"
+    frac = float(decimal_odds) - 1
+    return f"{frac:.0f}-1" if frac >= 1.5 else f"{frac:.1f}-1"
+
+
+def skill_profile(skills: dict, dg_id) -> dict:
+    """{"OTT": ("+0.45", "#12"), ...} for one player; rank among everyone in DataGolf's skill ratings."""
+    rows = skills.get("players") or []
+    me = next((r for r in rows if r.get("dg_id") == dg_id), None)
+    if not me:
+        return {}
+    out = {}
+    for key, field in SKILL_KEYS.items():
+        value = me.get(field)
+        if not isinstance(value, (int, float)):
+            continue
+        rank = 1 + sum(1 for r in rows if isinstance(r.get(field), (int, float)) and r[field] > value)
+        out[key] = (f"{value:+.2f}", f"#{rank}")
+    return out
+
+
+def _win_probs(preds: dict, model: str) -> dict:
+    out = {}
+    for row in preds.get(model) or []:
+        p = _prob(row.get("win"))
+        if p is not None:
+            out[row.get("dg_id")] = (display_name(row.get("player_name", "")), p)
+    return out
+
+
+def course_fit_boost(preds: dict, n: int = 5) -> list:
+    """Players DataGolf's course history & fit model likes most vs its baseline model:
+    [(name, "+1.8 pts", boost)] in win-probability percentage points. [] if both models aren't there."""
+    base, fit = _win_probs(preds, "baseline"), _win_probs(preds, "baseline_history_fit")
+    if not base or not fit:
+        return []
+    boosts = [(fit[i][0], (fit[i][1] - base[i][1]) * 100) for i in fit if i in base]
+    boosts = [b for b in sorted(boosts, key=lambda x: x[1], reverse=True) if b[1] >= 0.05][:n]
+    return [(name, f"+{pts:.1f} pts", pts) for name, pts in boosts]
+
+
+def favorites(preds: dict, n: int = 5) -> list:
+    """Top n model win chances: [(name, "18.5%")]."""
+    rows = []
+    for row in _model_rows(preds):
+        p = _prob(row.get("win"))
+        if p is not None:
+            rows.append((display_name(row.get("player_name", "")), p))
+    return [(name, f"{p:.1%}") for name, p in sorted(rows, key=lambda x: x[1], reverse=True)[:n]]
+
+
+def pick_facts(slot: str, pick: dict, event_name: str, profile: dict) -> str:
+    """Plain-text facts for one pick slide's marker note (every number shown on the slide)."""
+    books = f"{pick['market_win']:.1%}" if pick.get("market_win") else "no consensus price"
+    lines = [f"{pick['name']} is our {slot.upper()} pick for {event_name}.",
+             f"DataGolf's model win chance: {pick['model_win']:.1%}. Sportsbooks' consensus: {books}"
+             + (f" (median odds {format_odds(pick.get('median_odds'))})." if pick.get("median_odds") else "."),
+             f"Why: {pick['why']}."]
+    if profile:
+        lines.append("Strokes gained per round (world rank): " + "; ".join(
+            f"{SKILL_NAMES[k]} {v} ({r})" for k, (v, r) in profile.items()))
+    role = {"win": "the most likely winner", "value": "priced too long by the books",
+            "fade": "priced too short by the books — we're against him", "sleeper": "a longshot with a real chance"}
+    lines.append(f"Role: {role[slot]}.")
+    return "\n".join(lines)
