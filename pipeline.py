@@ -20,20 +20,27 @@ from distribute import image_host, post_x, post_meta, post_tiktok
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 
 
-def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "", dry_run: bool = False):
+def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "",
+                     dry_run: bool = False, draft: bool = False):
     """Posts the same image+caption to all four platforms. Each call is wrapped
     so one platform's failure (e.g. TikTok still pre-audit) doesn't block the rest.
 
-    dry_run=True skips every real network call (image hosting, all 4 platforms)
-    and just returns what WOULD have been posted. Use this to validate the data
-    pipeline and generated content against real DataGolf/Claude API responses
-    before anything goes public."""
-    if dry_run:
+    dry_run / draft skip every real network call (image hosting, all 4 platforms)
+    and save the caption next to the image (<image>.txt) so a person can post the
+    pair by hand. The difference is in the callers: a dry run saves no state, a
+    draft saves state exactly like a real post (so throttles, leader tracking and
+    saved picks keep working while posting is manual)."""
+    if dry_run or draft:
+        tiktok_title = tiktok_title or caption[:90]
+        caption_path = os.path.splitext(local_image_path)[0] + ".txt"
+        with open(caption_path, "w", encoding="utf-8") as f:
+            f.write(f"{caption}\n\nTikTok title: {tiktok_title}\n")
         return {
-            "DRY_RUN": True,
+            "DRY_RUN" if dry_run else "DRAFT": True,
             "would_post_image": local_image_path,
             "would_post_caption": caption,
-            "would_post_tiktok_title": tiktok_title or caption[:90],
+            "caption_file": caption_path,
+            "would_post_tiktok_title": tiktok_title,
         }
 
     results = {}
@@ -57,17 +64,27 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
     return results
 
 
-def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag: str = ""):
+def _caption(post_type: str, summary: str, event_tag: str, fallback: str, allow_fallback: bool) -> str:
+    """Claude-written caption. In dry-run/draft mode a failure (e.g. no ANTHROPIC_API_KEY yet)
+    falls back to a plain factual caption so the card still gets made; real posts re-raise."""
+    try:
+        return content.generate_social_caption(post_type, summary, event_tag=event_tag)
+    except Exception as e:
+        if not allow_fallback:
+            raise
+        print(f"caption generation failed ({type(e).__name__}); using plain fallback caption", file=sys.stderr)
+        return f"{fallback} {event_tag}".strip()
+
+
+def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag: str = "", draft: bool = False):
     """Run once, the morning the field is set (Tue/Wed of tournament week).
     Picks come from data/transform.choose_picks (DataGolf model vs sportsbook consensus);
     they're saved to state so Monday's newsletter can report how they finished."""
     preds = datagolf.get_pre_tournament_predictions(tour=tour)
+    event_name = preds.get("event_name") or "THIS WEEK'S EVENT"
+    event = transform.check_picks_window(event_name, datagolf.get_schedule(tour=tour, upcoming_only=False))
     outrights = datagolf.get_outright_odds(market="win", tour=tour)
     picks = transform.choose_picks(preds, outrights)
-
-    event_name = preds.get("event_name") or "THIS WEEK'S EVENT"
-    _, upcoming = transform.last_completed_and_next(datagolf.get_schedule(tour=tour, upcoming_only=True))
-    event = upcoming or {}
 
     image_path = os.path.join(OUTPUT_DIR, "weekly_picks.png")
     render_weekly_picks(
@@ -76,8 +93,11 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
         fade=picks["fade"]["name"], sleeper=picks["sleeper"]["name"],
         out_path=image_path,
     )
-    caption = content.generate_social_caption(
-        "weekly picks", transform.picks_summary(event_name, picks), event_tag=event_tag
+    caption = _caption(
+        "weekly picks", transform.picks_summary(event_name, picks), event_tag,
+        fallback=f"{event_name} picks. Win: {picks['win']['name']}. Value: {picks['value']['name']}. "
+                 f"Fade: {picks['fade']['name']}. Sleeper: {picks['sleeper']['name']}.",
+        allow_fallback=dry_run or draft,
     )
     prev = state.load()
     state.save({**prev, "last_picks": {
@@ -86,13 +106,14 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
         "year": (event.get("start_date") or "")[:4] or None,
         "picks": picks,
     }}, commit=not dry_run)
-    result = _post_everywhere(image_path, caption, tiktok_title=f"{event_name} picks", dry_run=dry_run)
-    if dry_run:
+    result = _post_everywhere(image_path, caption, tiktok_title=f"{event_name} picks", dry_run=dry_run, draft=draft)
+    if dry_run or draft:
         result["picks"] = {slot: f"{p['name']} — {p['why']}" for slot, p in picks.items()}
     return result
 
 
-def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_run: bool = False, event_tag: str = ""):
+def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_run: bool = False,
+                  event_tag: str = "", draft: bool = False):
     """Called every 5 minutes during live tournament rounds (matches DataGolf's
     own refresh cadence — polling faster gains nothing). NOTE: polling every 5
     min does NOT mean posting every 5 min — see throttle below. A leaderboard
@@ -110,17 +131,23 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     if not current_leaderboard:
         return {"status": "no data returned, check field names / API key"}
 
-    prev_leader = prev.get("leader_name")
+    # only compare leaders within the same event: a fresh state or last week's leader isn't a lead change
+    prev_leader = prev.get("leader_name") if prev.get("event_name") == event_name else None
     current_leader = transform.display_name(current_leaderboard[0].get("player_name", "")) if current_leaderboard else None
 
     # Trigger 1: leader change -> Hot Take (always worth posting, this is rare by definition)
-    if current_leader and current_leader != prev_leader:
-        take = content.generate_hot_take(
-            f"{current_leader} has taken the lead, passing {prev_leader or 'the previous leader'}."
-        )
-        image_path = os.path.join(OUTPUT_DIR, "hot_take_live.png")
-        render_hot_take(lines=take["lines"], kicker=take["kicker"], out_path=image_path)
-        actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run)))
+    if current_leader and prev_leader and current_leader != prev_leader:
+        try:
+            take = content.generate_hot_take(f"{current_leader} has taken the lead, passing {prev_leader}.")
+        except Exception as e:
+            if not (dry_run or draft):
+                raise
+            take = None
+            actions_taken.append(("hot_take", f"skipped: hot take needs the Claude API ({type(e).__name__})"))
+        if take:
+            image_path = os.path.join(OUTPUT_DIR, "hot_take_live.png")
+            render_hot_take(lines=take["lines"], kicker=take["kicker"], out_path=image_path)
+            actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run, draft=draft)))
 
     # Trigger 2: leaderboard snapshot — throttled to once per min_leaderboard_gap_minutes,
     # NOT every poll. A poll that doesn't clear the gap just updates state and exits.
@@ -135,11 +162,13 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         image_path = os.path.join(OUTPUT_DIR, "leaderboard_live.png")
         render_leaderboard(event=event_name.upper(), round_label="LIVE",
                             players=top5, out_path=image_path)
-        caption = content.generate_social_caption(
-            "live leaderboard", f"current top 5, leader {current_leader}", event_tag=event_tag
+        caption = _caption(
+            "live leaderboard", f"current top 5, leader {current_leader}", event_tag,
+            fallback=f"{event_name} leaderboard: {current_leader} leads.",
+            allow_fallback=dry_run or draft,
         )
-        actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run)))
-        if not dry_run:
+        actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft)))
+        if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
     else:
         actions_taken.append(("leaderboard", f"skipped, only {minutes_since_last:.0f} min since last post"))
@@ -200,13 +229,16 @@ if __name__ == "__main__":
     parser.add_argument("--tour", default="pga")
     parser.add_argument("--dry-run", action="store_true",
                          help="Run against real data/APIs but print what would be posted instead of posting it.")
+    parser.add_argument("--draft", action="store_true",
+                         help="Generate and save state like a real run, but write image + caption to output/ "
+                              "for posting by hand instead of posting. (Newsletter: same as --dry-run.)")
     parser.add_argument("--event-tag", default="",
                          help='Real event hashtag to append during majors, e.g. "#USOpen". Leave blank normally.')
     args = parser.parse_args()
 
     if args.action == "picks":
-        print(run_pretournament_picks(args.tour, dry_run=args.dry_run, event_tag=args.event_tag))
+        print(run_pretournament_picks(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
     elif args.action == "live":
-        print(run_live_poll(args.tour, dry_run=args.dry_run, event_tag=args.event_tag))
+        print(run_live_poll(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
     elif args.action == "newsletter":
-        print(run_weekly_newsletter(args.tour, dry_run=args.dry_run))
+        print(run_weekly_newsletter(args.tour, dry_run=args.dry_run or args.draft))

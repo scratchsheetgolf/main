@@ -131,6 +131,24 @@ def picks_summary(event_name: str, picks: dict) -> str:
     return "\n".join(lines)
 
 
+
+def check_picks_window(event_name: str, schedule: dict, today: date = None) -> dict:
+    """Picks compare DataGolf's PRE-tournament model with sportsbook odds. Once an event starts the
+    books switch to live odds and the comparison is meaningless (a run during round 4 wanted to
+    'fade' the 54-hole leader), so refuse after the start date. Returns the schedule entry."""
+    today = today or date.today()
+    for ev in schedule.get("schedule") or []:
+        if (ev.get("event_name") or "").strip().lower() == (event_name or "").strip().lower():
+            try:
+                start = date.fromisoformat(ev.get("start_date", ""))
+            except ValueError:
+                raise PicksError(f"can't read start date for {event_name}")
+            if start <= today:
+                raise PicksError(f"{event_name} started {start.isoformat()}; picks are only made before round 1 "
+                                 "(sportsbook odds are live once it starts)")
+            return ev
+    raise PicksError(f"{event_name} (from the predictions) isn't in the schedule; can't confirm it hasn't started")
+
 # ---- Schedule / recap ----
 
 def last_completed_and_next(schedule: dict, today: date = None):

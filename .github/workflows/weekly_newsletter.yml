@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'true = build the digest and save it as an artifact without sending (safe to test). Scheduled runs always send.'
+        description: 'true = build the digest and attach it to the run without sending. false = send only if the AUTO_POST repo variable is true.'
         required: false
         default: 'true'
 
@@ -32,12 +32,14 @@ jobs:
           MAILCHIMP_LIST_ID: ${{ secrets.MAILCHIMP_LIST_ID }}
           NEWSLETTER_REPLY_TO: ${{ secrets.NEWSLETTER_REPLY_TO }}
         run: |
-          FLAG=""
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"; fi
+          # Sends for real only if the AUTO_POST repo variable is true and this isn't a manual dry run.
+          FLAG="--dry-run"
+          if [ "${{ github.event.inputs.dry_run }}" != "true" ] && [ "${{ vars.AUTO_POST }}" = "true" ]; then FLAG=""; fi
+          echo "mode: ${FLAG:-real send}"
           python pipeline.py newsletter --tour pga $FLAG
 
       - name: Upload digest preview
-        if: ${{ github.event.inputs.dry_run == 'true' }}
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: newsletter-preview
