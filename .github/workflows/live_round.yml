@@ -63,6 +63,7 @@ jobs:
           META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
           META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          POST_PLATFORMS: ${{ vars.POST_PLATFORMS }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Posting is manual until the AUTO_POST repo variable is set to true:

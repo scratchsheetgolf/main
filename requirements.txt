@@ -2,6 +2,7 @@ cairosvg==2.9.0
 requests
 anthropic>=1.11,<2
 tweepy
+requests-oauthlib  # X v2 media upload (also a tweepy dependency)
 
 # render.py measures text for auto-fit (already a cairosvg dependency; listed because render.py imports it directly)
 pillow

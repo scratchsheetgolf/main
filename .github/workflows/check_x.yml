@@ -1,0 +1,37 @@
+name: Check X credentials
+
+# Manual only. Verifies the X keys WITHOUT posting: which account they belong to,
+# whether the token can write, and that an image upload works (the uploaded test
+# image is never attached to a post). Costs about a cent.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install card fonts
+        run: |
+          mkdir -p ~/.local/share/fonts
+          cp fonts/*.ttf ~/.local/share/fonts/
+          fc-cache -f
+
+      - name: Render a sample card to test the upload
+        run: python preview_cards.py output/previews
+
+      - name: Check credentials (no post)
+        env:
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+        run: python -m distribute.post_x --check output/previews/sample/weekly_picks.png

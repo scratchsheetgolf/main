@@ -20,6 +20,22 @@ from distribute import image_host, post_x, post_meta, post_tiktok
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 
 
+ALL_PLATFORMS = {"x", "facebook", "instagram", "tiktok"}
+
+
+def enabled_platforms() -> set:
+    """Platforms real posts go to: the POST_PLATFORMS repo variable (comma list, e.g. "x"),
+    or all four if it's unset. Only matters once AUTO_POST is true."""
+    raw = os.environ.get("POST_PLATFORMS", "").strip()
+    if not raw:
+        return set(ALL_PLATFORMS)
+    chosen = {p.strip().lower() for p in raw.split(",") if p.strip()}
+    unknown = chosen - ALL_PLATFORMS
+    if unknown:
+        raise ValueError(f"POST_PLATFORMS has unknown platform(s): {', '.join(sorted(unknown))}")
+    return chosen
+
+
 def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "",
                      dry_run: bool = False, draft: bool = False, alternatives: list = None):
     """Posts the same image+caption to all four platforms. Each call is wrapped
@@ -47,23 +63,32 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
         }
 
     results = {}
-    public_url = None
-    try:
-        public_url = image_host.publish_image(local_image_path)
-    except Exception as e:
-        results["image_host"] = f"FAILED: {e}"
-        return results  # nothing else can proceed without a public URL
+    platforms = enabled_platforms()
+    results["platforms"] = sorted(platforms)
 
-    for name, fn in [
-        ("x", lambda: post_x.post_image(local_image_path, caption)),
-        ("facebook", lambda: post_meta.post_to_facebook_page(public_url, caption)),
-        ("instagram", lambda: post_meta.post_to_instagram(public_url, caption)),
-        ("tiktok", lambda: post_tiktok.post_photo([public_url], tiktok_title or caption[:90], caption)),
-    ]:
+    if "x" in platforms:  # X takes a direct upload; it doesn't need the public image URL
         try:
-            results[name] = fn()
+            results["x"] = post_x.post_image(local_image_path, caption)
         except Exception as e:
-            results[name] = f"FAILED: {e}"
+            results["x"] = f"FAILED: {e}"
+
+    url_platforms = platforms & {"facebook", "instagram", "tiktok"}
+    if url_platforms:
+        try:
+            public_url = image_host.publish_image(local_image_path)
+        except Exception as e:
+            results["image_host"] = f"FAILED: {e} (skipped {', '.join(sorted(url_platforms))})"
+            return results
+        for name, fn in [
+            ("facebook", lambda: post_meta.post_to_facebook_page(public_url, caption)),
+            ("instagram", lambda: post_meta.post_to_instagram(public_url, caption)),
+            ("tiktok", lambda: post_tiktok.post_photo([public_url], tiktok_title or caption[:90], caption)),
+        ]:
+            if name in url_platforms:
+                try:
+                    results[name] = fn()
+                except Exception as e:
+                    results[name] = f"FAILED: {e}"
     return results
 
 
