@@ -25,6 +25,10 @@ permissions:
 jobs:
   poll:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # one tour failing (e.g. off week) shouldn't stop the other
+      matrix:
+        tour: [pga, euro]  # PGA Tour + DP World Tour; each keeps its own state file
     steps:
       - uses: actions/checkout@v7
         with:
@@ -72,13 +76,13 @@ jobs:
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"
           elif [ "${{ vars.AUTO_POST }}" = "true" ]; then FLAG=""; fi
           echo "mode: ${FLAG:-real post}"
-          python pipeline.py live --tour pga --event-tag "${{ github.event.inputs.event_tag }}" $FLAG
+          python pipeline.py live --tour ${{ matrix.tour }} --event-tag "${{ github.event.inputs.event_tag }}" $FLAG
 
       - name: Attach post drafts (card + caption) to this run
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: post-drafts
+          name: post-drafts-${{ matrix.tour }}
           path: |
             output/*.png
             output/*.txt
