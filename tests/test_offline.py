@@ -360,6 +360,10 @@ class RealSdkAndFallbackTests(PipelineDryRunTests):
             {**r, "thru": "F"} for r in LIVE["data"]]}
         self.assertTrue(transform.is_final(done))
         self.assertFalse(transform.is_final(LIVE))
+        real_shape = {"info": {"current_round": 4}, "data": [{**r, "thru": 18} for r in LIVE["data"]]}
+        self.assertTrue(transform.is_final(real_shape))     # what the live feed actually sent
+        mid_round = {"info": {"current_round": 4}, "data": [{**r, "thru": 12} for r in LIVE["data"]]}
+        self.assertFalse(transform.is_final(mid_round))
         with mock.patch.object(datagolf, "get_live_in_play", return_value=done), \
              mock.patch.object(pipeline, "render_leaderboard") as rl:
             pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)

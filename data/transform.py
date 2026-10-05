@@ -171,7 +171,8 @@ def is_final(live: dict) -> bool:
     except (TypeError, ValueError):
         rnd = 0
     top = sorted_leaderboard(live)[:10]
-    return rnd >= 4 and bool(top) and all(str(r.get("thru", "")).upper() == "F" for r in top)
+    # the docs' example shows thru "F"; the real feed (Bank of Utah, 2026-10-04) sends thru 18 when done
+    return rnd >= 4 and bool(top) and all(str(r.get("thru", "")).strip().upper() in ("F", "18") for r in top)
 
 
 def standings_snapshot(live: dict, top_n: int = 70) -> dict:
