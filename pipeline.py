@@ -138,6 +138,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     current_leaderboard = transform.sorted_leaderboard(live)   # the feed isn't in position order
     event_name = (live.get("info") or {}).get("event_name") or prev.get("event_name") or "LIVE"
     current_round = (live.get("info") or {}).get("current_round")
+    final = transform.is_final(live)
     if not current_leaderboard:
         return {"status": "no data returned, check field names / API key"}
 
@@ -181,13 +182,15 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                 for p in current_leaderboard[:5]]
         image_path = os.path.join(OUTPUT_DIR, "leaderboard_live.png")
         render_leaderboard(event=event_name.upper(),
-                           round_label=f"ROUND {current_round} · LIVE" if current_round else "LIVE",
+                           round_label="FINAL" if final else (f"ROUND {current_round} · LIVE" if current_round else "LIVE"),
                             players=top5, out_path=image_path)
         caption, alternatives = _caption(
-            "live leaderboard",
-            f"{event_name} round {current_round} live top 5: "
+            "final leaderboard" if final else "live leaderboard",
+            (f"{event_name} FINAL results (the event is over), top 5: " if final
+             else f"{event_name} round {current_round}, in progress, top 5: ")
             + "; ".join(f"{p['pos']} {p['name']} {p['score']}" for p in top5), event_tag,
-            fallback=f"{event_name} leaderboard: {current_leader} leads.",
+            fallback=(f"{event_name} final: {current_leader} wins." if final
+                      else f"{event_name} leaderboard: {current_leader} leads."),
             allow_fallback=dry_run or draft,
         )
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft,
@@ -240,14 +243,16 @@ def _recap_sections(tour: str) -> tuple:
         saved = state.load().get("last_picks") or {}
         ours = transform.pick_results(saved, results) if str(saved.get("event_id")) == str(last["event_id"]) else []
         facts = [f"Event: {last['event_name']} at {last.get('course', '')}",
-                 "Top finishers: " + "; ".join(f"{t['pos']} {t['name']}" for t in top5)]
+                 "Top finishers: " + "; ".join(f"{t['pos']} {t['name']}" + (f" ({t['score']})" if t["score"] else "")
+                                               for t in top5)]
         if ours:
             facts.append("Our picks: " + "; ".join(f"{r['slot'].upper()} {r['name']} finished {r['finish']}" for r in ours))
         else:
             facts.append("We did not publish picks for this event.")
         blurb = content.generate_newsletter_recap("\n".join(facts))
         body = "".join(f"<p>{escape(par.strip())}</p>" for par in blurb.split("\n") if par.strip())
-        body += "<p>" + "<br>".join(f"<b>{escape(t['pos'])}</b> {escape(t['name'])}" for t in top5) + "</p>"
+        body += "<p>" + "<br>".join(f"<b>{escape(t['pos'])}</b> {escape(t['name'])}"
+                                    + (f" {escape(t['score'])}" if t["score"] else "") for t in top5) + "</p>"
         sections.append({"heading": f"{escape(last['event_name'])} recap", "body_html": body})
         if ours:
             rows = "<br>".join(f"<b>{escape(r['slot'].upper())}</b> {escape(r['name'])}: {escape(r['finish'])}" for r in ours)

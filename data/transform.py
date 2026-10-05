@@ -163,14 +163,27 @@ def sorted_leaderboard(live: dict) -> list:
     return sorted(live.get("data") or [], key=key)
 
 
+def is_final(live: dict) -> bool:
+    """True once the event is over: round 4+ and everyone near the top has finished (thru 'F')."""
+    info = live.get("info") or {}
+    try:
+        rnd = int(info.get("current_round") or 0)
+    except (TypeError, ValueError):
+        rnd = 0
+    top = sorted_leaderboard(live)[:10]
+    return rnd >= 4 and bool(top) and all(str(r.get("thru", "")).upper() == "F" for r in top)
+
+
 def standings_snapshot(live: dict, top_n: int = 70) -> dict:
     """What the live poll saves to state each run, so Monday's recap has final standings even when
     historical-event-data isn't on the plan and the feed has moved on to the next event."""
     info = live.get("info") or {}
     rows = sorted_leaderboard(live)[:top_n]
     return {"event_name": info.get("event_name"), "round": info.get("current_round"),
+            "final": is_final(live),
             "event_stats": [{"dg_id": r.get("dg_id"), "player_name": r.get("player_name", ""),
-                             "fin_text": str(r.get("current_pos", ""))} for r in rows]}
+                             "fin_text": str(r.get("current_pos", "")),
+                             "score": format_to_par(r.get("current_score"))} for r in rows]}
 
 
 def lead_change_facts(live: dict, prev_leader: str) -> str:
@@ -234,7 +247,8 @@ def _finish_rank(fin_text: str) -> int:
 def top_finishers(event_results: dict, n: int = 5) -> list:
     """[{'pos': 'T2', 'name': 'Justin Rose'}] from historical-event-data/events."""
     rows = sorted(event_results.get("event_stats") or [], key=lambda r: _finish_rank(r.get("fin_text")))
-    return [{"pos": str(r.get("fin_text", "")), "name": display_name(r.get("player_name", ""))} for r in rows[:n]]
+    return [{"pos": str(r.get("fin_text", "")), "name": display_name(r.get("player_name", "")),
+             "score": r.get("score", "")} for r in rows[:n]]
 
 
 def pick_results(saved_picks: dict, event_results: dict) -> list:

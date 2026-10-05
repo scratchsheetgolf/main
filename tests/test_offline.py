@@ -355,6 +355,27 @@ class RealSdkAndFallbackTests(PipelineDryRunTests):
         self.assertEqual([p["pos"] for p in players], ["1", "2", "T3", "T3", "CUT"])
         self.assertEqual(players[0]["name"], "The Leader")
 
+    def test_final_round_labelled_final(self):
+        done = {"info": {"event_name": "Fake Invitational", "current_round": 4}, "data": [
+            {**r, "thru": "F"} for r in LIVE["data"]]}
+        self.assertTrue(transform.is_final(done))
+        self.assertFalse(transform.is_final(LIVE))
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=done), \
+             mock.patch.object(pipeline, "render_leaderboard") as rl:
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
+        self.assertEqual(rl.call_args.kwargs["round_label"], "FINAL")
+        self.assertIn("FINAL results", self.llm_prompts[-1])
+
+    def test_recap_shows_scores_from_live_standings(self):
+        live_final = {"info": {"event_name": "Fake Classic", "current_round": 4}, "data": [
+            {"dg_id": 1005, "player_name": "Player05, Test", "current_pos": "1", "current_score": -20, "thru": "F"}]}
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")), \
+             mock.patch.object(datagolf, "get_live_in_play", return_value=live_final):
+            out = pipeline.run_weekly_newsletter(dry_run=True)
+        with open(out["preview_file"], encoding="utf-8") as f:
+            self.assertIn("<b>1</b> Test Player05 -20", f.read())
+        self.assertIn("1 Test Player05 (-20)", self.llm_prompts[-1])
+
     def test_live_poll_saves_standings(self):
         with mock.patch.object(pipeline, "render_leaderboard"):
             pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)

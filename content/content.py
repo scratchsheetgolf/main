@@ -266,7 +266,8 @@ def generate_newsletter_recap(facts: str) -> str:
         _brand_system("the weekly recap in the newsletter") + "\n\n"
         f"Write two short paragraphs, {RECAP_MAX_WORDS} words at most in total: what happened, then an "
         "honest line on our picks — own the misses as confidently as the hits. Use ONLY the facts given: "
-        "no scores, stats, shots or storylines that aren't in them. Plain text, no headings, no markdown."
+        "no scores, stats, shots or storylines that aren't in them. Use names (players, course, event) exactly "
+        "as written in the facts. Plain text, no headings, no markdown."
     )
     feedback = ""
     for _ in range(2):
