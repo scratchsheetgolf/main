@@ -147,6 +147,23 @@ def generate_social_caption(post_type: str, image_summary: str, event_tag: str =
     return caption
 
 
+
+def generate_newsletter_recap(facts: str) -> str:
+    """Two short paragraphs recapping last week, written ONLY from the facts given.
+    facts: plain text built by pipeline.py from DataGolf results (winner, top 5, how our picks finished).
+    Returns plain text; the caller escapes it into HTML. Tables of numbers are built in code, not here."""
+    voice = _load_voice()
+    system = (
+        f"You write the weekly recap for The Scratch Sheet's golf newsletter.\n\n"
+        f"BRAND VOICE:\n{voice}\n\n"
+        "You'll be given factual results from last week's tournament, and how our published "
+        "picks finished. Write two short paragraphs (under 120 words total): what happened, "
+        "then an honest line on our picks — own the misses as confidently as the hits. Use ONLY "
+        "the facts given: no scores, stats, shots or storylines that aren't in them. Plain text, "
+        "no headings, no markdown."
+    )
+    return _generate(system, facts, max_tokens=300)
+
 if __name__ == "__main__":
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print("No ANTHROPIC_API_KEY set in this environment — expected here, "
