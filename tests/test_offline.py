@@ -435,13 +435,22 @@ class XCheckTests(unittest.TestCase):
 
     def test_check_reports_account_and_write_access(self):
         from distribute import post_x
-        with mock.patch.multiple(post_x, API_KEY="k", API_SECRET="s", ACCESS_TOKEN="t", ACCESS_SECRET="a"), \
+        with mock.patch.multiple(post_x, API_KEY="k", API_SECRET="s", ACCESS_TOKEN="42-t", ACCESS_SECRET="a"), \
              mock.patch.object(post_x.tweepy.Client, "get_me", return_value=self.fake_me("read-write")):
             out = post_x.check()
         self.assertEqual((out["username"], out["can_post"]), ("TheScratchSheet", True))
-        with mock.patch.multiple(post_x, API_KEY="k", API_SECRET="s", ACCESS_TOKEN="t", ACCESS_SECRET="a"), \
+        with mock.patch.multiple(post_x, API_KEY="k", API_SECRET="s", ACCESS_TOKEN="42-t", ACCESS_SECRET="a"), \
              mock.patch.object(post_x.tweepy.Client, "get_me", return_value=self.fake_me("read")):
             self.assertFalse(post_x.check()["can_post"])
+
+    def test_check_catches_common_key_mixups(self):
+        from distribute import post_x
+        with mock.patch.multiple(post_x, API_KEY="k", API_SECRET="s", ACCESS_TOKEN="AAAAbearerlike", ACCESS_SECRET="a"):
+            with self.assertRaisesRegex(RuntimeError, "Bearer Token"):
+                post_x.check()
+        with mock.patch.multiple(post_x, API_KEY="k ", API_SECRET="s", ACCESS_TOKEN="42-t", ACCESS_SECRET="a"):
+            with self.assertRaisesRegex(RuntimeError, "whitespace"):
+                post_x.check()
 
 if __name__ == "__main__":
     unittest.main()

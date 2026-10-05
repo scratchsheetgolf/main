@@ -80,7 +80,18 @@ def check(image_path: str = None) -> dict:
     and (if image_path is given) that an image upload works. An uploaded-but-unused image is never
     shown anywhere; X discards it."""
     _require_credentials()
-    raw = _client(return_type=requests.Response).get_me(user_auth=True)
+    for name, value in [("X_API_KEY", API_KEY), ("X_API_SECRET", API_SECRET),
+                        ("X_ACCESS_TOKEN", ACCESS_TOKEN), ("X_ACCESS_SECRET", ACCESS_SECRET)]:
+        if value != value.strip():
+            raise RuntimeError(f"{name} has leading/trailing whitespace; re-set the secret without it")
+    if "-" not in ACCESS_TOKEN:
+        raise RuntimeError("X_ACCESS_TOKEN doesn't look like an OAuth 1.0a access token (expected '<user id>-...'); "
+                           "check it isn't the Bearer Token or a secret")
+    try:
+        raw = _client(return_type=requests.Response).get_me(user_auth=True)
+    except tweepy.TweepyException as e:
+        body = getattr(getattr(e, "response", None), "text", "")
+        raise RuntimeError(f"X rejected the credentials: {e} | X says: {body[:300]}") from e
     raw.raise_for_status()
     user = (raw.json().get("data") or {})
     access_level = raw.headers.get("x-access-level", "unknown")
