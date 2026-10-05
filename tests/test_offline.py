@@ -291,7 +291,7 @@ class ContentCheckTests(unittest.TestCase):
 class AlternativesInDraftTests(DraftModeTests):
     def test_caption_alternatives_written_to_draft(self):
         out = pipeline.run_pretournament_picks(draft=True)
-        self.assertEqual(out["would_post_caption"], "Caption alpha.")
+        self.assertEqual(out["would_post_caption"], "Caption alpha. #golfpicks")
         with open(out["caption_file"], encoding="utf-8") as f:
             text = f.read()
         self.assertIn("- Caption beta.", text)
@@ -579,6 +579,7 @@ class PreviewCarouselTests(PipelineDryRunTests):
         with open(car["caption_file"], encoding="utf-8") as f:
             text = f.read()
         self.assertIn("#pgatour", text)
+        self.assertEqual(text.count("#golfpicks"), 1)
         self.assertIn("Song (add in the Instagram app):", text)
         self.assertEqual(pipeline.song_suggestions(["a", "b", "c", "d"], week=3), ["d", "a", "b"])
         win_facts = next(p for p in self.llm_prompts if "is our WIN pick" in p)
