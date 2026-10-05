@@ -577,7 +577,10 @@ class PreviewCarouselTests(PipelineDryRunTests):
             for name in car["slides"] + ["caption.txt"]:
                 self.assertTrue(os.path.exists(os.path.join(folder, name)), (folder, name))
         with open(car["caption_file"], encoding="utf-8") as f:
-            self.assertIn("#pgatour", f.read())
+            text = f.read()
+        self.assertIn("#pgatour", text)
+        self.assertIn("Song (add in the Instagram app):", text)
+        self.assertEqual(pipeline.song_suggestions(["a", "b", "c", "d"], week=3), ["d", "a", "b"])
         win_facts = next(p for p in self.llm_prompts if "is our WIN pick" in p)
         self.assertIn("Strokes gained per round (world rank)", win_facts)
 
