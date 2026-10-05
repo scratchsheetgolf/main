@@ -139,6 +139,10 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     event_name = (live.get("info") or {}).get("event_name") or prev.get("event_name") or "LIVE"
     current_round = (live.get("info") or {}).get("current_round")
     final = transform.is_final(live)
+    if dry_run:  # feed diagnostics for checking the docs' assumptions (no player data beyond the top 3)
+        print("in-play info:", live.get("info"), file=sys.stderr)
+        print("top 3 thru/round/end_hole:", [(r.get("current_pos"), r.get("thru"), r.get("round"), r.get("end_hole"))
+                                              for r in current_leaderboard[:3]], "final:", final, file=sys.stderr)
     if not current_leaderboard:
         return {"status": "no data returned, check field names / API key"}
 
