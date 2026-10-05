@@ -396,5 +396,52 @@ class RealSdkAndFallbackTests(PipelineDryRunTests):
         self.assertEqual(saved["event_name"], "Fake Invitational")
         self.assertEqual(saved["event_stats"][0]["fin_text"], "1")
 
+class PlatformSwitchTests(unittest.TestCase):
+    def test_enabled_platforms(self):
+        with mock.patch.dict(os.environ, {"POST_PLATFORMS": ""}):
+            self.assertEqual(pipeline.enabled_platforms(), pipeline.ALL_PLATFORMS)
+        with mock.patch.dict(os.environ, {"POST_PLATFORMS": " X "}):
+            self.assertEqual(pipeline.enabled_platforms(), {"x"})
+        with mock.patch.dict(os.environ, {"POST_PLATFORMS": "x,threads"}):
+            with self.assertRaises(ValueError):
+                pipeline.enabled_platforms()
+
+    def test_x_only_posts_to_x_and_skips_image_host(self):
+        with mock.patch.dict(os.environ, {"POST_PLATFORMS": "x"}), \
+             mock.patch.object(pipeline.post_x, "post_image", return_value={"id": "1"}) as px, \
+             mock.patch.object(pipeline.image_host, "publish_image") as host, \
+             mock.patch.object(pipeline.post_meta, "post_to_instagram") as ig:
+            out = pipeline._post_everywhere("card.png", "caption")
+        px.assert_called_once_with("card.png", "caption")
+        host.assert_not_called()
+        ig.assert_not_called()
+        self.assertEqual(out["x"], {"id": "1"})
+
+    def test_image_host_failure_no_longer_blocks_x(self):
+        with mock.patch.dict(os.environ, {"POST_PLATFORMS": "x,instagram"}), \
+             mock.patch.object(pipeline.post_x, "post_image", return_value={"id": "1"}), \
+             mock.patch.object(pipeline.image_host, "publish_image", side_effect=RuntimeError("git")):
+            out = pipeline._post_everywhere("card.png", "caption")
+        self.assertEqual(out["x"], {"id": "1"})
+        self.assertIn("FAILED", out["image_host"])
+
+
+class XCheckTests(unittest.TestCase):
+    def fake_me(self, level):
+        resp = mock.MagicMock()
+        resp.json.return_value = {"data": {"id": "42", "username": "TheScratchSheet"}}
+        resp.headers = {"x-access-level": level}
+        return resp
+
+    def test_check_reports_account_and_write_access(self):
+        from distribute import post_x
+        with mock.patch.multiple(post_x, API_KEY="k", API_SECRET="s", ACCESS_TOKEN="t", ACCESS_SECRET="a"), \
+             mock.patch.object(post_x.tweepy.Client, "get_me", return_value=self.fake_me("read-write")):
+            out = post_x.check()
+        self.assertEqual((out["username"], out["can_post"]), ("TheScratchSheet", True))
+        with mock.patch.multiple(post_x, API_KEY="k", API_SECRET="s", ACCESS_TOKEN="t", ACCESS_SECRET="a"), \
+             mock.patch.object(post_x.tweepy.Client, "get_me", return_value=self.fake_me("read")):
+            self.assertFalse(post_x.check()["can_post"])
+
 if __name__ == "__main__":
     unittest.main()
