@@ -155,7 +155,8 @@ class PipelineDryRunTests(unittest.TestCase):
             pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
         kwargs = rl.call_args.kwargs
         self.assertEqual(kwargs["event"], "FAKE INVITATIONAL")
-        self.assertEqual(kwargs["players"][0], {"name": "Test Player00", "score": "-14"})
+        self.assertEqual(kwargs["players"][0], {"pos": "1", "name": "Test Player00", "score": "-14"})
+        self.assertEqual(kwargs["round_label"], "ROUND 4 · LIVE")
         self.assertEqual([p["score"] for p in kwargs["players"][3:]], ["E", "+3"])
 
     def test_newsletter_dry_run_reports_picks(self):
@@ -320,10 +321,46 @@ class RealSdkAndFallbackTests(PipelineDryRunTests):
         with open(out["preview_file"], encoding="utf-8") as f:
             self.assertIn("<b>1</b> Test Player05", f.read())
 
-    def test_recap_errors_clearly_when_no_results_anywhere(self):
+    def test_recap_skipped_when_no_results_anywhere(self):
         with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")):
-            with self.assertRaisesRegex(RuntimeError, "live feed has moved on"):
-                pipeline.run_weekly_newsletter(dry_run=True)   # LIVE fixture is a different event
+            out = pipeline.run_weekly_newsletter(dry_run=True)   # LIVE fixture is a different event
+        with open(out["preview_file"], encoding="utf-8") as f:
+            html = f.read()
+        self.assertNotIn("recap", html)
+        self.assertIn("Up next", html)
+
+    def test_recap_uses_standings_saved_by_live_poll(self):
+        state.save({"standings": {"event_name": "Fake Classic", "event_stats": [
+            {"dg_id": 1009, "player_name": "Player09, Test", "fin_text": "1"},
+            {"dg_id": 1000, "player_name": "Player00, Test", "fin_text": "T2"}]}}, commit=False)
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")):
+            out = pipeline.run_weekly_newsletter(dry_run=True)
+        with open(out["preview_file"], encoding="utf-8") as f:
+            self.assertIn("<b>1</b> Test Player09", f.read())
+
+    def test_unsorted_feed_is_put_in_leaderboard_order(self):
+        unsorted = {"info": {"event_name": "Fake Invitational", "current_round": 4}, "data": [
+            {"dg_id": 1, "player_name": "Cut, Guy", "current_pos": "CUT", "current_score": 4},
+            {"dg_id": 2, "player_name": "Third, Tied", "current_pos": "T3", "current_score": -10},
+            {"dg_id": 3, "player_name": "Leader, The", "current_pos": "1", "current_score": -26},
+            {"dg_id": 4, "player_name": "Second, Solo", "current_pos": "2", "current_score": -19},
+            {"dg_id": 5, "player_name": "Third, Other", "current_pos": "T3", "current_score": -10}]}
+        order = [r["dg_id"] for r in transform.sorted_leaderboard(unsorted)]
+        self.assertEqual(order[:2], [3, 4])
+        self.assertEqual(order[-1], 1)
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=unsorted), \
+             mock.patch.object(pipeline, "render_leaderboard") as rl:
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
+        players = rl.call_args.kwargs["players"]
+        self.assertEqual([p["pos"] for p in players], ["1", "2", "T3", "T3", "CUT"])
+        self.assertEqual(players[0]["name"], "The Leader")
+
+    def test_live_poll_saves_standings(self):
+        with mock.patch.object(pipeline, "render_leaderboard"):
+            pipeline.run_live_poll(dry_run=True, min_leaderboard_gap_minutes=0)
+        saved = state.load()["standings"]
+        self.assertEqual(saved["event_name"], "Fake Invitational")
+        self.assertEqual(saved["event_stats"][0]["fin_text"], "1")
 
 if __name__ == "__main__":
     unittest.main()

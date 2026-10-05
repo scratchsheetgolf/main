@@ -150,11 +150,34 @@ def check_picks_window(event_name: str, schedule: dict, today: date = None) -> d
     raise PicksError(f"{event_name} (from the predictions) isn't in the schedule; can't confirm it hasn't started")
 
 
+def sorted_leaderboard(live: dict) -> list:
+    """The in-play feed's rows in leaderboard order. The feed is NOT sorted by position (first real
+    run's 'top 5' read -26, -5, -5, -16, -19), so sort by position, then score; CUT/WD/DQ last."""
+    def key(r):
+        rank = _finish_rank(r.get("current_pos", ""))
+        try:
+            score = int(r.get("current_score"))
+        except (TypeError, ValueError):
+            score = 10_000
+        return (rank, score)
+    return sorted(live.get("data") or [], key=key)
+
+
+def standings_snapshot(live: dict, top_n: int = 70) -> dict:
+    """What the live poll saves to state each run, so Monday's recap has final standings even when
+    historical-event-data isn't on the plan and the feed has moved on to the next event."""
+    info = live.get("info") or {}
+    rows = sorted_leaderboard(live)[:top_n]
+    return {"event_name": info.get("event_name"), "round": info.get("current_round"),
+            "event_stats": [{"dg_id": r.get("dg_id"), "player_name": r.get("player_name", ""),
+                             "fin_text": str(r.get("current_pos", ""))} for r in rows]}
+
+
 def lead_change_facts(live: dict, prev_leader: str) -> str:
     """Plain-text facts for a lead-change hot take, from the in-play feed. Gives the writer real numbers
     (round, scores, margin) to work with; content.py rejects any number that isn't in here."""
     info = live.get("info") or {}
-    rows = live.get("data") or []
+    rows = sorted_leaderboard(live)
     lead = rows[0]
     lines = [f"Event: {info.get('event_name', '')}, round {info.get('current_round', '?')}",
              f"New leader: {display_name(lead.get('player_name', ''))} at {format_to_par(lead.get('current_score'))}"
@@ -200,9 +223,7 @@ def results_from_live(live: dict, event_name: str):
     info = live.get("info") or {}
     if (info.get("event_name") or "").strip().lower() != (event_name or "").strip().lower():
         return None
-    return {"event_name": info.get("event_name"), "source": "live feed final standings",
-            "event_stats": [{"dg_id": r.get("dg_id"), "player_name": r.get("player_name", ""),
-                             "fin_text": str(r.get("current_pos", ""))} for r in live.get("data") or []]}
+    return {**standings_snapshot(live, top_n=10_000), "source": "live feed final standings"}
 
 
 def _finish_rank(fin_text: str) -> int:

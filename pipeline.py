@@ -135,8 +135,9 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
 
     # shape per DataGolf docs: {"info": {"event_name", ...}, "data": [{"player_name": "Last, First",
     # "current_pos": "T2", "current_score": -14, ...}]} — sorted by position
-    current_leaderboard = live.get("data", [])
+    current_leaderboard = transform.sorted_leaderboard(live)   # the feed isn't in position order
     event_name = (live.get("info") or {}).get("event_name") or prev.get("event_name") or "LIVE"
+    current_round = (live.get("info") or {}).get("current_round")
     if not current_leaderboard:
         return {"status": "no data returned, check field names / API key"}
 
@@ -174,15 +175,18 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     minutes_since_last = (now - last_post_ts) / 60
 
     if minutes_since_last >= min_leaderboard_gap_minutes:
-        top5 = [{"name": transform.display_name(p.get("player_name", "")),
+        top5 = [{"pos": str(p.get("current_pos", "")),
+                 "name": transform.display_name(p.get("player_name", "")),
                  "score": transform.format_to_par(p.get("current_score"))}
                 for p in current_leaderboard[:5]]
         image_path = os.path.join(OUTPUT_DIR, "leaderboard_live.png")
-        render_leaderboard(event=event_name.upper(), round_label="LIVE",
+        render_leaderboard(event=event_name.upper(),
+                           round_label=f"ROUND {current_round} · LIVE" if current_round else "LIVE",
                             players=top5, out_path=image_path)
         caption, alternatives = _caption(
             "live leaderboard",
-            f"{event_name} live top 5: " + "; ".join(f"{p['name']} {p['score']}" for p in top5), event_tag,
+            f"{event_name} round {current_round} live top 5: "
+            + "; ".join(f"{p['pos']} {p['name']} {p['score']}" for p in top5), event_tag,
             fallback=f"{event_name} leaderboard: {current_leader} leads.",
             allow_fallback=dry_run or draft,
         )
@@ -194,8 +198,31 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         actions_taken.append(("leaderboard", f"skipped, only {minutes_since_last:.0f} min since last post"))
 
     state.save({**prev, "event_name": event_name, "leader_name": current_leader,
-                "last_leaderboard_post_ts": last_post_ts}, commit=not dry_run)
+                "last_leaderboard_post_ts": last_post_ts,
+                "standings": transform.standings_snapshot(live)}, commit=not dry_run)
     return {"actions": actions_taken}
+
+
+def _event_results(event: dict, tour: str):
+    """Final results for a finished event, from the best source available:
+    1. historical-event-data (403 on plans without historical data)
+    2. the in-play feed, if it's still on that event
+    3. the standings the live poll saved to state during the event
+    Returns None if none of them has the event (e.g. a team event like the Presidents Cup)."""
+    try:
+        return datagolf.get_event_results(event["event_id"], int(event["start_date"][:4]), tour=tour)
+    except Exception as e:
+        print(f"historical results unavailable for {event['event_name']} ({e}); trying fallbacks", file=sys.stderr)
+    try:
+        live = transform.results_from_live(datagolf.get_live_in_play(tour=tour), event["event_name"])
+        if live:
+            return live
+    except Exception as e:
+        print(f"live feed unavailable ({e})", file=sys.stderr)
+    saved = state.load().get("standings") or {}
+    if (saved.get("event_name") or "").strip().lower() == event["event_name"].strip().lower() and saved.get("event_stats"):
+        return {**saved, "source": "standings saved by the live poll"}
+    return None
 
 
 def _recap_sections(tour: str) -> tuple:
@@ -204,14 +231,11 @@ def _recap_sections(tour: str) -> tuple:
     from html import escape
     last, upcoming = transform.last_completed_and_next(datagolf.get_schedule(tour=tour, upcoming_only=False))
     sections = []
-    if last:
-        try:
-            results = datagolf.get_event_results(last["event_id"], int(last["start_date"][:4]), tour=tour)
-        except Exception as e:  # e.g. 403: historical event data not included in the DataGolf plan
-            results = transform.results_from_live(datagolf.get_live_in_play(tour=tour), last["event_name"])
-            if results is None:
-                raise RuntimeError(f"No results for {last['event_name']}: historical endpoint failed ({e}) "
-                                   "and the live feed has moved on to another event") from e
+    results = _event_results(last, tour) if last else None
+    if last and results is None:
+        print(f"newsletter: no individual results for {last['event_name']} (team event, or none saved); "
+              "skipping the recap section", file=sys.stderr)
+    if last and results is not None:
         top5 = transform.top_finishers(results)
         saved = state.load().get("last_picks") or {}
         ours = transform.pick_results(saved, results) if str(saved.get("event_id")) == str(last["event_id"]) else []
@@ -235,7 +259,7 @@ def _recap_sections(tour: str) -> tuple:
             "<p>Picks drop when the field is set.</p>")})
     if not sections:
         raise RuntimeError("No completed or upcoming events in the schedule; nothing to put in the newsletter.")
-    return sections, (last or upcoming)["event_name"]
+    return sections, ((last if results is not None else None) or upcoming or last)["event_name"]
 
 
 def run_weekly_newsletter(tour: str = "pga", dry_run: bool = False):
