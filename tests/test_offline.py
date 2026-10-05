@@ -164,5 +164,54 @@ class PipelineDryRunTests(unittest.TestCase):
         self.assertIn("finished T2", self.llm_prompts[-1])  # recap writer only sees real results
 
 
+class DraftModeTests(PipelineDryRunTests):
+    """Draft = no posting, but state is saved (and committed) like a real run."""
+
+    def setUp(self):
+        super().setUp()
+        self.git = mock.patch.object(state.subprocess, "run")
+        self.git_run = self.git.start()
+        self.no_post = mock.patch.object(pipeline.image_host, "publish_image",
+                                         side_effect=AssertionError("draft must not post"))
+        self.no_post.start()
+
+    def tearDown(self):
+        self.no_post.stop()
+        self.git.stop()
+        super().tearDown()
+
+    def test_picks_draft_saves_state_and_caption_file(self):
+        out = pipeline.run_pretournament_picks(draft=True)
+        self.assertTrue(out["DRAFT"])
+        with open(out["caption_file"], encoding="utf-8") as f:
+            self.assertIn("TikTok title:", f.read())
+        self.assertIn("last_picks", state.load())
+        self.assertTrue(self.git_run.called)  # state committed, unlike a dry run
+
+    def test_caption_falls_back_in_draft_but_not_for_real_posts(self):
+        with mock.patch.object(content, "_generate", side_effect=RuntimeError("no api key")):
+            out = pipeline.run_pretournament_picks(draft=True)
+            self.assertIn("Win: Test Player00", out["would_post_caption"])
+            with self.assertRaises(RuntimeError):
+                pipeline.run_pretournament_picks()
+
+    def test_no_hot_take_without_a_real_lead_change(self):
+        pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=0)       # fresh state
+        self.assertFalse(os.path.exists(os.path.join(self.tmp.name, "hot_take_live.png")))
+        state.save({**state.load(), "event_name": "Last Week Open", "leader_name": "Someone Else"}, commit=False)
+        pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=0)       # different event
+        self.assertFalse(os.path.exists(os.path.join(self.tmp.name, "hot_take_live.png")))
+
+    def test_hot_take_on_lead_change_in_same_event(self):
+        state.save({"event_name": "Fake Invitational", "leader_name": "Test Player01"}, commit=False)
+        out = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=600)
+        self.assertEqual(out["actions"][0][0], "hot_take")
+        self.assertTrue(out["actions"][0][1]["DRAFT"])
+
+    def test_hourly_throttle_holds_between_draft_polls(self):
+        pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=60)
+        out = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=60)
+        self.assertIn("skipped", out["actions"][-1][1])
+
 if __name__ == "__main__":
     unittest.main()

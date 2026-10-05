@@ -11,7 +11,7 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'true = print what would post without posting (safe to test). Scheduled runs always post live regardless of this.'
+        description: 'true = dry run (nothing saved). false = draft, or a real post only if the AUTO_POST repo variable is true.'
         required: false
         default: 'true'
 
@@ -61,6 +61,21 @@ jobs:
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          FLAG=""
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"; fi
+          # Posting is manual until the AUTO_POST repo variable is set to true:
+          # until then scheduled runs make drafts (saved state + image/caption attached to the run).
+          FLAG="--draft"
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"
+          elif [ "${{ vars.AUTO_POST }}" = "true" ]; then FLAG=""; fi
+          echo "mode: ${FLAG:-real post}"
           python pipeline.py picks --tour pga --event-tag "${{ github.event.inputs.event_tag }}" $FLAG
+
+      - name: Attach post drafts (card + caption) to this run
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: post-drafts
+          path: |
+            output/*.png
+            output/*.txt
+          if-no-files-found: ignore
+          retention-days: 14
