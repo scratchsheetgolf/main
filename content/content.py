@@ -63,9 +63,11 @@ def _generate(system: str, user: str, max_tokens: int = 300, temperature: float 
     resp = client.messages.create(
         model=MODEL,
         max_tokens=max_tokens,
-        temperature=temperature,
         system=system,
         messages=[{"role": "user", "content": user}],
+        # anthropic>=1.0 dropped the temperature keyword; Haiku 4.5 still honours it in the request body.
+        # (Opus 4.7+ rejects it; Sonnet 5/5.5 reject non-default values. Drop this line if MODEL changes.)
+        extra_body={"temperature": temperature},
     )
     return "".join(b.text for b in resp.content if b.type == "text").strip()
 

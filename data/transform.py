@@ -184,13 +184,25 @@ def last_completed_and_next(schedule: dict, today: date = None):
         except ValueError:
             continue
         status = (ev.get("status") or "").lower()
-        if status == "completed" or (status != "upcoming" and start < today):
-            done.append((start, ev))
-        elif start >= today or status == "upcoming":
-            upcoming.append((start, ev))
+        winner = (ev.get("winner") or "").strip()
+        if status == "completed" or (winner and winner.upper() != "TBD"):
+            done.append((start, ev))      # finished: only these get recapped
+        elif start >= today:
+            upcoming.append((start, ev))  # not started yet (an in-progress event is neither)
     last = max(done, key=lambda t: t[0])[1] if done else None
     nxt = min(upcoming, key=lambda t: t[0])[1] if upcoming else None
     return last, nxt
+
+
+def results_from_live(live: dict, event_name: str):
+    """Fallback when historical-event-data isn't on the plan (403): the in-play feed's final standings,
+    in the same shape as get_event_results. None unless the feed is for event_name."""
+    info = live.get("info") or {}
+    if (info.get("event_name") or "").strip().lower() != (event_name or "").strip().lower():
+        return None
+    return {"event_name": info.get("event_name"), "source": "live feed final standings",
+            "event_stats": [{"dg_id": r.get("dg_id"), "player_name": r.get("player_name", ""),
+                             "fin_text": str(r.get("current_pos", ""))} for r in live.get("data") or []]}
 
 
 def _finish_rank(fin_text: str) -> int:

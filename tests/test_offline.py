@@ -291,5 +291,39 @@ class AlternativesInDraftTests(DraftModeTests):
             self.assertTrue(os.path.exists(os.path.join(self.tmp.name, name)), name)
         self.assertIn("round 4", self.llm_prompts[0])   # the hot-take writer (first call) got real numbers
 
+class RealSdkAndFallbackTests(PipelineDryRunTests):
+    def test_generate_call_matches_installed_sdk_signature(self):
+        """Mocks with autospec of the real SDK method, so a removed keyword (like temperature in
+        anthropic 1.x) raises TypeError here instead of in production."""
+        self.patches[2].stop()  # use the real content._generate
+        fake = mock.MagicMock()
+        fake.content = [mock.MagicMock(type="text", text="ok")]
+        with mock.patch.object(type(content.client.messages), "create", autospec=True, return_value=fake) as create:
+            self.assertEqual(content._generate("sys", "hi", max_tokens=10, temperature=0.3), "ok")
+        self.assertEqual(create.call_args.kwargs["extra_body"], {"temperature": 0.3})
+        self.patches[2].start()
+
+    def test_in_progress_event_is_not_recapped(self):
+        sched = {"schedule": SCHEDULE["schedule"] + [
+            {"event_id": "93", "event_name": "Fake Midweek", "start_date": (TODAY - timedelta(days=2)).isoformat(),
+             "status": "in progress", "winner": "TBD"}]}
+        last, nxt = transform.last_completed_and_next(sched, TODAY)
+        self.assertEqual((last["event_id"], nxt["event_id"]), ("91", "92"))
+
+    def test_recap_falls_back_to_live_feed_when_results_forbidden(self):
+        live_final = {"info": {"event_name": "Fake Classic"}, "data": [
+            {"dg_id": 1005, "player_name": "Player05, Test", "current_pos": "1", "current_score": -20},
+            {"dg_id": 1000, "player_name": "Player00, Test", "current_pos": "T2", "current_score": -18}]}
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")), \
+             mock.patch.object(datagolf, "get_live_in_play", return_value=live_final):
+            out = pipeline.run_weekly_newsletter(dry_run=True)
+        with open(out["preview_file"], encoding="utf-8") as f:
+            self.assertIn("<b>1</b> Test Player05", f.read())
+
+    def test_recap_errors_clearly_when_no_results_anywhere(self):
+        with mock.patch.object(datagolf, "get_event_results", side_effect=RuntimeError("403 Forbidden")):
+            with self.assertRaisesRegex(RuntimeError, "live feed has moved on"):
+                pipeline.run_weekly_newsletter(dry_run=True)   # LIVE fixture is a different event
+
 if __name__ == "__main__":
     unittest.main()

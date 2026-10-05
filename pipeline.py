@@ -205,7 +205,13 @@ def _recap_sections(tour: str) -> tuple:
     last, upcoming = transform.last_completed_and_next(datagolf.get_schedule(tour=tour, upcoming_only=False))
     sections = []
     if last:
-        results = datagolf.get_event_results(last["event_id"], int(last["start_date"][:4]), tour=tour)
+        try:
+            results = datagolf.get_event_results(last["event_id"], int(last["start_date"][:4]), tour=tour)
+        except Exception as e:  # e.g. 403: historical event data not included in the DataGolf plan
+            results = transform.results_from_live(datagolf.get_live_in_play(tour=tour), last["event_name"])
+            if results is None:
+                raise RuntimeError(f"No results for {last['event_name']}: historical endpoint failed ({e}) "
+                                   "and the live feed has moved on to another event") from e
         top5 = transform.top_finishers(results)
         saved = state.load().get("last_picks") or {}
         ours = transform.pick_results(saved, results) if str(saved.get("event_id")) == str(last["event_id"]) else []
