@@ -119,6 +119,22 @@ def _caption(post_type: str, summary: str, event_tag: str, fallback: str, allow_
 
 IG_HASHTAGS = {"pga": "#golf #pgatour #golfpicks", "euro": "#golf #dpworldtour #golfpicks"}
 
+# Instagram music is added by hand in the app, so caption.txt suggests songs. Curated, card/luck themed to fit
+# "This Week's Hand"; rotates by ISO week so it doesn't repeat. Availability depends on the account type
+# (Business accounts only get Meta's royalty-free library) — the backups are there for when one is missing.
+IG_SONGS_PREVIEW = [
+    "The Gambler – Kenny Rogers", "Poker Face – Lady Gaga", "Luck Be a Lady – Frank Sinatra",
+    "Ace of Spades – Motörhead", "Lucky Man – The Verve", "Viva Las Vegas – Elvis Presley",
+    "Mr. Blue Sky – Electric Light Orchestra", "Feel Good Inc. – Gorillaz",
+]
+
+
+def song_suggestions(songs: list, week: int = None, n: int = 3) -> list:
+    """n songs for this week's post, starting at a weekly offset (first = the pick, rest = backups)."""
+    import datetime
+    week = datetime.date.today().isocalendar()[1] if week is None else week
+    return [songs[(week + i) % len(songs)] for i in range(n)]
+
 
 def _note(facts: str) -> str:
     """Marker note for a carousel slide; blank if generation fails (slides are posted by hand)."""
@@ -195,6 +211,8 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
     shared("09_closer.png", path)
 
     text = f"{caption}\n\n{IG_HASHTAGS.get(tour, '#golf')}\n"
+    song, *backups = song_suggestions(IG_SONGS_PREVIEW)
+    text += f"\nSong (add in the Instagram app): {song}. Backups: {'; '.join(backups)}\n"
     if credits:   # CC BY-SA photos: attribution + license link travel with the post
         text += "\nPhotos (Wikimedia Commons; cards shared under the same licenses):\n" + "\n".join(credits) + "\n"
     caption_path = os.path.join(out_dir, "caption.txt")
