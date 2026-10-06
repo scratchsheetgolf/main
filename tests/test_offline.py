@@ -596,6 +596,31 @@ class PreviewCarouselTests(PipelineDryRunTests):
         long = "x" * 270 + " #golfpicks"
         self.assertEqual(pipeline.with_cta(long, "Who's your winner this week?"), long)   # wouldn't fit -> unchanged
 
+    def test_books_odds_have_vig_removed(self):
+        odds = {"odds": [{"dg_id": i, "player_name": f"P{i}", "a": 4.0, "b": 4.0, "c": 4.0} for i in range(5)]}
+        m = transform._market_by_player(odds)       # raw 25% each = 125% total -> 20% each
+        self.assertAlmostEqual(sum(v["implied"] for v in m.values()), 1.0)
+        self.assertAlmostEqual(m[0]["implied"], 0.20)
+
+    def test_no_value_pick_when_model_never_beats_books(self):
+        preds = {"baseline_history_fit": [{"dg_id": i, "player_name": f"P{i}, T", "win": 10.0} for i in range(12)]}
+        odds = {"odds": [{"dg_id": i, "player_name": f"P{i}", "a": 10.0, "b": 10.0, "c": 10.0} for i in range(12)]}
+        with self.assertRaises(transform.PicksError):   # model 10% = books 10% (no-vig) for everyone
+            transform.choose_picks(preds, odds)
+
+    def test_event_names_match_across_sponsor_and_accents(self):
+        sched = {"schedule": [{"event_name": "acciona Open de Espana", "start_date": "2026-10-08"},
+                              {"event_name": "Open de Portugal", "start_date": "2026-10-15"}]}
+        ev = transform.check_picks_window("Open de España presented by Madrid", sched, today=date(2026, 10, 6))
+        self.assertEqual(ev["start_date"], "2026-10-08")
+        self.assertEqual(transform.event_key("Open de España presented by Madrid"), "open de espana")
+
+    def test_note_cannot_flip_model_vs_books(self):
+        facts = "The model is LOWER than the books on him (model 1.4% vs books 2.0%, books' margin removed)."
+        self.assertEqual(content.wrong_direction("model loves him more than Vegas does at 50-1", facts),
+                         ["more than vegas", "than vegas does"])
+        self.assertEqual(content.wrong_direction("a longshot with a real chance", facts), [])
+
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
         photo, entry = player_photos.lookup("Ludvig Aberg")          # matches "Ludvig Åberg"

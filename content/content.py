@@ -100,6 +100,19 @@ def unsupported_claims(text: str, facts: str) -> list:
     return found
 
 
+MODEL_ABOVE_PHRASES = ["more than vegas", "more than the books", "than vegas does", "than the books do",
+                       "underpriced", "overpriced him", "books overpriced", "edge on the books", "edge over the books",
+                       "better than the books", "books are sleeping", "books missed", "value on him", "undervalued"]
+
+
+def wrong_direction(text: str, facts: str) -> list:
+    """Phrases claiming the model rates a player above the books when the facts say it's LOWER."""
+    if "The model is LOWER than the books" not in facts or "The model is HIGHER" in facts:
+        return []
+    low = text.lower()
+    return [p for p in MODEL_ABOVE_PHRASES if p in low]
+
+
 def _parse_options(raw: str, fields: list) -> list:
     """Split 'OPTION n' blocks into dicts of the requested fields."""
     blocks = re.split(r"(?im)^\s*OPTION\s*\d*\s*:?\s*$", raw)
@@ -128,6 +141,10 @@ def _problems(opt: dict, limits: dict, facts: str) -> list:
     invented = ungrounded_numbers(text, facts)
     if invented:
         out.append(f"uses numbers not in the facts: {', '.join(invented)}")
+    flipped = wrong_direction(text, facts)
+    if flipped:
+        out.append(f"says the model likes him more than the books ({', '.join(flipped)}), but the facts say "
+                   "the model is LOWER than the books")
     claims = unsupported_claims(text, facts)
     if claims:
         out.append(f"claims history the facts don't support ({', '.join(claims)}): no firsts, records, streaks or career talk")

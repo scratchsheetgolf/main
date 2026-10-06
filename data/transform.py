@@ -11,11 +11,13 @@ Response shapes follow DataGolf's API docs (datagolf.com/api-access, checked
 Every number that reaches a card or the newsletter comes from here, never from
 the language model. content.py only writes words around these facts.
 """
+import re
 from datetime import date
 from statistics import median
 
 # ---- Pick rules (tune here; each pick explains itself in the returned "why") ----
 VALUE_MIN_WIN_PROB = 0.015    # value pick must have >= 1.5% model win chance (no lottery tickets)
+VALUE_MIN_EDGE = 1.0          # value pick: model must be ABOVE the books' no-vig price (ratio > this)
 FADE_FROM_TOP_N = 10          # fade is chosen from the books' 10 shortest-priced players
 SLEEPER_MIN_DECIMAL_ODDS = 51  # sleeper = 50-to-1 or longer at the books' median price
 MIN_BOOKS = 3                 # need at least 3 sportsbook prices to call a market consensus
@@ -61,7 +63,11 @@ def _model_rows(preds: dict) -> list:
 
 
 def _market_by_player(outrights: dict) -> dict:
-    """dg_id -> {'median_odds': x, 'implied': p} from the sportsbook columns (ignores DG's own column)."""
+    """dg_id -> {'median_odds': x, 'implied': p} from the sportsbook columns (ignores DG's own column).
+    'implied' has the books' margin (vig) removed: raw 1/odds across a field sums to well over 100%
+    (first real run, Baycurrent 2026: every player's raw books % sat above the model's), so the raw
+    numbers are scaled down proportionally until the field sums to 100%. Without this the model
+    almost never looks 'above the books' and VALUE degrades to the least-bad ratio."""
     skip = {"player_name", "dg_id", "datagolf"}
     out = {}
     for row in outrights.get("odds") or []:
@@ -70,6 +76,10 @@ def _market_by_player(outrights: dict) -> dict:
         if len(prices) >= MIN_BOOKS:
             med = median(prices)
             out[row.get("dg_id")] = {"median_odds": med, "implied": 1.0 / med}
+    overround = sum(m["implied"] for m in out.values())
+    if overround > 1.0:          # only ever scale down (a partly priced field can sum below 100%)
+        for m in out.values():
+            m["implied"] /= overround
     return out
 
 
@@ -108,6 +118,8 @@ def choose_picks(preds: dict, outrights: dict) -> dict:
     if not value_pool:
         raise PicksError("no value candidate above the minimum win-chance floor")
     value = max(value_pool, key=lambda pl: pl["model_win"] / pl["market_win"])
+    if value["model_win"] / value["market_win"] <= VALUE_MIN_EDGE:
+        raise PicksError("no player has the model above the books' no-vig price; no honest VALUE pick this week")
     picks["value"] = take(value, f"model {value['model_win']:.1%} vs books {value['market_win']:.1%}")
 
     favourites = sorted(priced, key=lambda pl: pl["market_win"], reverse=True)[:FADE_FROM_TOP_N]
@@ -123,13 +135,32 @@ def choose_picks(preds: dict, outrights: dict) -> dict:
     return picks
 
 
+def model_vs_books(pick: dict) -> str:
+    """Plain statement of which side is higher, so the writer can't flip it."""
+    if not pick.get("market_win"):
+        return "No sportsbook consensus to compare with."
+    side = "HIGHER" if pick["model_win"] > pick["market_win"] else "LOWER"
+    return (f"The model is {side} than the books on him (model {pick['model_win']:.1%} vs books "
+            f"{pick['market_win']:.1%}, books' margin removed).")
+
+
 def picks_summary(event_name: str, picks: dict) -> str:
     """Plain-text facts for the caption writer. Only numbers computed above."""
     lines = [f"Event: {event_name}"]
     for slot in ("win", "value", "fade", "sleeper"):
-        lines.append(f"{slot.upper()}: {picks[slot]['name']} ({picks[slot]['why']})")
+        lines.append(f"{slot.upper()}: {picks[slot]['name']} ({picks[slot]['why']}). {model_vs_books(picks[slot])}")
     return "\n".join(lines)
 
+
+
+def event_key(name) -> str:
+    """Comparable event name: no accents/punctuation/case, sponsor tail dropped.
+    'Open de España presented by Madrid' -> 'open de espana' (first real DP World run, 2026-10-06:
+    predictions and schedule named the same event differently)."""
+    import unicodedata
+    text = unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode().lower()
+    text = re.split(r"\bpresented by\b|\bpres\. by\b|\bsponsored by\b", text)[0]
+    return " ".join(re.sub(r"[^a-z0-9 ]+", " ", text).split())
 
 
 def check_picks_window(event_name: str, schedule: dict, today: date = None) -> dict:
@@ -137,16 +168,22 @@ def check_picks_window(event_name: str, schedule: dict, today: date = None) -> d
     books switch to live odds and the comparison is meaningless (a run during round 4 wanted to
     'fade' the 54-hole leader), so refuse after the start date. Returns the schedule entry."""
     today = today or date.today()
-    for ev in schedule.get("schedule") or []:
-        if (ev.get("event_name") or "").strip().lower() == (event_name or "").strip().lower():
-            try:
-                start = date.fromisoformat(ev.get("start_date", ""))
-            except ValueError:
-                raise PicksError(f"can't read start date for {event_name}")
-            if start <= today:
-                raise PicksError(f"{event_name} started {start.isoformat()}; picks are only made before round 1 "
-                                 "(sportsbook odds are live once it starts)")
-            return ev
+    target = event_key(event_name)
+    candidates = [ev for ev in schedule.get("schedule") or []
+                  if target and (event_key(ev.get("event_name")) == target
+                                 or target in event_key(ev.get("event_name"))
+                                 or (event_key(ev.get("event_name")) and event_key(ev.get("event_name")) in target))]
+    if len(candidates) > 1:   # loose match hit several events: keep exact matches only
+        candidates = [ev for ev in candidates if event_key(ev.get("event_name")) == target] or candidates[:0]
+    for ev in candidates:
+        try:
+            start = date.fromisoformat(ev.get("start_date", ""))
+        except ValueError:
+            raise PicksError(f"can't read start date for {event_name}")
+        if start <= today:
+            raise PicksError(f"{event_name} started {start.isoformat()}; picks are only made before round 1 "
+                             "(sportsbook odds are live once it starts)")
+        return ev
     raise PicksError(f"{event_name} (from the predictions) isn't in the schedule; can't confirm it hasn't started")
 
 
@@ -482,7 +519,7 @@ def pick_facts(slot: str, pick: dict, event_name: str, profile: dict) -> str:
     lines = [f"{pick['name']} is our {slot.upper()} pick for {event_name}.",
              f"DataGolf's model win chance: {pick['model_win']:.1%}. Sportsbooks' consensus: {books}"
              + (f" (median odds {format_odds(pick.get('median_odds'))})." if pick.get("median_odds") else "."),
-             f"Why: {pick['why']}."]
+             f"Why: {pick['why']}.", model_vs_books(pick)]
     if profile:
         lines.append("Strokes gained per round (world rank): " + "; ".join(
             f"{SKILL_NAMES[k]} {v} ({r})" for k, (v, r) in profile.items()))
