@@ -241,9 +241,17 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
     # Reel for Instagram (+ Facebook via cross-posting): Reels reach non-followers, carousels mostly don't
     reel_path = None
     try:
-        reel_slides = [(slides["01_hand.png"]["color"], 2.0)] + [
-            (slides[n]["color"], 1.6) for n in sorted(slides) if n[:2] in ("03", "04", "05", "06")
-        ] + [(slides["09_closer.png"]["color"], 1.5)]
+        meaning = {"win": "the model's most likely winner", "value": "model rates him above the books' price",
+                   "fade": "a books' favorite the model rates lower", "sleeper": "50-1 or longer with a real chance"}
+        reel_slides = [{"path": slides["01_hand.png"]["color"], "seconds": 2.2, "top": event_name.upper(),
+                        "sub": "4 picks. DataGolf's model vs the sportsbooks.", "bottom": "the hand is dealt"}]
+        for n in sorted(slides):
+            slot = n[3:-4]
+            if slot in meaning:
+                reel_slides.append({"path": slides[n]["color"], "seconds": 2.4, "top": f"{slot.upper()} PICK",
+                                    "sub": meaning[slot], "bottom": f"why: {picks[slot]['why']}"})
+        reel_slides.append({"path": slides["09_closer.png"]["color"], "seconds": 1.8, "top": "RECEIPTS SUNDAY",
+                            "sub": "win or lose, we post how these did", "bottom": "follow for live alerts thu-sun"})
         reel_path = render_reel(reel_slides, os.path.join(out_dir, "reel.mp4"))
     except Exception as e:  # the carousel stands on its own
         print(f"reel failed ({type(e).__name__}: {e}); carousel unaffected", file=sys.stderr)

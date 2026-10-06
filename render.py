@@ -249,41 +249,68 @@ def render_hand(card_paths: list, event: str, out_path: str) -> str:
     return out_path
 
 
-def render_reel(slides: list, out_path: str, fps: int = 30, fade_frames: int = 6) -> str:
-    """Vertical 1080x1920 Reel (H.264, silent; music is added in the Instagram app) from 4:5 slide PNGs.
-    slides: [(png_path, seconds)]. Each slide sits centered on paper with a slow push-in, cross-fading
-    into the next. Needs ffmpeg on PATH."""
+def render_reel(slides: list, out_path: str, fps: int = 30) -> str:
+    """Vertical 1080x1920 Reel (H.264, silent; music is added in the Instagram app).
+    slides: [{"path": 4:5 png, "seconds": float, "top": heading, "sub": one-line meaning, "bottom": why line}]
+    (text keys optional). Each card is "dealt" in: a quick snap with a small settling rotation, then a slow
+    push-in; text sits above/below the card, inside Instagram's safe area. Hard cuts, no cross-fade. Needs ffmpeg."""
     import shutil
     import subprocess
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageFont
     if not shutil.which("ffmpeg"):
         raise RuntimeError("ffmpeg not installed; can't build the Reel")
-    W, H, paper = 1080, 1920, (0xF2, 0xEC, 0xDC)
-    frames_per = [max(int(sec * fps), fade_frames + 1) for _, sec in slides]
-    imgs = [Image.open(path).convert("RGB") for path, _ in slides]
+    W, H = 1080, 1920
+    PAPER, INK, RED, PENCIL = (0xF2, 0xEC, 0xDC), (0x1E, 0x2A, 0x22), (0xD3, 0x26, 0x1F), (0x6E, 0x68, 0x57)
+    CARD_W, CARD_TOP = 900, 400                      # card 900x1125, y 400-1525; text 250-385 and 1550-1640
+    font = lambda fam, size: ImageFont.truetype(os.path.join(FONT_DIR, FONT_FILES[fam]), size)
 
-    def frame(img, t):                       # t in [0, 1] across this slide
-        z = 1.0 + 0.045 * t                  # gentle push-in
-        w = int(W * z)
-        h = int(img.height * w / img.width)
-        canvas = Image.new("RGB", (W, H), paper)
-        canvas.paste(img.resize((w, h), Image.BICUBIC), ((W - w) // 2, (H - h) // 2))
-        return canvas
+    def fit(draw, text, fam, size, max_w):
+        while size > 18 and draw.textlength(text, font=font(fam, size)) > max_w:
+            size -= 2
+        return font(fam, size)
 
+    def background(sl):
+        bg = Image.new("RGB", (W, H), PAPER)
+        d = ImageDraw.Draw(bg)
+        if sl.get("top"):
+            f = fit(d, sl["top"], "Anton", 76, 960)
+            d.text((W // 2, 285), sl["top"], font=f, fill=INK, anchor="mm")
+        if sl.get("sub"):
+            f = fit(d, sl["sub"], "Barlow SemiBold", 36, 960)
+            d.text((W // 2, 352), sl["sub"], font=f, fill=PENCIL, anchor="mm")
+        if sl.get("bottom"):
+            f = fit(d, sl["bottom"], "Permanent Marker", 44, 960)
+            d.text((W // 2, 1600), sl["bottom"], font=f, fill=RED, anchor="mm")
+        return bg
+
+    def card_img(path):
+        img = Image.open(path).convert("RGBA")
+        return img.resize((CARD_W, int(img.height * CARD_W / img.width)), Image.LANCZOS)
+
+    deal = 7                                         # frames for the snap-in
     proc = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
          "-r", str(fps), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", out_path],
         stdin=subprocess.PIPE)
     try:
-        for i, (img, n) in enumerate(zip(imgs, frames_per)):
+        for sl in slides:
+            bg, card = background(sl), card_img(sl["path"])
+            n = max(int(sl.get("seconds", 1.6) * fps), deal + 1)
             for f in range(n):
-                cur = frame(img, f / n)
-                nxt_i = i + 1
-                if nxt_i < len(imgs) and f >= n - fade_frames:   # cross-fade into the next slide
-                    alpha = (f - (n - fade_frames) + 1) / (fade_frames + 1)
-                    cur = Image.blend(cur, frame(imgs[nxt_i], 0), alpha)
-                proc.stdin.write(cur.tobytes())
+                if f < deal:                         # dealt in from the right with a small settling turn
+                    e = 1 - (1 - (f + 1) / deal) ** 3
+                    angle, scale, dx = 3 * (1 - e), 1.0, int(420 * (1 - e))
+                else:                                # slow push-in
+                    angle, dx = 0.0, 0
+                    scale = 1.0 + 0.02 * (f - deal) / max(n - deal, 1)
+                c = card.resize((int(card.width * scale), int(card.height * scale)), Image.BICUBIC)
+                if angle:
+                    c = c.rotate(angle, expand=True, resample=Image.BICUBIC)
+                frame = bg.copy()
+                cx, cy = W // 2 + dx, CARD_TOP + card.height // 2
+                frame.paste(c, (cx - c.width // 2, cy - c.height // 2), c)
+                proc.stdin.write(frame.tobytes())
     finally:
         proc.stdin.close()
         rc = proc.wait()
