@@ -243,8 +243,11 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
     try:
         meaning = {"win": "the model's most likely winner", "value": "model rates him above the books' price",
                    "fade": "a books' favorite the model rates lower", "sleeper": "50-1 or longer with a real chance"}
-        reel_slides = [{"path": slides["01_hand.png"]["color"], "seconds": 2.2, "top": event_name.upper(),
-                        "sub": "4 picks. DataGolf's model vs the sportsbooks.", "bottom": "the hand is dealt"}]
+        reel_hand = os.path.join(out_dir, "reel_hand.png")    # same fan, Reel wording (no "swipe")
+        render_hand([slides[n]["color"] for n in card_names], f"{event_line} · WIN · VALUE · FADE · SLEEPER",
+                    reel_hand, kicker="here's the deal")
+        reel_slides = [{"path": reel_hand, "seconds": 2.2, "top": event_name.upper(),
+                        "sub": "4 picks. DataGolf's model vs the sportsbooks.", "bottom": "picks from the model, not our gut"}]
         for n in sorted(slides):
             slot = n[3:-4]
             if slot in meaning:

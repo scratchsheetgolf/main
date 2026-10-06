@@ -224,12 +224,13 @@ def render_playing_card(slot: str, player: str, event: str, model_win: str, book
     return _fill_and_render(template, tokens, out_path)
 
 
-def render_hand(card_paths: list, event: str, out_path: str) -> str:
-    """'This Week's Hand' cover: the rendered playing cards cut out and fanned like a poker hand."""
+def render_hand(card_paths: list, event: str, out_path: str, kicker: str = "swipe for the reads") -> str:
+    """'This Week's Hand' cover: the rendered playing cards cut out and fanned like a poker hand.
+    kicker: the marker line at the bottom ("swipe for the reads" on the carousel, something else on the Reel)."""
     import io
     from PIL import Image, ImageDraw
     bg_path = out_path + ".bg.png"
-    _fill_and_render("hand_cover.svg", {"event": event}, bg_path)
+    _fill_and_render("hand_cover.svg", {"event": event, "kicker": kicker}, bg_path)
     bg = Image.open(bg_path).convert("RGBA")
     os.remove(bg_path)
     scale = bg.width / 1080

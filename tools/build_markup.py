@@ -274,6 +274,6 @@ hd = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox
       f'<rect x="36" y="36" width="1008" height="1278" fill="none" stroke="{INK}" stroke-width="3"/>\n',
       f'<text x="540" y="200" font-family="Anton" font-size="120" fill="{INK}" text-anchor="middle">THIS WEEK\'S HAND</text>\n',
       f'<text x="540" y="256" font-family="Barlow SemiBold" font-size="28" fill="{PENCIL}" letter-spacing="6" text-anchor="middle" data-fit="900">__EVENT__</text>\n',
-      f'<text x="540" y="1250" font-family="Permanent Marker" font-size="40" fill="{SHARPIE}" text-anchor="middle" transform="rotate(-2 540 1250)">swipe for the reads</text>\n</svg>\n']
+      f'<text x="540" y="1250" font-family="Permanent Marker" font-size="40" fill="{SHARPIE}" text-anchor="middle" transform="rotate(-2 540 1250)" data-fit="880">__KICKER__</text>\n</svg>\n']
 open(f"{OUT}/hand_cover.svg", "w").write("".join(hd))
 print("built", sorted(os.listdir(OUT)))
