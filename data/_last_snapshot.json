@@ -1,0 +1,41 @@
+{
+  "last_picks": {
+    "event_name": "Baycurrent Classic",
+    "event_id": "527",
+    "year": "2026",
+    "picks": {
+      "win": {
+        "dg_id": 19895,
+        "name": "Xander Schauffele",
+        "model_win": 0.08658008658008658,
+        "market_win": 0.1,
+        "median_odds": 10.0,
+        "why": "highest model win chance (8.7%)"
+      },
+      "value": {
+        "dg_id": 29767,
+        "name": "Ryan Gerard",
+        "model_win": 0.04073319755600815,
+        "market_win": 0.043478260869565216,
+        "median_odds": 23.0,
+        "why": "model 4.1% vs books 4.3%"
+      },
+      "fade": {
+        "dg_id": 29433,
+        "name": "Jacob Bridgeman",
+        "model_win": 0.03031221582297666,
+        "market_win": 0.043478260869565216,
+        "median_odds": 23.0,
+        "why": "books 4.3% vs model 3.0%"
+      },
+      "sleeper": {
+        "dg_id": 22760,
+        "name": "Ryo Hisatsune",
+        "model_win": 0.013800717637317142,
+        "market_win": 0.0196078431372549,
+        "median_odds": 51.0,
+        "why": "best model chance (1.4%) at 50-to-1"
+      }
+    }
+  }
+}
