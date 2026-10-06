@@ -6,8 +6,11 @@ name: Live Round Polling
 # pipeline.py exits fast (one cheap API call) if no round is actually live,
 # so running this broadly across tournament weeks doesn't waste real work.
 on:
-  # schedule:  # PAUSED until a local --dry-run passes; re-enable deliberately
-  #    - cron: "*/5 * * * 4,5,6,0"
+  schedule:  # ON from 2026-10-07 in DRAFT mode (AUTO_POST unset = drafts only, nothing posts)
+    # Wed-Sun UTC covers Asia round 1 (e.g. Japan starts Wed ~22:30 UTC) through Sunday;
+    # Mon 00-03 UTC covers US Sunday-evening finishes (Pacific events end ~01:00 UTC Monday).
+    - cron: "*/5 * * * 3,4,5,6,0"
+    - cron: "*/5 0-3 * * 1"
   workflow_dispatch:
     inputs:
       event_tag:
@@ -18,6 +21,10 @@ on:
         description: 'true = dry run (nothing saved). false = draft, or a real post only if the AUTO_POST repo variable is true.'
         required: false
         default: 'true'
+
+concurrency:  # one poll at a time: overlapping runs would race on the saved state
+  group: live-round
+  cancel-in-progress: false
 
 permissions:
   contents: write  # needed for image_host.py and state.py to commit back to the repo
