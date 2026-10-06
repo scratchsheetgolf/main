@@ -621,6 +621,15 @@ class PreviewCarouselTests(PipelineDryRunTests):
                          ["more than vegas", "than vegas does"])
         self.assertEqual(content.wrong_direction("a longshot with a real chance", facts), [])
 
+    def test_short_event_name_and_spacing_shrinks(self):
+        self.assertEqual(transform.short_event_name("Open de España presented by Madrid"), "Open de España")
+        self.assertEqual(transform.short_event_name("Baycurrent Classic"), "Baycurrent Classic")
+        svg = ('<svg xmlns="http://www.w3.org/2000/svg"><text font-family="Barlow SemiBold" font-size="24" '
+               'letter-spacing="4" data-fit="200">WIN PICK · DP WORLD TOUR · A VERY LONG EVENT NAME</text></svg>')
+        out = render._apply_fit_and_score(svg, "t.svg")
+        self.assertIn('letter-spacing="', out)
+        self.assertNotIn('letter-spacing="4"', out)
+
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
         photo, entry = player_photos.lookup("Ludvig Aberg")          # matches "Ludvig Åberg"

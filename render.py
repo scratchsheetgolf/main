@@ -80,7 +80,10 @@ def _apply_fit_and_score(svg: str, template_filename: str) -> str:
         widest = max(_measure(family, size, line, spacing) for line in lines)
         limit = float(max_width) * 0.99  # small margin: PIL and cairo measure a hair differently
         if widest > limit:
-            el.set("font-size", f"{size * limit / widest:.1f}")
+            factor = limit / widest       # shrink size AND letter-spacing, or long spaced text still overflows
+            el.set("font-size", f"{size * factor:.1f}")
+            if spacing:
+                el.set("letter-spacing", f"{spacing * factor:.2f}")
     return ET.tostring(root, encoding="unicode")
 
 

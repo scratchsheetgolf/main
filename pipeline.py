@@ -181,7 +181,7 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
     out_dir = os.path.join(OUTPUT_DIR, f"carousel_{tour}")
     brand_dir = os.path.join(out_dir, "brand")
     os.makedirs(brand_dir, exist_ok=True)
-    event_line = f"{tour_label(tour)}{event_name.upper()}"
+    event_line = f"{tour_label(tour)}{transform.short_event_name(event_name).upper()}"
     slides = {}          # name -> {"color": path, "brand": path}
 
     def shared(name, path):
@@ -246,7 +246,7 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
         reel_hand = os.path.join(out_dir, "reel_hand.png")    # same fan, Reel wording (no "swipe")
         render_hand([slides[n]["color"] for n in card_names], f"{event_line} · WIN · VALUE · FADE · SLEEPER",
                     reel_hand, kicker="here's the deal")
-        reel_slides = [{"path": reel_hand, "seconds": 2.2, "top": event_name.upper(),
+        reel_slides = [{"path": reel_hand, "seconds": 2.2, "top": transform.short_event_name(event_name).upper(),
                         "sub": "4 picks. DataGolf's model vs the sportsbooks.", "bottom": "picks from the model, not our gut"}]
         for n in sorted(slides):
             slot = n[3:-4]

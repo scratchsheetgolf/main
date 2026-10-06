@@ -163,6 +163,11 @@ def event_key(name) -> str:
     return " ".join(re.sub(r"[^a-z0-9 ]+", " ", text).split())
 
 
+def short_event_name(name: str) -> str:
+    """Name for cards: sponsor tail dropped, accents kept. 'Open de España presented by Madrid' -> 'Open de España'."""
+    return re.split(r"\s+(?:presented by|pres\. by|sponsored by)\s+", name or "", flags=re.I)[0].strip()
+
+
 def check_picks_window(event_name: str, schedule: dict, today: date = None) -> dict:
     """Picks compare DataGolf's PRE-tournament model with sportsbook odds. Once an event starts the
     books switch to live odds and the comparison is meaningless (a run during round 4 wanted to
