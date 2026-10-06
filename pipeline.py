@@ -129,6 +129,30 @@ IG_SONGS_PREVIEW = [
 ]
 
 
+# Engagement question closing the weekly picks post (X caption + Instagram caption.txt). A real question
+# about the picks, not "like and share" bait. Rotates weekly.
+PICKS_CTAS = [
+    "Who's your winner this week?",
+    "Which of these four are we wrong about?",
+    "Who are you fading this week?",
+    "Your best longshot this week, go.",
+    "Tail the fade or fade the fade?",
+    "Who's the value pick we missed?",
+]
+X_LIMIT = 280
+
+
+def with_cta(caption: str, cta: str, limit: int = X_LIMIT) -> str:
+    """Put the question after the caption text and before any trailing hashtags; skipped if it won't fit on X."""
+    words = caption.split(" ")
+    i = len(words)
+    while i > 0 and words[i - 1].startswith("#"):
+        i -= 1
+    body, tags = " ".join(words[:i]).rstrip(), " ".join(words[i:])
+    out = f"{body}\n\n{cta}" + (f" {tags}" if tags else "")
+    return out if len(out) <= limit else caption
+
+
 def song_suggestions(songs: list, week: int = None, n: int = 3) -> list:
     """n songs for this week's post, starting at a weekly offset (first = the pick, rest = backups)."""
     import datetime
@@ -248,6 +272,9 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
                  f"Fade: {picks['fade']['name']}. Sleeper: {picks['sleeper']['name']}.",
         allow_fallback=dry_run or draft,
     )
+    cta = song_suggestions(PICKS_CTAS, n=1)[0]   # same weekly rotation as the songs
+    caption = with_cta(caption, cta)
+    alternatives = [with_cta(a, cta) for a in alternatives]
     prev = state.load(tour)
     state.save({**prev, "last_picks": {
         "event_name": event_name,

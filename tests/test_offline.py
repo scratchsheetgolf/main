@@ -291,7 +291,8 @@ class ContentCheckTests(unittest.TestCase):
 class AlternativesInDraftTests(DraftModeTests):
     def test_caption_alternatives_written_to_draft(self):
         out = pipeline.run_pretournament_picks(draft=True)
-        self.assertEqual(out["would_post_caption"], "Caption alpha. #golfpicks")
+        self.assertTrue(out["would_post_caption"].startswith("Caption alpha.\n\n"))
+        self.assertTrue(out["would_post_caption"].endswith("? #golfpicks") or out["would_post_caption"].endswith(", go. #golfpicks"))
         with open(out["caption_file"], encoding="utf-8") as f:
             text = f.read()
         self.assertIn("- Caption beta.", text)
@@ -584,6 +585,13 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertEqual(pipeline.song_suggestions(["a", "b", "c", "d"], week=3), ["d", "a", "b"])
         win_facts = next(p for p in self.llm_prompts if "is our WIN pick" in p)
         self.assertIn("Strokes gained per round (world rank)", win_facts)
+
+    def test_cta_goes_before_hashtags_and_respects_x_limit(self):
+        self.assertEqual(pipeline.with_cta("Picks are in. #USOpen #golfpicks", "Who's your winner?"),
+                         "Picks are in.\n\nWho's your winner? #USOpen #golfpicks")
+        self.assertEqual(pipeline.with_cta("Plain.", "Q?"), "Plain.\n\nQ?")
+        long = "x" * 270 + " #golfpicks"
+        self.assertEqual(pipeline.with_cta(long, "Who's your winner this week?"), long)   # wouldn't fit -> unchanged
 
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
