@@ -3,7 +3,7 @@ name: Pre-Tournament Picks
 # Runs once a week, Tuesday morning, when fields are typically set.
 on:
   # schedule:  # PAUSED until a local --dry-run passes; re-enable deliberately
-  #    - cron: "0 13 * * 2"  # Tuesday 13:00 UTC — adjust to your timezone preference
+  #    - cron: "0 19 * * 2"  # Tuesday 19:00 UTC = 3pm ET. DataGolf posts pre-tournament predictions ~1:30pm ET Tue (their FAQ); 13:00 UTC was before release
   workflow_dispatch:
     inputs:
       event_tag:
