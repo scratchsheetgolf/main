@@ -1,0 +1,41 @@
+{
+  "last_picks": {
+    "event_name": "Open de Espa\u00f1a presented by Madrid",
+    "event_id": "2026139",
+    "year": "2026",
+    "picks": {
+      "win": {
+        "dg_id": 23950,
+        "name": "Ludvig Aberg",
+        "model_win": 0.11312217194570136,
+        "market_win": 0.07993489375289023,
+        "median_odds": 8.5,
+        "why": "highest model win chance (11.3%)"
+      },
+      "value": {
+        "dg_id": 13900,
+        "name": "Shane Lowry",
+        "model_win": 0.05122950819672131,
+        "market_win": 0.03774703316108705,
+        "median_odds": 18.0,
+        "why": "model 5.1% vs books 3.8%"
+      },
+      "fade": {
+        "dg_id": 28984,
+        "name": "David Puig",
+        "model_win": 0.021482277121374866,
+        "market_win": 0.02983300096156167,
+        "median_odds": 22.775,
+        "why": "books 3.0% vs model 2.1%"
+      },
+      "sleeper": {
+        "dg_id": 18770,
+        "name": "Antoine Rozner",
+        "model_win": 0.013933398355858995,
+        "market_win": 0.011614471741872941,
+        "median_odds": 58.5,
+        "why": "best model chance (1.4%) at 58-to-1"
+      }
+    }
+  }
+}
