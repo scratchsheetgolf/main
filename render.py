@@ -248,6 +248,49 @@ def render_hand(card_paths: list, event: str, out_path: str) -> str:
     bg.convert("RGB").save(out_path)
     return out_path
 
+
+def render_reel(slides: list, out_path: str, fps: int = 30, fade_frames: int = 6) -> str:
+    """Vertical 1080x1920 Reel (H.264, silent; music is added in the Instagram app) from 4:5 slide PNGs.
+    slides: [(png_path, seconds)]. Each slide sits centered on paper with a slow push-in, cross-fading
+    into the next. Needs ffmpeg on PATH."""
+    import shutil
+    import subprocess
+    from PIL import Image
+    if not shutil.which("ffmpeg"):
+        raise RuntimeError("ffmpeg not installed; can't build the Reel")
+    W, H, paper = 1080, 1920, (0xF2, 0xEC, 0xDC)
+    frames_per = [max(int(sec * fps), fade_frames + 1) for _, sec in slides]
+    imgs = [Image.open(path).convert("RGB") for path, _ in slides]
+
+    def frame(img, t):                       # t in [0, 1] across this slide
+        z = 1.0 + 0.045 * t                  # gentle push-in
+        w = int(W * z)
+        h = int(img.height * w / img.width)
+        canvas = Image.new("RGB", (W, H), paper)
+        canvas.paste(img.resize((w, h), Image.BICUBIC), ((W - w) // 2, (H - h) // 2))
+        return canvas
+
+    proc = subprocess.Popen(
+        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+         "-r", str(fps), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+         "-pix_fmt", "yuv420p", "-movflags", "+faststart", out_path],
+        stdin=subprocess.PIPE)
+    try:
+        for i, (img, n) in enumerate(zip(imgs, frames_per)):
+            for f in range(n):
+                cur = frame(img, f / n)
+                nxt_i = i + 1
+                if nxt_i < len(imgs) and f >= n - fade_frames:   # cross-fade into the next slide
+                    alpha = (f - (n - fade_frames) + 1) / (fade_frames + 1)
+                    cur = Image.blend(cur, frame(imgs[nxt_i], 0), alpha)
+                proc.stdin.write(cur.tobytes())
+    finally:
+        proc.stdin.close()
+        rc = proc.wait()
+    if rc != 0:
+        raise RuntimeError(f"ffmpeg failed (exit {rc})")
+    return out_path
+
 if __name__ == "__main__":
     # smoke test with mock data
     render_leaderboard(

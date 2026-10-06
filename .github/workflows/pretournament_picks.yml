@@ -46,6 +46,9 @@ jobs:
           fc-cache -f
           fc-list : family | grep -E "Anton|DM Serif Display|Permanent Marker|Barlow" || { echo "card fonts missing"; exit 1; }
 
+      - name: Install ffmpeg (Instagram Reel)
+        run: command -v ffmpeg || { sudo apt-get update -q && sudo apt-get install -y -q ffmpeg; }
+
       - name: Configure git identity for auto-commits
         run: |
           git config user.name "scratch-sheet-bot"

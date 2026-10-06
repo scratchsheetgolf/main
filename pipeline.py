@@ -15,7 +15,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from data import datagolf, state, transform
 from content import content
 from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
-                    render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand)
+                    render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand,
+                    render_reel)
 from distribute import image_host, post_x, post_meta, post_tiktok
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
@@ -237,6 +238,15 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
     tags = IG_HASHTAGS.get(tour, "#golf")
     body = " ".join(w for w in caption.split(" ") if w not in tags.split())   # no tag twice
     text = f"{body}\n\n{tags}\n"
+    # Reel for Instagram (+ Facebook via cross-posting): Reels reach non-followers, carousels mostly don't
+    reel_path = None
+    try:
+        reel_slides = [(slides["01_hand.png"]["color"], 2.0)] + [
+            (slides[n]["color"], 1.6) for n in sorted(slides) if n[:2] in ("03", "04", "05", "06")
+        ] + [(slides["09_closer.png"]["color"], 1.5)]
+        reel_path = render_reel(reel_slides, os.path.join(out_dir, "reel.mp4"))
+    except Exception as e:  # the carousel stands on its own
+        print(f"reel failed ({type(e).__name__}: {e}); carousel unaffected", file=sys.stderr)
     song, *backups = song_suggestions(IG_SONGS_PREVIEW)
     text += f"\nSong (add in the Instagram app): {song}. Backups: {'; '.join(backups)}\n"
     if credits:   # CC BY-SA photos: attribution + license link travel with the post
@@ -245,7 +255,8 @@ def build_picks_carousel(tour: str, event_name: str, preds: dict, picks: dict, c
     for folder in (out_dir, brand_dir):
         with open(os.path.join(folder, "caption.txt"), "w", encoding="utf-8") as f:
             f.write(text)
-    return {"carousel_dir": out_dir, "brand_dir": brand_dir, "slides": sorted(slides), "caption_file": caption_path}
+    return {"carousel_dir": out_dir, "brand_dir": brand_dir, "slides": sorted(slides), "caption_file": caption_path,
+            "reel": reel_path}
 
 
 def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag: str = "", draft: bool = False):

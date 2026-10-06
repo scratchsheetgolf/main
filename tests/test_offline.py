@@ -580,6 +580,9 @@ class PreviewCarouselTests(PipelineDryRunTests):
         with open(car["caption_file"], encoding="utf-8") as f:
             text = f.read()
         self.assertIn("#pgatour", text)
+        import shutil
+        if shutil.which("ffmpeg"):
+            self.assertTrue(car["reel"] and os.path.getsize(car["reel"]) > 10_000)
         self.assertEqual(text.count("#golfpicks"), 1)
         self.assertIn("Song (add in the Instagram app):", text)
         self.assertEqual(pipeline.song_suggestions(["a", "b", "c", "d"], week=3), ["d", "a", "b"])
