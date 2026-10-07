@@ -630,6 +630,19 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertIn('letter-spacing="', out)
         self.assertNotIn('letter-spacing="4"', out)
 
+    def test_telegram_drafts_off_without_secrets_and_on_with_them(self):
+        from distribute import notify_telegram
+        with mock.patch.dict(os.environ, {"TELEGRAM_DRAFTS_TOKEN": "", "TELEGRAM_DRAFTS_CHAT_ID": ""}):
+            self.assertTrue(notify_telegram.send_text("hi").startswith("skipped"))
+        ok = mock.Mock(ok=True)
+        with mock.patch.dict(os.environ, {"TELEGRAM_DRAFTS_TOKEN": "T", "TELEGRAM_DRAFTS_CHAT_ID": "42"}), \
+             mock.patch.object(notify_telegram.requests, "post", return_value=ok) as post:
+            self.assertEqual(notify_telegram.send_text("hi"), "sent")
+            self.assertEqual(post.call_args.kwargs["data"]["chat_id"], "42")
+            bad = mock.Mock(ok=False, status_code=401, text="token T rejected")
+            post.return_value = bad
+            self.assertEqual(notify_telegram.send_text("hi"), "FAILED: Telegram 401")   # body (could echo token) not surfaced
+
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
         photo, entry = player_photos.lookup("Ludvig Aberg")          # matches "Ludvig Åberg"
