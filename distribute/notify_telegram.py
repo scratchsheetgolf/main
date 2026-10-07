@@ -32,7 +32,13 @@ def _call(method: str, data: dict, files: dict = None) -> str:
     try:
         r = requests.post(API.format(token=token, method=method), data={"chat_id": chat, **data},
                           files=files, timeout=60)
-        return "sent" if r.ok else f"FAILED: Telegram {r.status_code}"   # no body: it could echo the token
+        if r.ok:
+            return "sent"
+        try:   # Telegram's short reason ("Bad Request: chat not found"); token stripped in case it's ever echoed
+            reason = str(r.json().get("description", ""))[:120].replace(token, "[token]")
+        except Exception:
+            reason = ""
+        return f"FAILED: Telegram {r.status_code}" + (f" ({reason})" if reason else "")
     except Exception as e:
         return f"FAILED: {type(e).__name__}"
 
