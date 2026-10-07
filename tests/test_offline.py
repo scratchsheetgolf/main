@@ -639,9 +639,10 @@ class PreviewCarouselTests(PipelineDryRunTests):
              mock.patch.object(notify_telegram.requests, "post", return_value=ok) as post:
             self.assertEqual(notify_telegram.send_text("hi"), "sent")
             self.assertEqual(post.call_args.kwargs["data"]["chat_id"], "42")
-            bad = mock.Mock(ok=False, status_code=401, text="token T rejected")
+            bad = mock.Mock(ok=False, status_code=400)
+            bad.json.return_value = {"description": "Bad Request: chat not found for T"}
             post.return_value = bad
-            self.assertEqual(notify_telegram.send_text("hi"), "FAILED: Telegram 401")   # body (could echo token) not surfaced
+            self.assertEqual(notify_telegram.send_text("hi"), "FAILED: Telegram 400 (Bad Request: chat not found for [token])")
 
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
