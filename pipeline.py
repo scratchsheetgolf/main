@@ -17,7 +17,7 @@ from content import content
 from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
                     render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand,
                     render_reel)
-from distribute import image_host, post_x, post_meta, post_tiktok
+from distribute import image_host, post_x, post_meta, post_tiktok, notify_telegram
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 
@@ -63,8 +63,13 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
             if alternatives:
                 f.write("\nOther options (swap in by hand if better):\n")
                 f.write("".join(f"- {alt}\n" for alt in alternatives))
+        pinged = None
+        if draft:   # drafts go to Mike's phone (no-op until the Telegram secrets exist)
+            alts = ("\n\nOther options:\n" + "\n".join(f"- {a}" for a in alternatives)) if alternatives else ""
+            pinged = notify_telegram.send_file(local_image_path, f"DRAFT (post by hand)\n\n{caption}{alts}")
         return {
             "DRY_RUN" if dry_run else "DRAFT": True,
+            "telegram": pinged,
             "would_post_image": local_image_path,
             "would_post_caption": caption,
             "caption_file": caption_path,
@@ -308,6 +313,14 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
                               dry_run=dry_run, draft=draft, alternatives=alternatives)
     try:
         result["carousel"] = build_picks_carousel(tour, event_name, preds, picks, image_path, caption)
+        car = result["carousel"]
+        if draft and notify_telegram.enabled():   # Instagram set to the phone: slides, Reel, caption
+            slides = [os.path.join(car["carousel_dir"], n) for n in car["slides"]]
+            with open(car["caption_file"], encoding="utf-8") as f:
+                ig_caption = f.read()
+            notify_telegram.send_album(slides, f"INSTAGRAM carousel ({tour_label(tour) or 'PGA TOUR · '}{event_name}) — caption:\n\n{ig_caption}")
+            if car.get("reel"):
+                notify_telegram.send_file(car["reel"], "INSTAGRAM Reel (add the song in the app; share to Story)")
     except Exception as e:  # the picks card above stands on its own
         print(f"carousel failed ({type(e).__name__}: {e}); picks card unaffected", file=sys.stderr)
         result["carousel"] = f"FAILED: {e}"

@@ -70,6 +70,8 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+          TELEGRAM_DRAFTS_TOKEN: ${{ secrets.TELEGRAM_DRAFTS_TOKEN }}
+          TELEGRAM_DRAFTS_CHAT_ID: ${{ secrets.TELEGRAM_DRAFTS_CHAT_ID }}
           META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
           META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
           META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
