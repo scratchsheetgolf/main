@@ -308,6 +308,8 @@ def detect_moments(live: dict, prev_scores: dict, already_sent=()) -> list:
             drop = prev["score"] - cur["score"]
             moments.append({
                 "key": f"hole:{dg}:{rnd}:{cur['thru']}", "kind": "big_hole", "priority": 3 if drop >= 3 else 2, "drop": drop,
+                "caption": (f"{cur['name']} goes {drop} under on one hole (round {rnd}, thru {cur['thru']}). "
+                            f"Now {cur['pos']} at {format_to_par(cur['score'])}."),
                 "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}", "inferred": True,
                 "facts": (f"{cur['name']} just played one hole in {drop} under par: his total went from "
                           f"{format_to_par(prev['score'])} to {format_to_par(cur['score'])} with one more hole "
@@ -318,17 +320,30 @@ def detect_moments(live: dict, prev_scores: dict, already_sent=()) -> list:
         if today is not None and today <= -6 and cur["rank"] <= 10 and cur["thru"] < 18:
             moments.append({
                 "key": f"charge:{dg}:{rnd}", "kind": "charge", "priority": 1, "inferred": False,
+                "caption": (f"{cur['name']} is {format_to_par(today)} through {cur['thru']} in round {rnd}. "
+                            f"Now {cur['pos']} at {format_to_par(cur['score'])}."),
                 "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}",
                 "facts": (f"{cur['name']} is {format_to_par(today)} for round {rnd} through {cur['thru']} holes, "
                           f"{where}. {lead_line}")})
         if prev and prev["rank"] <= 3 and today is not None and today >= 3:
             moments.append({
                 "key": f"collapse:{dg}:{rnd}", "kind": "collapse", "priority": 1, "inferred": False,
+                "caption": (f"{cur['name']} was {prev['pos']} and is {format_to_par(today)} for round {rnd} "
+                            f"through {cur['thru']}. Now {cur['pos']} at {format_to_par(cur['score'])}."),
                 "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}",
                 "facts": (f"{cur['name']} was {prev['pos']} at the last check but is {format_to_par(today)} for "
                           f"round {rnd} through {cur['thru']} holes, {where}. {lead_line}")})
     moments = [m for m in moments if m["key"] not in set(already_sent)]
     return sorted(moments, key=lambda m: (-m["priority"], now[m["key"].split(":")[1]]["rank"]))
+
+
+def final_caption(event_name: str, top5: list) -> str:
+    """Data-only caption for the final leaderboard (used when posting automatically)."""
+    if not top5:
+        return f"{event_name}: final."
+    win = top5[0]
+    rest = "; ".join(f"{p['pos']} {p['name']} {p['score']}" for p in top5[1:])
+    return f"{event_name} final: {win['name']} wins at {win['score']}." + (f" Then: {rest}." if rest else "")
 
 
 def moment_fallback(m: dict) -> tuple:

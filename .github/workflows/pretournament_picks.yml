@@ -11,7 +11,7 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'true = dry run (nothing saved). false = draft, or a real post only if the AUTO_POST repo variable is true.'
+        description: 'true = dry run (nothing saved). false = draft (picks are always drafts for review; AUTO_POST is ignored).'
         required: false
         default: 'true'
 
@@ -71,11 +71,11 @@ jobs:
           POST_PLATFORMS: ${{ vars.POST_PLATFORMS }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Posting is manual until the AUTO_POST repo variable is set to true:
+          # Always a draft (posted by hand after review), even when AUTO_POST is on:
           # until then scheduled runs make drafts (saved state + image/caption attached to the run).
           FLAG="--draft"
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"
-          elif [ "${{ vars.AUTO_POST }}" = "true" ]; then FLAG=""; fi
+          fi  # AUTO_POST is deliberately ignored here: picks/intel are AI-written and always reviewed by Mike first
           echo "mode: ${FLAG:-real post}"
           python pipeline.py picks --tour ${{ matrix.tour }} --event-tag "${{ github.event.inputs.event_tag }}" $FLAG
 

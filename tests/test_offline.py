@@ -657,6 +657,48 @@ class PreviewCarouselTests(PipelineDryRunTests):
         with mock.patch.object(notify_telegram, "quiet_now", return_value=True):
             self.assertEqual(notify_telegram.send_file("x.png", "c", respect_quiet=True), "held (quiet hours)")
 
+    def _auto_poll(self, rows, prev, rnd=2, final_thru=None):
+        live = {"info": {"event_name": "Fake Invitational", "current_round": rnd}, "data": rows}
+        posts = []
+        def fake_post(path, caption, **kw):
+            posts.append({"path": os.path.basename(path), "caption": caption, "draft": kw.get("draft"), "dry": kw.get("dry_run")})
+            return {"ok": True}
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=live), \
+             mock.patch.object(state, "load", return_value=prev), \
+             mock.patch.object(state, "save") as saved, \
+             mock.patch.object(pipeline, "_post_everywhere", side_effect=fake_post), \
+             mock.patch.object(content, "generate_live_reaction") as writer, \
+             mock.patch.object(content, "generate_hot_take", return_value={"lines": ["A", "B", "C", "D"], "kicker": "k", "alternatives": []}), \
+             mock.patch.object(pipeline, "render_live_alert"), mock.patch.object(pipeline, "render_hot_take"), \
+             mock.patch.object(pipeline, "render_leaderboard"):
+            pipeline.run_live_poll(dry_run=False, draft=False)
+        return posts, writer, saved.call_args.args[0]
+
+    def test_auto_mode_posts_only_alerts_with_data_text(self):
+        prev = {"event_name": "Fake Invitational", "leader_name": "Old Leader", "last_leaderboard_post_ts": 0,
+                "live_scores": {"3": {"name": "Cy Hot", "pos": "2", "score": -11, "today": -4, "thru": 10, "rank": 2}}}
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
+        posts, writer, saved = self._auto_poll(rows, prev)
+        by = {p["path"]: p for p in posts}
+        self.assertFalse(by["live_alert.png"]["draft"])                     # alert really posts
+        self.assertEqual(by["live_alert.png"]["caption"], "Cy Hot goes 3 under on one hole (round 2, thru 11). Now 1 at -14.")
+        writer.assert_not_called()                                           # no AI wording when unattended
+        self.assertTrue(by["hot_take_live.png"]["draft"])                    # lead change -> draft only
+        self.assertTrue(by["leaderboard_live.png"]["draft"])                 # hourly leaderboard -> draft only
+
+    def test_auto_mode_final_leaderboard_posts_once(self):
+        rows = [{"dg_id": 1, "player_name": "Win, Al", "current_pos": "1", "current_score": -20, "today": -3, "thru": 18},
+                {"dg_id": 2, "player_name": "Two, Bo", "current_pos": "2", "current_score": -18, "today": -1, "thru": 18}]
+        prev = {"event_name": "Fake Invitational", "leader_name": "Al Win", "last_leaderboard_post_ts": 0}
+        posts, _, saved = self._auto_poll(rows, prev, rnd=4)
+        final = [p for p in posts if p["path"] == "leaderboard_live.png"]
+        self.assertEqual(len(final), 1)
+        self.assertFalse(final[0]["draft"])
+        self.assertEqual(final[0]["caption"], "Fake Invitational final: Al Win wins at -20. Then: 2 Bo Two -18.")
+        self.assertEqual(saved["final_posted"], "Fake Invitational")
+        posts2, _, _ = self._auto_poll(rows, {**prev, "final_posted": "Fake Invitational"}, rnd=4)
+        self.assertEqual([p for p in posts2 if p["path"] == "leaderboard_live.png"], [])
+
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
         photo, entry = player_photos.lookup("Ludvig Aberg")          # matches "Ludvig Åberg"

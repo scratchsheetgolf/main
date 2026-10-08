@@ -333,11 +333,18 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
 MAX_LIVE_ALERTS = 3   # per round, per tour
 
 
-def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool):
-    """Render + post one Live Alert card. Lines come from the writer (checked: numbers must be in the facts,
-    and no eagle/ace wording when the moment was inferred); data-only fallback lines otherwise."""
+def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool, auto: bool = False):
+    """Render + post one Live Alert card. Drafts: lines from the writer (checked: numbers must be in the facts,
+    and no eagle/ace wording when the moment was inferred), data-only fallback otherwise.
+    auto (posting for real, unattended): data-only lines and caption, no AI wording at all."""
     facts = f"Tour: {TOUR_NAMES.get(tour, tour)}. Event: {event_name}.\n{m['facts']}"
     options = []
+    if auto:
+        line1, line2, reaction = transform.moment_fallback(m)
+        image_path = os.path.join(OUTPUT_DIR, "live_alert.png")
+        render_live_alert(hole_moment=tour_label(tour) + m["hole_moment"], event_line_1=line1.upper(),
+                          event_line_2=line2.upper(), reaction=reaction, out_path=image_path)
+        return _post_everywhere(image_path, m["caption"], dry_run=dry_run, draft=draft, live=True)
     try:
         res = content.generate_live_reaction(facts)
         if res:
@@ -390,7 +397,11 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     prev_leader = prev.get("leader_name") if prev.get("event_name") == event_name else None
     current_leader = transform.display_name(current_leaderboard[0].get("player_name", "")) if current_leaderboard else None
 
-    # Trigger 1: leader change -> Hot Take (always worth posting, this is rare by definition)
+    # Auto mode (AUTO_POST on, unattended) posts ONLY live alerts + the final leaderboard, with data-only
+    # wording. Hot takes and hourly leaderboards still get made, but as Telegram drafts for Mike.
+    auto = not (dry_run or draft)
+
+    # Trigger 1: leader change -> Hot Take (draft only in auto mode: it's AI-written)
     if current_leader and prev_leader and current_leader != prev_leader:
         try:
             take = content.generate_hot_take(f"Tour: {TOUR_NAMES.get(tour, tour)}\n"
@@ -406,13 +417,13 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
             image_path = os.path.join(OUTPUT_DIR, "hot_take_live.png")
             render_hot_take(lines=take["lines"], kicker=take["kicker"], out_path=image_path)
             alt_notes = []
-            if dry_run or draft:  # render the other options too, so a person can post the best card
+            if dry_run or draft or auto:  # render the other options too, so a person can post the best card
                 for i, alt in enumerate(take["alternatives"], start=1):
                     alt_path = os.path.join(OUTPUT_DIR, f"hot_take_live_alt{i}.png")
                     render_hot_take(lines=alt["lines"], kicker=alt["kicker"], out_path=alt_path)
                     alt_notes.append(f"{os.path.basename(alt_path)}: {' / '.join(alt['lines'])} {alt['kicker']}")
             actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run,
-                                                               draft=draft, alternatives=alt_notes, live=True)))
+                                                               draft=draft or auto, alternatives=alt_notes, live=True)))
 
     # Trigger 2: big moments (big hole / charge / collapse) -> Live Alert card. Capped so the account
     # doesn't read like a bot: at most one per poll, 20 min apart, MAX_LIVE_ALERTS per round.
@@ -424,7 +435,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     gap_ok = (time_module.time() - alerts.get("last_ts", 0)) / 60 >= 20
     if moments and len(alerts["sent"]) < MAX_LIVE_ALERTS and gap_ok:
         m = moments[0]
-        actions_taken.append(("live_alert", _live_alert(m, tour, event_name, dry_run, draft)))
+        actions_taken.append(("live_alert", _live_alert(m, tour, event_name, dry_run, draft, auto=auto)))
         alerts["sent"].append(m["key"])
         if not dry_run:
             alerts["last_ts"] = time_module.time()
@@ -438,7 +449,10 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     last_post_ts = prev.get("last_leaderboard_post_ts", 0)
     minutes_since_last = (now - last_post_ts) / 60
 
-    if minutes_since_last >= min_leaderboard_gap_minutes:
+    final_done = final and prev.get("final_posted") == event_name   # one final leaderboard per event
+    if final_done:
+        actions_taken.append(("leaderboard", "skipped: final leaderboard already done for this event"))
+    elif final or minutes_since_last >= min_leaderboard_gap_minutes:
         top5 = [{"pos": str(p.get("current_pos", "")),
                  "name": transform.display_name(p.get("player_name", "")),
                  "score": transform.format_to_par(p.get("current_score"))}
@@ -447,20 +461,26 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         render_leaderboard(event=event_name.upper(),
                            round_label=tour_label(tour) + ("FINAL" if final else (f"ROUND {current_round} · LIVE" if current_round else "LIVE")),
                             players=top5, out_path=image_path)
-        caption, alternatives = _caption(
-            "final leaderboard" if final else "live leaderboard",
-            f"{TOUR_NAMES.get(tour, tour)}. "
-            + (f"{event_name} FINAL results (the event is over), top 5: " if final
-               else f"{event_name} round {current_round}, in progress, top 5: ")
-            + "; ".join(f"{p['pos']} {p['name']} {p['score']}" for p in top5), event_tag,
-            fallback=(f"{event_name} final: {current_leader} wins." if final
-                      else f"{event_name} leaderboard: {current_leader} leads."),
-            allow_fallback=dry_run or draft,
-        )
-        actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft,
+        if auto and final:      # unattended post: data-only caption
+            caption, alternatives = transform.final_caption(event_name, top5) + (f" {event_tag}" if event_tag else ""), []
+        else:
+            caption, alternatives = _caption(
+              "final leaderboard" if final else "live leaderboard",
+              f"{TOUR_NAMES.get(tour, tour)}. "
+              + (f"{event_name} FINAL results (the event is over), top 5: " if final
+                 else f"{event_name} round {current_round}, in progress, top 5: ")
+              + "; ".join(f"{p['pos']} {p['name']} {p['score']}" for p in top5), event_tag,
+              fallback=(f"{event_name} final: {current_leader} wins." if final
+                        else f"{event_name} leaderboard: {current_leader} leads."),
+              allow_fallback=dry_run or draft or not final,
+            )
+        actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run,
+                                                              draft=draft or (auto and not final),
                                                               alternatives=alternatives, live=True)))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
+            if final:
+                prev = {**prev, "final_posted": event_name}
     else:
         actions_taken.append(("leaderboard", f"skipped, only {minutes_since_last:.0f} min since last post"))
 
