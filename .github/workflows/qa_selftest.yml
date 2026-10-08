@@ -1,0 +1,21 @@
+name: QA reviewer self-test
+
+# Manual only. Calls the real QA reviewer (content.qa_review) with one correct and one
+# deliberately wrong post; fails unless it passes the first and fails the second. No posting.
+on:
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run the reviewer on a correct and a wrong post
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python pipeline.py qa-selftest

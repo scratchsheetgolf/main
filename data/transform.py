@@ -301,13 +301,15 @@ def detect_moments(live: dict, prev_scores: dict, already_sent=()) -> list:
     moments = []
     for dg, cur in now.items():
         prev = (prev_scores or {}).get(dg)
+        base = {"dg_id": dg, "score": cur["score"], "pos": cur["pos"], "thru": cur["thru"], "round": rnd}
         where = f"now {cur['pos']} at {format_to_par(cur['score'])}"
         lead_line = (f"Leader: {leader['name']} at {format_to_par(leader['score'])}."
                      if leader and leader["name"] != cur["name"] else "He leads the tournament.")
         if prev and cur["thru"] - prev["thru"] == 1 and prev["score"] - cur["score"] >= 2 and cur["rank"] <= 30:
             drop = prev["score"] - cur["score"]
-            moments.append({
+            moments.append({**base,
                 "key": f"hole:{dg}:{rnd}:{cur['thru']}", "kind": "big_hole", "priority": 3 if drop >= 3 else 2, "drop": drop,
+                "prev_score": prev["score"], "prev_thru": prev["thru"],
                 "caption": (f"{cur['name']} goes {drop} under on one hole (round {rnd}, thru {cur['thru']}). "
                             f"Now {cur['pos']} at {format_to_par(cur['score'])}."),
                 "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}", "inferred": True,
@@ -318,16 +320,17 @@ def detect_moments(live: dict, prev_scores: dict, already_sent=()) -> list:
                           "albatross or hole-in-one; say how many under he went on one hole.")})
         today = cur["today"]
         if today is not None and today <= -6 and cur["rank"] <= 10 and cur["thru"] < 18:
-            moments.append({
-                "key": f"charge:{dg}:{rnd}", "kind": "charge", "priority": 1, "inferred": False,
+            moments.append({**base,
+                "key": f"charge:{dg}:{rnd}", "kind": "charge", "priority": 1, "inferred": False, "today": today,
                 "caption": (f"{cur['name']} is {format_to_par(today)} through {cur['thru']} in round {rnd}. "
                             f"Now {cur['pos']} at {format_to_par(cur['score'])}."),
                 "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}",
                 "facts": (f"{cur['name']} is {format_to_par(today)} for round {rnd} through {cur['thru']} holes, "
                           f"{where}. {lead_line}")})
         if prev and prev["rank"] <= 3 and today is not None and today >= 3:
-            moments.append({
+            moments.append({**base,
                 "key": f"collapse:{dg}:{rnd}", "kind": "collapse", "priority": 1, "inferred": False,
+                "prev_pos": prev["pos"], "today": today,
                 "caption": (f"{cur['name']} was {prev['pos']} and is {format_to_par(today)} for round {rnd} "
                             f"through {cur['thru']}. Now {cur['pos']} at {format_to_par(cur['score'])}."),
                 "name": cur["name"], "hole_moment": f"ROUND {rnd} · THRU {cur['thru']}",

@@ -72,6 +72,35 @@ def _generate(system: str, user: str, max_tokens: int = 300, temperature: float 
     return "".join(b.text for b in resp.content if b.type == "text").strip()
 
 
+QA_MODEL = "claude-sonnet-5-5"   # reviewer is stronger than the writer; ~10 checks/week, pennies
+
+
+def qa_review(raw_data: str, post_text: str) -> tuple:
+    """Independent check before anything posts unattended. Returns (passed, reason).
+    Any error, timeout or unclear answer counts as a FAIL (the post becomes a draft instead)."""
+    system = (
+        "You are the last check before an automated golf post goes public on X with no human review. "
+        "You get RAW DATA (fresh from the live feed) and the POST TEXT (card + caption). PASS only if every "
+        "name, number, position, round and hole count in the post matches the raw data exactly, and the post "
+        "claims nothing the data doesn't show (e.g. 'eagle', 'ace', 'record', a hole number, a winner before "
+        "the event is final). Answer with exactly one line: PASS, or FAIL: <short reason>."
+    )
+    try:
+        # Sonnet 5.5 thinks before answering and thinking counts against max_tokens; it rejects a custom
+        # temperature, so none is sent.
+        resp = client.messages.create(
+            model=QA_MODEL, max_tokens=4000, system=system,
+            messages=[{"role": "user", "content": f"RAW DATA:\n{raw_data}\n\nPOST TEXT:\n{post_text}"}],
+        )
+        answer = "".join(b.text for b in resp.content if b.type == "text").strip()
+    except Exception as e:
+        return False, f"QA call failed ({type(e).__name__})"
+    first = answer.splitlines()[0].strip() if answer else ""
+    if first.upper() == "PASS":
+        return True, "PASS"
+    return False, first[:200] if first.upper().startswith("FAIL") else f"unclear QA answer: {first[:120]!r}"
+
+
 # ---- checking ----
 
 _NUMBER = re.compile(r"\d+(?:\.\d+)?")

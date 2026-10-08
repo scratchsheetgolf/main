@@ -657,15 +657,17 @@ class PreviewCarouselTests(PipelineDryRunTests):
         with mock.patch.object(notify_telegram, "quiet_now", return_value=True):
             self.assertEqual(notify_telegram.send_file("x.png", "c", respect_quiet=True), "held (quiet hours)")
 
-    def _auto_poll(self, rows, prev, rnd=2, final_thru=None):
+    def _auto_poll(self, rows, prev, rnd=2, final_thru=None, qa=(True, "PASS"), refetch=None):
         live = {"info": {"event_name": "Fake Invitational", "current_round": rnd}, "data": rows}
+        feeds = [live] + ([refetch] if refetch else [live] * 3)
         posts = []
         def fake_post(path, caption, **kw):
             posts.append({"path": os.path.basename(path), "caption": caption, "draft": kw.get("draft"), "dry": kw.get("dry_run")})
             return {"ok": True}
-        with mock.patch.object(datagolf, "get_live_in_play", return_value=live), \
+        with mock.patch.object(datagolf, "get_live_in_play", side_effect=feeds + [live] * 3), \
              mock.patch.object(state, "load", return_value=prev), \
              mock.patch.object(state, "save") as saved, \
+             mock.patch.object(content, "qa_review", return_value=qa) as self.qa_mock, \
              mock.patch.object(pipeline, "_post_everywhere", side_effect=fake_post), \
              mock.patch.object(content, "generate_live_reaction") as writer, \
              mock.patch.object(content, "generate_hot_take", return_value={"lines": ["A", "B", "C", "D"], "kicker": "k", "alternatives": []}), \
@@ -698,6 +700,29 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertEqual(saved["final_posted"], "Fake Invitational")
         posts2, _, _ = self._auto_poll(rows, {**prev, "final_posted": "Fake Invitational"}, rnd=4)
         self.assertEqual([p for p in posts2 if p["path"] == "leaderboard_live.png"], [])
+
+    def test_auto_alert_held_as_draft_when_qa_fails(self):
+        prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 9e12,
+                "live_scores": {"3": {"name": "Cy Hot", "pos": "2", "score": -11, "today": -4, "thru": 10, "rank": 2}}}
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
+        posts, _, _ = self._auto_poll(rows, prev, qa=(False, "FAIL: position wrong"))
+        alert = next(p for p in posts if p["path"] == "live_alert.png")
+        self.assertTrue(alert["draft"])
+        self.assertTrue(alert["caption"].startswith("QA HELD (FAIL: position wrong)"))
+        raw = self.qa_mock.call_args.args[0]
+        self.assertIn('"prev_score": -11', raw)                      # reviewer sees the previous poll too
+
+    def test_auto_alert_held_when_fresh_feed_disagrees(self):
+        prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 9e12,
+                "live_scores": {"3": {"name": "Cy Hot", "pos": "2", "score": -11, "today": -4, "thru": 10, "rank": 2}}}
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
+        moved = {"info": {"event_name": "Fake Invitational", "current_round": 2},
+                 "data": [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -13, "today": -6, "thru": 11}]}
+        posts, _, _ = self._auto_poll(rows, prev, refetch=moved)
+        alert = next(p for p in posts if p["path"] == "live_alert.png")
+        self.assertTrue(alert["draft"])
+        self.assertIn("score changed since detection", alert["caption"])
+        self.qa_mock.assert_not_called()                              # code check failed first; no AI call
 
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
