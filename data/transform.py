@@ -262,12 +262,15 @@ def _score_int(v):
 
 
 def _thru_int(v):
-    """Holes completed this round: "F"/"18" -> 18, "7" -> 7, not started -> 0."""
-    text = str(v if v is not None else "").strip().upper()
+    """Holes completed this round: "F"/"18" -> 18, "7"/"7*" -> 7; anything else (not started, a tee time
+    like "1:20 PM", blank) -> 0. Strict on purpose: pulling digits out of a tee time ("1:20" -> 120) made a
+    half-played round look finished (Open de España R1, 2026-10-08)."""
+    text = str(v if v is not None else "").strip().upper().rstrip("*")
     if text == "F":
         return 18
-    digits = "".join(ch for ch in text if ch.isdigit())
-    return int(digits) if digits else 0
+    if text.isdigit() and 0 <= int(text) <= 18:
+        return int(text)
+    return 0
 
 
 def live_scores(live: dict) -> dict:

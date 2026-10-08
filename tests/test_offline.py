@@ -736,6 +736,13 @@ class PreviewCarouselTests(PipelineDryRunTests):
         "win": {"name": "Xander Schauffele", "dg_id": 2}, "value": {"name": "Ryan Gerard", "dg_id": 3},
         "fade": {"name": "Jacob Bridgeman", "dg_id": 1}, "sleeper": {"name": "Ryo Hisatsune", "dg_id": 4}}}
 
+    def test_thru_is_strict_about_tee_times(self):
+        for raw, want in [("F", 18), (18, 18), ("12", 12), ("9*", 9), ("1:20 PM", 0), ("", 0), (None, 0), ("120", 0)]:
+            self.assertEqual(transform._thru_int(raw), want, raw)
+        live = self._wrap_live()
+        live["data"][3]["thru"] = "1:20 PM"          # hasn't teed off yet
+        self.assertFalse(transform.round_complete(live))
+
     def test_round_complete_ignores_withdrawn_players(self):
         self.assertTrue(transform.round_complete(self._wrap_live()))
         self.assertFalse(transform.round_complete(self._wrap_live(thru_last=16)))
