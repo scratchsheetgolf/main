@@ -192,6 +192,30 @@ sl.append(f'<text x="98" y="1090" font-family="Permanent Marker" font-size="30" 
 sl.append(footer())
 open(f"{OUT}/stat_list.svg", "w").write("".join(sl))
 
+# ---------- round wrap: leader + where our four picks stand ----------
+wy = [554 + i * 110 for i in range(4)]          # row tops
+rw = [head("round wrap"), frame_inner(), topline("THE WRAP"),
+      f'<text x="540" y="268" font-family="DM Serif Display" font-size="76" fill="{INK}" text-anchor="middle" data-fit="880">__TITLE__</text>\n',
+      f'<text x="540" y="320" font-family="Barlow SemiBold" font-size="24" fill="{PENCIL}" letter-spacing="3" text-anchor="middle" data-fit="880">__SUBTITLE__</text>\n',
+      f'<rect x="80" y="356" width="920" height="112" fill="{GREEN}"/>\n',
+      f'<text x="110" y="398" font-family="Barlow Condensed SemiBold" font-size="24" fill="{PAPER}" letter-spacing="5">LEADER</text>\n',
+      f'<text x="110" y="450" font-family="DM Serif Display" font-size="50" fill="{PAPER}" data-fit="620">__LEADER__</text>\n',
+      f'<text x="920" y="446" font-family="Anton" font-size="64" fill="{PAPER}" text-anchor="middle" data-fit="150">__LEADER_SCORE__</text>\n',
+      f'<rect x="80" y="500" width="920" height="54" fill="{INK}"/>\n',
+      f'<g font-family="Barlow Condensed SemiBold" font-size="26" fill="{PAPER}" letter-spacing="4"><text x="165" y="536" text-anchor="middle">PICK</text>'
+      f'<text x="272" y="536">PLAYER</text><text x="790" y="536" text-anchor="middle">POS</text><text x="925" y="536" text-anchor="middle">TO PAR</text></g>\n',
+      f'<g stroke="{RULE}" stroke-width="2">' + "".join(f'<line x1="80" y1="{y + 110}" x2="1000" y2="{y + 110}"/>' for y in wy[:-1]) +
+      f'<line x1="250" y1="554" x2="250" y2="994"/><line x1="720" y1="554" x2="720" y2="994"/><line x1="860" y1="554" x2="860" y2="994"/></g>\n',
+      f'<rect x="80" y="554" width="920" height="440" fill="none" stroke="{INK}" stroke-width="2"/>\n']
+for i, (y, label) in enumerate(zip(wy, ["WIN", "VALUE", "FADE", "SLEEPER"]), 1):
+    rw.append(f'<text x="165" y="{y + 68}" font-family="Barlow Condensed SemiBold" font-size="34" fill="{RED}" letter-spacing="3" text-anchor="middle">{label}</text>\n')
+    rw.append(f'<text x="272" y="{y + 70}" font-family="DM Serif Display" font-size="44" fill="{INK}" data-fit="430">__NAME_{i}__</text>\n')
+    rw.append(f'<text x="790" y="{y + 74}" font-family="Anton" font-size="52" fill="{INK}" text-anchor="middle" data-fit="125">__POS_{i}__</text>\n')
+    rw.append(f'<text x="925" y="{y + 74}" font-family="Anton" font-size="52" fill="{RED}" text-anchor="middle" data-fit="120">__SCORE_{i}__</text>\n')
+rw.append(f'<text x="98" y="1090" font-family="Permanent Marker" font-size="32" fill="{SHARPIE}" transform="rotate(-2 98 1090)" data-fit="880">__NOTE__</text>\n')
+rw.append(footer())
+open(f"{OUT}/round_wrap.svg", "w").write("".join(rw))
+
 # ---------- carousel: closing slide ----------
 cl = [head("closer"), frame_inner(), hole_strip(96, 10),
       f'<text x="540" y="560" font-family="Anton" font-size="200" fill="{INK}" text-anchor="middle">RECEIPTS</text>\n',

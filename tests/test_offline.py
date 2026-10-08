@@ -724,6 +724,54 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertIn("score changed since detection", alert["caption"])
         self.qa_mock.assert_not_called()                              # code check failed first; no AI call
 
+    def _wrap_live(self, thru_last=18):
+        rows = [{"dg_id": 1, "player_name": "Bridgeman, Jacob", "current_pos": "1", "current_score": -7, "today": -7, "thru": 18},
+                {"dg_id": 2, "player_name": "Schauffele, Xander", "current_pos": "T14", "current_score": -2, "today": -2, "thru": 18},
+                {"dg_id": 3, "player_name": "Gerard, Ryan", "current_pos": "T31", "current_score": 0, "today": 0, "thru": "F"},
+                {"dg_id": 4, "player_name": "Hisatsune, Ryo", "current_pos": "T52", "current_score": 1, "today": 1, "thru": thru_last},
+                {"dg_id": 5, "player_name": "Gone, Guy", "current_pos": "WD", "current_score": 5, "today": 5, "thru": 9}]
+        return {"info": {"event_name": "Baycurrent Classic", "current_round": 1}, "data": rows}
+
+    PICKS = {"event_name": "Baycurrent Classic", "picks": {
+        "win": {"name": "Xander Schauffele", "dg_id": 2}, "value": {"name": "Ryan Gerard", "dg_id": 3},
+        "fade": {"name": "Jacob Bridgeman", "dg_id": 1}, "sleeper": {"name": "Ryo Hisatsune", "dg_id": 4}}}
+
+    def test_round_complete_ignores_withdrawn_players(self):
+        self.assertTrue(transform.round_complete(self._wrap_live()))
+        self.assertFalse(transform.round_complete(self._wrap_live(thru_last=16)))
+
+    def test_round_wrap_is_data_only_and_owns_the_fade(self):
+        w = transform.round_wrap(self._wrap_live(), self.PICKS)
+        self.assertEqual((w["leader"], w["leader_score"]), ("Jacob Bridgeman", "-7"))
+        self.assertEqual(w["picks"][2], ("Jacob Bridgeman", "1", "-7"))
+        self.assertEqual(w["note"], "our fade is leading. we'll own that sunday.")
+        self.assertEqual(w["caption"], "Baycurrent Classic after round 1: Jacob Bridgeman leads at -7. Our card: "
+                         "WIN Schauffele T14 · VALUE Gerard T31 · FADE Bridgeman 1 · SLEEPER Hisatsune T52. "
+                         "Low round: Jacob Bridgeman -7.")
+
+    def test_round_wrap_posts_once_and_waits_out_quiet_hours(self):
+        from distribute import notify_telegram
+        live = self._wrap_live()
+        prev = {"event_name": "Baycurrent Classic", "leader_name": "Jacob Bridgeman", "last_leaderboard_post_ts": 9e12,
+                "last_picks": self.PICKS}
+        def poll(prev_state, quiet):
+            with mock.patch.object(datagolf, "get_live_in_play", return_value=live), \
+                 mock.patch.object(state, "load", return_value=prev_state), \
+                 mock.patch.object(state, "save") as saved, \
+                 mock.patch.object(notify_telegram, "quiet_now", return_value=quiet), \
+                 mock.patch.object(pipeline, "render_round_wrap") as card, \
+                 mock.patch.object(pipeline, "_post_everywhere", return_value={"ok": True}) as post:
+                out = pipeline.run_live_poll(draft=True)
+            return dict(out["actions"]), card, post, saved.call_args.args[0]
+        acts, card, post, saved = poll(prev, quiet=True)
+        self.assertIn("held until quiet hours end", acts["round_wrap"])
+        card.assert_not_called()
+        acts, card, post, saved = poll(prev, quiet=False)
+        card.assert_called_once()
+        self.assertEqual(saved["wraps"], [1])
+        acts, card, post, saved = poll({**prev, "wraps": [1]}, quiet=False)
+        self.assertNotIn("round_wrap", acts)
+
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
         photo, entry = player_photos.lookup("Ludvig Aberg")          # matches "Ludvig Åberg"

@@ -16,7 +16,7 @@ from data import datagolf, state, transform
 from content import content
 from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
                     render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand,
-                    render_reel)
+                    render_reel, render_round_wrap)
 from distribute import image_host, post_x, post_meta, post_tiktok, notify_telegram
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
@@ -496,6 +496,34 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         actions_taken.append(("live_alert", f"held: {len(moments)} moment(s), cap {len(alerts['sent'])}/"
                                             f"{MAX_LIVE_ALERTS} or under 20 min since the last alert"))
 
+    # Trigger 2b: round wrap ("After Round N": leader + where our picks stand), once per round, data-only.
+    # Held during quiet hours so overseas rounds become a morning post for a US audience.
+    wraps = list(prev.get("wraps") or []) if prev.get("event_name") == event_name else []
+    saved_picks = prev.get("last_picks") or {}
+    have_picks = transform.event_key(saved_picks.get("event_name")) == transform.event_key(event_name)
+    if not final and current_round and current_round not in wraps and have_picks and transform.round_complete(live):
+        if notify_telegram.quiet_now():
+            actions_taken.append(("round_wrap", f"round {current_round} done; held until quiet hours end"))
+        else:
+            wrap = transform.round_wrap(live, saved_picks, event_tag)
+            image_path = os.path.join(OUTPUT_DIR, "round_wrap.png")
+            render_round_wrap(wrap["title"], f"{tour_label(tour)}{transform.short_event_name(event_name).upper()}",
+                              wrap["leader"], wrap["leader_score"], wrap["picks"], wrap["note"], image_path)
+            caption, wrap_draft = wrap["caption"], draft
+            if auto:
+                def same_wrap(info, rows):
+                    fresh = transform.round_wrap({"info": info, "data": rows}, saved_picks, event_tag)
+                    same = (fresh["picks"], fresh["leader"], fresh["leader_score"]) == (wrap["picks"], wrap["leader"], wrap["leader_score"])
+                    return same, ("" if same else "standings changed since the card was made")
+                passed, why = _qa_gate(tour, event_name, f"CARD: {wrap}\nCAPTION: {caption}", expect_final=False,
+                                       check_row=same_wrap)
+                if not passed:
+                    wrap_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
+            actions_taken.append(("round_wrap", _post_everywhere(image_path, caption, dry_run=dry_run,
+                                                                 draft=wrap_draft, live=False)))
+            if not dry_run:
+                wraps.append(current_round)
+
     # Trigger 3: leaderboard snapshot — throttled to once per min_leaderboard_gap_minutes,
     # NOT every poll. A poll that doesn't clear the gap just updates state and exits.
     now = time_module.time()
@@ -551,7 +579,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     state.save({**prev, "event_name": event_name, "leader_name": current_leader,
                 "last_leaderboard_post_ts": last_post_ts,
                 "standings": transform.standings_snapshot(live),
-                "live_scores": transform.live_scores(live), "alerts": alerts}, commit=not dry_run, tour=tour)
+                "live_scores": transform.live_scores(live), "alerts": alerts, "wraps": wraps}, commit=not dry_run, tour=tour)
     return {"actions": actions_taken}
 
 
