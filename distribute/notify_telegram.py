@@ -20,6 +20,17 @@ def _creds():
     return os.environ.get("TELEGRAM_DRAFTS_TOKEN"), os.environ.get("TELEGRAM_DRAFTS_CHAT_ID")
 
 
+def quiet_now(now=None) -> bool:
+    """True during Mike's quiet hours, when live drafts are held (not pinged). Repo variables:
+    QUIET_TZ (default America/Los_Angeles), QUIET_START/QUIET_END hours (default 22 -> 7)."""
+    import datetime
+    from zoneinfo import ZoneInfo
+    tz = ZoneInfo(os.environ.get("QUIET_TZ") or "America/Los_Angeles")
+    start, end = int(os.environ.get("QUIET_START") or 22), int(os.environ.get("QUIET_END") or 7)
+    hour = (now or datetime.datetime.now(tz)).astimezone(tz).hour
+    return (hour >= start or hour < end) if start > end else (start <= hour < end)
+
+
 def enabled() -> bool:
     token, chat = _creds()
     return bool(token and chat)
@@ -47,8 +58,11 @@ def send_text(text: str) -> str:
     return _call("sendMessage", {"text": text[:4096]})
 
 
-def send_file(path: str, caption: str = "") -> str:
-    """Photo for .png/.jpg, video for .mp4, document otherwise. Long captions go as a follow-up message."""
+def send_file(path: str, caption: str = "", respect_quiet: bool = False) -> str:
+    """Photo for .png/.jpg, video for .mp4, document otherwise. Long captions go as a follow-up message.
+    respect_quiet: skip during quiet hours (live drafts; the next leaderboard after quiet hours pings)."""
+    if respect_quiet and quiet_now():
+        return "held (quiet hours)"
     ext = os.path.splitext(path)[1].lower()
     method, field = (("sendPhoto", "photo") if ext in (".png", ".jpg", ".jpeg")
                      else ("sendVideo", "video") if ext == ".mp4" else ("sendDocument", "document"))
