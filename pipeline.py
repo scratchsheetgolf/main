@@ -46,7 +46,7 @@ def enabled_platforms() -> set:
 
 
 def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "",
-                     dry_run: bool = False, draft: bool = False, alternatives: list = None):
+                     dry_run: bool = False, draft: bool = False, alternatives: list = None, live: bool = False):
     """Posts the same image+caption to all four platforms. Each call is wrapped
     so one platform's failure (e.g. TikTok still pre-audit) doesn't block the rest.
 
@@ -66,7 +66,8 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
         pinged = None
         if draft:   # drafts go to Mike's phone (no-op until the Telegram secrets exist)
             alts = ("\n\nOther options:\n" + "\n".join(f"- {a}" for a in alternatives)) if alternatives else ""
-            pinged = notify_telegram.send_file(local_image_path, f"DRAFT (post by hand)\n\n{caption}{alts}")
+            pinged = notify_telegram.send_file(local_image_path, f"DRAFT (post by hand)\n\n{caption}{alts}",
+                                               respect_quiet=live)
         return {
             "DRY_RUN" if dry_run else "DRAFT": True,
             "telegram": pinged,
@@ -357,7 +358,7 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool)
                       event_line_2=line2.upper(), reaction=reaction, out_path=image_path)
     alt_notes = [f"{o['event_line_1']} / {o['event_line_2']} — {o['reaction']}" for o in options[1:]]
     caption = f"{m['name']}: {reaction}" if reaction else m["name"]
-    return _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft, alternatives=alt_notes)
+    return _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft, alternatives=alt_notes, live=True)
 
 
 def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_run: bool = False,
@@ -411,7 +412,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                     render_hot_take(lines=alt["lines"], kicker=alt["kicker"], out_path=alt_path)
                     alt_notes.append(f"{os.path.basename(alt_path)}: {' / '.join(alt['lines'])} {alt['kicker']}")
             actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run,
-                                                               draft=draft, alternatives=alt_notes)))
+                                                               draft=draft, alternatives=alt_notes, live=True)))
 
     # Trigger 2: big moments (big hole / charge / collapse) -> Live Alert card. Capped so the account
     # doesn't read like a bot: at most one per poll, 20 min apart, MAX_LIVE_ALERTS per round.
@@ -457,7 +458,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
             allow_fallback=dry_run or draft,
         )
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft,
-                                                              alternatives=alternatives)))
+                                                              alternatives=alternatives, live=True)))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
     else:

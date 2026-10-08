@@ -644,6 +644,19 @@ class PreviewCarouselTests(PipelineDryRunTests):
             post.return_value = bad
             self.assertEqual(notify_telegram.send_text("hi"), "FAILED: Telegram 400 (Bad Request: chat not found for [token])")
 
+    def test_quiet_hours_hold_live_pings_only(self):
+        import datetime
+        from zoneinfo import ZoneInfo
+        from distribute import notify_telegram
+        la = ZoneInfo("America/Los_Angeles")
+        with mock.patch.dict(os.environ, {"QUIET_TZ": "", "QUIET_START": "", "QUIET_END": ""}):
+            self.assertTrue(notify_telegram.quiet_now(datetime.datetime(2026, 10, 8, 2, 0, tzinfo=la)))
+            self.assertTrue(notify_telegram.quiet_now(datetime.datetime(2026, 10, 8, 23, 30, tzinfo=la)))
+            self.assertFalse(notify_telegram.quiet_now(datetime.datetime(2026, 10, 8, 7, 0, tzinfo=la)))
+            self.assertFalse(notify_telegram.quiet_now(datetime.datetime(2026, 10, 8, 21, 59, tzinfo=la)))
+        with mock.patch.object(notify_telegram, "quiet_now", return_value=True):
+            self.assertEqual(notify_telegram.send_file("x.png", "c", respect_quiet=True), "held (quiet hours)")
+
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos
         photo, entry = player_photos.lookup("Ludvig Aberg")          # matches "Ludvig Åberg"
