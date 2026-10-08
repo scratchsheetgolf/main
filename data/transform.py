@@ -349,6 +349,60 @@ def final_caption(event_name: str, top5: list) -> str:
     return f"{event_name} final: {win['name']} wins at {win['score']}." + (f" Then: {rest}." if rest else "")
 
 
+INACTIVE_POS = ("CUT", "WD", "DQ", "MDF", "DNS")
+
+
+def round_complete(live: dict) -> bool:
+    """True once every player still in the event has finished the current round (thru 18 / F)."""
+    active = [r for r in live.get("data") or [] if str(r.get("current_pos", "")).upper() not in INACTIVE_POS]
+    return bool(active) and all(_thru_int(r.get("thru")) >= 18 for r in active)
+
+
+def round_wrap(live: dict, saved_picks: dict, event_tag: str = "") -> dict:
+    """Data-only 'After Round N' content: leader, our four picks' standing, low round of the day.
+    saved_picks = state["last_picks"] for this event. Every word comes from the feed (safe to auto-post)."""
+    info = live.get("info") or {}
+    rnd = info.get("current_round")
+    rows = sorted_leaderboard(live)
+    by_id = {str(r.get("dg_id")): r for r in rows}
+    lead = rows[0]
+    leader, leader_score = display_name(lead.get("player_name", "")), format_to_par(lead.get("current_score"))
+    picks, standing = [], {}
+    for slot in ("win", "value", "fade", "sleeper"):
+        pk = (saved_picks.get("picks") or {}).get(slot) or {}
+        r = by_id.get(str(pk.get("dg_id")))
+        pos = str(r.get("current_pos", "")) if r else "—"
+        score = format_to_par(r.get("current_score")) if r else "—"
+        picks.append((pk.get("name", ""), pos, score))
+        standing[slot] = (pk.get("name", ""), pos, _finish_rank(pos) if r else 10_000)
+    active = [r for r in rows if str(r.get("current_pos", "")).upper() not in INACTIVE_POS
+              and _score_int(r.get("today")) is not None]
+    low = min(active, key=lambda r: _score_int(r.get("today"))) if active else None
+    last = lambda name: name.split()[-1] if name else ""
+    f_name, f_pos, f_rank = standing["fade"]
+    w_name, w_pos, w_rank = standing["win"]
+    if f_rank <= 3:
+        note = f"our fade is {'leading' if f_rank == 1 else f_pos}. we'll own that sunday."
+    elif w_rank <= 5:
+        note = f"the model's pick is right in it at {w_pos}."
+    elif any(rank <= 10 for _, _, rank in standing.values()):
+        slot, (name, pos, _) = min(standing.items(), key=lambda kv: kv[1][2])
+        note = f"best of the card: {last(name)} at {pos}."
+    else:
+        note = f"rough day for the card. {max(4 - int(rnd or 0), 0)} rounds to fix it."
+    card = " · ".join(f"{slot.upper()} {last(n)} {p}" for slot, (n, p, _) in zip(("win", "value", "fade", "sleeper"),
+                                                                                 [(a, b, c) for a, b, c in picks]))
+    caption = f"{info.get('event_name')} after round {rnd}: {leader} leads at {leader_score}. Our card: {card}."
+    if low:
+        extra = f" Low round: {display_name(low.get('player_name', ''))} {format_to_par(_score_int(low.get('today')))}."
+        if len(caption) + len(extra) <= 265:
+            caption += extra
+    if event_tag:
+        caption += f" {event_tag}"
+    return {"round": rnd, "title": f"After Round {rnd}", "leader": leader, "leader_score": leader_score,
+            "picks": picks, "note": note, "caption": caption}
+
+
 def moment_fallback(m: dict) -> tuple:
     """Card lines straight from the data, for when the writer fails or SKIPs."""
     last = m["name"].split()[-1].upper()

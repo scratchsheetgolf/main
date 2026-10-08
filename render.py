@@ -182,6 +182,16 @@ def render_stat_list(title: str, subtitle: str, header: str, rows: list, note: s
     return _fill_and_render("stat_list.svg", tokens, out_path)
 
 
+def render_round_wrap(title: str, subtitle: str, leader: str, leader_score: str, picks: list, note: str,
+                      out_path: str) -> str:
+    """'After Round N' card: leader banner + our four picks' position and score.
+    picks: 4 (name, pos, to_par) tuples in WIN, VALUE, FADE, SLEEPER order."""
+    tokens = {"title": title, "subtitle": subtitle, "leader": leader, "leader_score": leader_score, "note": note}
+    for i, (name, pos, score) in enumerate((list(picks) + [("", "", "")] * 4)[:4], start=1):
+        tokens[f"name_{i}"], tokens[f"pos_{i}"], tokens[f"score_{i}"] = name, pos, score
+    return _fill_and_render("round_wrap.svg", tokens, out_path)
+
+
 def render_closer(event: str, out_path: str) -> str:
     """Carousel closing slide ("RECEIPTS SUNDAY.")."""
     return _fill_and_render("closer.svg", {"event": event}, out_path)
