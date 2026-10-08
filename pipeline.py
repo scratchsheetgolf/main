@@ -443,6 +443,11 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         print("in-play info:", live.get("info"), file=sys.stderr)
         print("top 3 thru/round/end_hole:", [(r.get("current_pos"), r.get("thru"), r.get("round"), r.get("end_hole"))
                                               for r in current_leaderboard[:3]], "final:", final, file=sys.stderr)
+        import collections
+        print("feed rows:", len(live.get("data") or []), "| thru values:",
+              dict(collections.Counter(repr(r.get("thru")) for r in live.get("data") or []).most_common(12)),
+              "| row keys:", sorted((live.get("data") or [{}])[0].keys()), file=sys.stderr)
+        print("info:", {k: v for k, v in (live.get("info") or {}).items()}, file=sys.stderr)
     if not current_leaderboard:
         return {"status": "no data returned, check field names / API key"}
 
