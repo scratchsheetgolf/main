@@ -2,14 +2,14 @@ name: Weekly Intel Drop
 
 # Off-week stat card from DataGolf rankings / skill ratings (DataGolf updates them weekly).
 # Same posting rules as picks/live: manual runs default to dry run; otherwise a draft
-# (card + caption attached to the run) unless the AUTO_POST repo variable is "true".
+# (card + caption attached to the run, pinged to Telegram); AUTO_POST is ignored.
 on:
   # schedule:  # PAUSED until manual drafts look right; Wednesday 15:00 UTC when enabled
   #    - cron: "0 15 * * 3"
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'true = dry run (nothing saved). false = draft, or a real post only if AUTO_POST is true.'
+        description: 'true = dry run (nothing saved). false = draft (always a draft for review; AUTO_POST is ignored).'
         required: false
         default: 'true'
 
@@ -60,7 +60,7 @@ jobs:
         run: |
           FLAG="--draft"
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"
-          elif [ "${{ vars.AUTO_POST }}" = "true" ]; then FLAG=""; fi
+          fi  # AUTO_POST is deliberately ignored here: picks/intel are AI-written and always reviewed by Mike first
           echo "mode: ${FLAG:-real post}"
           python pipeline.py intel $FLAG
 

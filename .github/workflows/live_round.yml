@@ -6,7 +6,7 @@ name: Live Round Polling
 # pipeline.py exits fast (one cheap API call) if no round is actually live,
 # so running this broadly across tournament weeks doesn't waste real work.
 on:
-  schedule:  # ON from 2026-10-07 in DRAFT mode (AUTO_POST unset = drafts only, nothing posts)
+  schedule:  # ON since 2026-10-07. AUTO_POST unset = drafts only. AUTO_POST=true = posts ONLY live alerts + final leaderboard (data-only text); the rest stays drafts
     # Wed-Sun UTC covers Asia round 1 (e.g. Japan starts Wed ~22:30 UTC) through Sunday;
     # Mon 00-03 UTC covers US Sunday-evening finishes (Pacific events end ~01:00 UTC Monday).
     - cron: "*/5 * * * 3,4,5,6,0"

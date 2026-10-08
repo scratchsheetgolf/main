@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'true = build the digest and attach it to the run without sending. false = send only if the AUTO_POST repo variable is true.'
+        description: 'Builds the digest and attaches it to the run; never sends (Substack is manual).'
         required: false
         default: 'true'
 
@@ -34,7 +34,7 @@ jobs:
         run: |
           # Sends for real only if the AUTO_POST repo variable is true and this isn't a manual dry run.
           FLAG="--dry-run"
-          if [ "${{ github.event.inputs.dry_run }}" != "true" ] && [ "${{ vars.AUTO_POST }}" = "true" ]; then FLAG=""; fi
+          # Never sends automatically: the newsletter moves to Substack, pasted in by Mike (AUTO_POST ignored).
           echo "mode: ${FLAG:-real send}"
           python pipeline.py newsletter --tour pga $FLAG
 
