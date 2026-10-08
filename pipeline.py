@@ -333,6 +333,50 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
 MAX_LIVE_ALERTS = 3   # per round, per tour
 
 
+def _qa_gate(tour: str, event_name: str, post_text: str, expect_final: bool, check_row=None, extra: dict = None):
+    """Last check before an UNATTENDED post: re-fetch the live feed, verify it in code, then an independent
+    Claude review of the post against the fresh numbers. Returns (passed, reason). Any doubt = fail."""
+    import json
+    try:
+        live = datagolf.get_live_in_play(tour=tour)
+    except Exception as e:
+        return False, f"re-fetch failed ({type(e).__name__})"
+    info = live.get("info") or {}
+    if transform.event_key(info.get("event_name")) != transform.event_key(event_name):
+        return False, f"feed moved on to {info.get('event_name')!r}"
+    if transform.is_final(live) != expect_final:
+        return False, "event final status changed" if expect_final else "event is now final"
+    rows = transform.sorted_leaderboard(live)
+    if check_row:
+        ok, why = check_row(info, rows)
+        if not ok:
+            return False, why
+    def slim(r):
+        return {k: r.get(k) for k in ("player_name", "current_pos", "current_score", "today", "thru", "round")}
+    raw = {"event": info.get("event_name"), "current_round": info.get("current_round"), "final": expect_final,
+           "top_5": [slim(r) for r in rows[:5]], **(extra or {})}
+    return content.qa_review(json.dumps(raw, ensure_ascii=False, indent=1), post_text)
+
+
+def _alert_row_check(m: dict):
+    """Code checks for one alert: the player's numbers in the fresh feed still match what the alert says."""
+    def check(info, rows):
+        if str(info.get("current_round")) != str(m["round"]):
+            return False, f"round changed ({m['round']} -> {info.get('current_round')})"
+        row = next((r for r in rows if str(r.get("dg_id")) == str(m["dg_id"])), None)
+        if not row:
+            return False, "player not in the fresh feed"
+        now = {"score": transform._score_int(row.get("current_score")), "pos": str(row.get("current_pos", "")),
+               "thru": transform._thru_int(row.get("thru"))}
+        for k, v in now.items():
+            if v != m[k]:
+                return False, f"{k} changed since detection ({m[k]} -> {v})"
+        if m["kind"] == "big_hole" and not (2 <= m["drop"] <= 4 and 1 <= m["thru"] <= 18):
+            return False, f"implausible single-hole move ({m['drop']} under, thru {m['thru']})"
+        return True, ""
+    return check
+
+
 def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool, auto: bool = False):
     """Render + post one Live Alert card. Drafts: lines from the writer (checked: numbers must be in the facts,
     and no eagle/ace wording when the moment was inferred), data-only fallback otherwise.
@@ -344,7 +388,16 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
         image_path = os.path.join(OUTPUT_DIR, "live_alert.png")
         render_live_alert(hole_moment=tour_label(tour) + m["hole_moment"], event_line_1=line1.upper(),
                           event_line_2=line2.upper(), reaction=reaction, out_path=image_path)
-        return _post_everywhere(image_path, m["caption"], dry_run=dry_run, draft=draft, live=True)
+        extra = {"alert_player_previous_poll": {k: m[k] for k in ("prev_score", "prev_thru", "prev_pos") if k in m},
+                 "alert_player_today_vs_par": m.get("today")}
+        passed, why = _qa_gate(tour, event_name,
+                               f"CARD: {tour_label(tour)}{m['hole_moment']} | {line1} {line2} | {reaction}\nCAPTION: {m['caption']}",
+                               expect_final=False, check_row=_alert_row_check(m), extra=extra)
+        if not passed:   # never posts on doubt: goes to Mike as a draft with the reason
+            out = _post_everywhere(image_path, f"QA HELD ({why}). Check before posting:\n{m['caption']}",
+                                   dry_run=dry_run, draft=True, live=True)
+            return {**out, "qa": why}
+        return {**_post_everywhere(image_path, m["caption"], dry_run=dry_run, draft=draft, live=True), "qa": "PASS"}
     try:
         res = content.generate_live_reaction(facts)
         if res:
@@ -474,8 +527,19 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                         else f"{event_name} leaderboard: {current_leader} leads."),
               allow_fallback=dry_run or draft or not final,
             )
+        lb_draft = draft or (auto and not final)
+        if auto and final:   # unattended final leaderboard: same QA gate
+            expected = [(p["pos"], p["name"], p["score"]) for p in top5]
+            def same_top5(info, rows):
+                fresh = [(str(r.get("current_pos", "")), transform.display_name(r.get("player_name", "")),
+                          transform.format_to_par(r.get("current_score"))) for r in rows[:5]]
+                return (fresh == expected), ("top 5 changed since the card was made" if fresh != expected else "")
+            passed, why = _qa_gate(tour, event_name, f"CARD: final top 5 {expected}\nCAPTION: {caption}",
+                                   expect_final=True, check_row=same_top5)
+            if not passed:
+                lb_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run,
-                                                              draft=draft or (auto and not final),
+                                                              draft=lb_draft,
                                                               alternatives=alternatives, live=True)))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
@@ -623,7 +687,7 @@ def probe(tour: str = "pga") -> dict:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["picks", "live", "newsletter", "probe", "intel"])
+    parser.add_argument("action", choices=["picks", "live", "newsletter", "probe", "intel", "qa-selftest"])
     parser.add_argument("--tour", default="pga")
     parser.add_argument("--dry-run", action="store_true",
                          help="Run against real data/APIs but print what would be posted instead of posting it.")
@@ -645,3 +709,14 @@ if __name__ == "__main__":
         print(json.dumps(probe(args.tour), indent=2, default=str))
     elif args.action == "newsletter":
         print(run_weekly_newsletter(args.tour, dry_run=args.dry_run or args.draft))
+    elif args.action == "qa-selftest":   # proves the real reviewer passes a correct post and fails a wrong one
+        import json
+        raw = json.dumps({"event": "Fake Invitational", "current_round": 2, "final": False,
+                          "top_5": [{"player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}],
+                          "alert_player_previous_poll": {"prev_score": -11, "prev_thru": 10}}, indent=1)
+        good = "CARD: ROUND 2 · THRU 11 | HOT GOES 3 UNDER ON ONE\nCAPTION: Cy Hot goes 3 under on one hole (round 2, thru 11). Now 1 at -14."
+        bad = "CARD: ROUND 2 · THRU 11 | HOT EAGLES 18\nCAPTION: Cy Hot eagles the 18th. Now 2 at -14."
+        results = {"correct_post": content.qa_review(raw, good), "wrong_post": content.qa_review(raw, bad)}
+        print(json.dumps(results, indent=1))
+        if not (results["correct_post"][0] and not results["wrong_post"][0]):
+            raise SystemExit("QA self-test FAILED: reviewer did not pass the correct post and fail the wrong one")
