@@ -406,6 +406,41 @@ def round_wrap(live: dict, saved_picks: dict, event_tag: str = "") -> dict:
             "picks": picks, "note": note, "caption": caption}
 
 
+def _to_par_int(score):
+    if isinstance(score, (int, float)):
+        return int(score)
+    s = str(score or "").strip().upper()
+    if s == "E":
+        return 0
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+
+def leader_hook(rows: list, final: bool = False) -> str:
+    """Reel opening line, straight from the feed (never AI wording): 'BRIDGEMAN LEADS BY 1',
+    'SMITH AND JONES SHARE THE LEAD', '3-WAY TIE AT -5', 'BRIDGEMAN WINS AT -18'. rows = sorted
+    feed rows (current_pos, current_score, player_name). '' if the feed is too thin to say."""
+    rows = [r for r in rows if _to_par_int(r.get("current_score")) is not None]
+    if not rows:
+        return ""
+    lead = _to_par_int(rows[0].get("current_score"))
+    at_top = [r for r in rows if _to_par_int(r.get("current_score")) == lead]
+    last = lambda r: display_name(r.get("player_name", "")).split()[-1].upper()
+    score = format_to_par(lead)
+    if len(at_top) == 1:
+        if final:
+            return f"{last(at_top[0])} WINS AT {score}"
+        behind = [_to_par_int(r.get("current_score")) for r in rows[1:]]
+        return f"{last(at_top[0])} LEADS BY {behind[0] - lead}" if behind else f"{last(at_top[0])} LEADS AT {score}"
+    if final:
+        return ""   # a tie on a final board means a playoff or a data gap: let the card speak
+    if len(at_top) == 2:
+        return f"{last(at_top[0])} AND {last(at_top[1])} SHARE THE LEAD"
+    return f"{len(at_top)}-WAY TIE AT {score}"
+
+
 def moment_fallback(m: dict) -> tuple:
     """Card lines straight from the data, for when the writer fails or SKIPs."""
     last = m["name"].split()[-1].upper()

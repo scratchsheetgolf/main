@@ -49,7 +49,7 @@ jobs:
         env:
           AUDIO_KEY: ${{ secrets.AUDIO_KEY }}
         run: |
-          python -c 'from distribute import music; from render import render_reel; c = music.pick_clip(); assert c, "no clip: AUDIO_KEY missing or decrypt failed"; render_reel([{"path": "output/previews/sample/weekly_picks.png", "seconds": 9}], "output/check_reel.mp4", audio=c)'
+          python -c 'from distribute import music; from render import render_reel; c = music.pick_clip(); assert c, "no clip: AUDIO_KEY missing or decrypt failed"; render_reel([{"path": "output/previews/sample/weekly_picks.png", "seconds": 6.0, "deal": 0.8, "zoom": 0.06, "zoom_seconds": 2.2, "exit": 0.6, "hook": "BRIDGEMAN LEADS BY 1", "closer": "stay tuned for more", "closer_seconds": 2.6}], "output/check_reel.mp4", audio=c)'
           ffprobe -v error -show_entries stream=codec_type -of csv=p=0 output/check_reel.mp4
 
       - name: Check credentials (no post)
