@@ -170,6 +170,53 @@ def post_reel_to_instagram(video_path: str, caption: str, publish: bool = True, 
     return _publish(creation_id)
 
 
+def post_reel_to_facebook(video_path: str, caption: str, publish: bool = True, wait_s: int = 180) -> dict:
+    """Facebook Page Reel (9:16, 3-90 s): start an upload session, send the bytes straight to rupload
+    (nothing hosted publicly), then finish. publish=False saves it as a Page DRAFT (the setup check
+    deletes it again). Waits for processing so a failed Reel can fall back to the photo post."""
+    import time
+    if not (PAGE_ID and ACCESS_TOKEN):
+        raise RuntimeError("META_PAGE_ID / META_PAGE_ACCESS_TOKEN not set.")
+    url = f"https://graph.facebook.com/{GRAPH_VERSION}/{PAGE_ID}/video_reels"
+    start = requests.post(url, data={"upload_phase": "start", "access_token": ACCESS_TOKEN}, timeout=30)
+    if not start.ok:
+        raise RuntimeError(f"Facebook Reel start rejected: {start.status_code} {start.text[:300]}")
+    video_id = start.json()["video_id"]
+    with open(video_path, "rb") as f:
+        data = f.read()
+    up = requests.post(f"https://rupload.facebook.com/video-upload/{GRAPH_VERSION}/{video_id}",
+                       headers={"Authorization": f"OAuth {ACCESS_TOKEN}", "offset": "0",
+                                "file_size": str(len(data))}, data=data, timeout=120)
+    if not up.ok:
+        raise RuntimeError(f"Facebook Reel upload failed: {up.status_code} {up.text[:300]}")
+    fin = requests.post(url, data={"upload_phase": "finish", "video_id": video_id,
+                                   "video_state": "PUBLISHED" if publish else "DRAFT",
+                                   "description": caption, "access_token": ACCESS_TOKEN}, timeout=60)
+    if not fin.ok:
+        raise RuntimeError(f"Facebook Reel finish rejected: {fin.status_code} {fin.text[:300]}")
+    # Only an explicit processing error raises (-> photo fallback). A slow Reel that's still processing
+    # at the deadline is left alone: it publishes on its own, and a fallback photo would double-post.
+    status, deadline = None, time.time() + wait_s
+    while time.time() < deadline:
+        st = _get(video_id, fields="status").get("status") or {}
+        phases = {k: (st.get(k) or {}).get("status") for k in ("uploading_phase", "processing_phase", "publishing_phase")}
+        if st.get("video_status") == "error" or "error" in phases.values():
+            raise RuntimeError(f"Facebook Reel processing failed: {str(st)[:300]}")
+        status = st.get("video_status")
+        done = phases["publishing_phase"] == "complete" if publish else phases["processing_phase"] == "complete"
+        if done or status == "ready":
+            break
+        time.sleep(5)
+    return {"video_id": video_id, "status": status, "published": publish}
+
+
+def delete_object(object_id: str) -> bool:
+    """Removes something this app created (the setup check's draft Reel)."""
+    r = requests.delete(f"https://graph.facebook.com/{GRAPH_VERSION}/{object_id}",
+                        params={"access_token": ACCESS_TOKEN}, timeout=30)
+    return r.ok
+
+
 NEEDED_SCOPES = {"pages_show_list", "pages_read_engagement", "pages_manage_posts",
                  "instagram_basic", "instagram_content_publish"}
 
@@ -231,6 +278,13 @@ def check(image_url: str = None, reel_path: str = None, carousel_urls: list = No
                                           thumb_offset_ms=500)["status"]   # same cover setting as live posts
         except Exception as e:
             problems.append(f"Reel test failed: {e}")
+    fb_reel = None
+    if reel_path and not problems:   # Facebook Reel as a Page draft (never public), deleted straight after
+        try:
+            r = post_reel_to_facebook(reel_path, "setup check (never published)", publish=False, wait_s=120)
+            fb_reel = f"{r['status']} (draft deleted: {delete_object(r['video_id'])})"
+        except Exception as e:
+            problems.append(f"Facebook Reel test failed: {e}")
     carousel = None
     if carousel_urls and not problems:   # the recap carousel path minus the publish
         try:
@@ -239,7 +293,7 @@ def check(image_url: str = None, reel_path: str = None, carousel_urls: list = No
             problems.append(f"carousel test failed: {e}")
     return {"page_name": page.get("name"), "instagram_username": ig.get("username"),
             "instagram_test_container": container, "instagram_test_reel": reel,
-            "instagram_test_carousel": carousel,
+            "instagram_test_carousel": carousel, "facebook_test_reel": fb_reel,
             "app_id": info.get("app_id"), "token_type": info.get("type"),
             "expires": "never" if info.get("expires_at") in (0, None) else info.get("expires_at"),
             "scopes": sorted(scopes), "problems": problems}
