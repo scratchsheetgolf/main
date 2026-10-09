@@ -227,14 +227,14 @@
         "score": "-2"
       },
       {
-        "dg_id": 8825,
-        "player_name": "Harman, Brian",
+        "dg_id": 25157,
+        "player_name": "Hodges, Lee",
         "fin_text": "T24",
         "score": "-2"
       },
       {
-        "dg_id": 25157,
-        "player_name": "Hodges, Lee",
+        "dg_id": 8825,
+        "player_name": "Harman, Brian",
         "fin_text": "T24",
         "score": "-2"
       },
@@ -275,8 +275,8 @@
         "score": "-1"
       },
       {
-        "dg_id": 23465,
-        "player_name": "Greyserman, Max",
+        "dg_id": 18424,
+        "player_name": "Roy, Kevin",
         "fin_text": "T36",
         "score": "-1"
       },
@@ -287,14 +287,8 @@
         "score": "-1"
       },
       {
-        "dg_id": 18424,
-        "player_name": "Roy, Kevin",
-        "fin_text": "T36",
-        "score": "-1"
-      },
-      {
-        "dg_id": 19729,
-        "player_name": "Kanaya, Takumi",
+        "dg_id": 23465,
+        "player_name": "Greyserman, Max",
         "fin_text": "T36",
         "score": "-1"
       },
@@ -307,6 +301,12 @@
       {
         "dg_id": 27164,
         "player_name": "Phillips, Chandler",
+        "fin_text": "T36",
+        "score": "-1"
+      },
+      {
+        "dg_id": 19729,
+        "player_name": "Kanaya, Takumi",
         "fin_text": "T36",
         "score": "-1"
       },
@@ -335,12 +335,6 @@
         "score": "E"
       },
       {
-        "dg_id": 13126,
-        "player_name": "Taylor, Nick",
-        "fin_text": "T46",
-        "score": "E"
-      },
-      {
         "dg_id": 11276,
         "player_name": "Horschel, Billy",
         "fin_text": "T46",
@@ -349,6 +343,12 @@
       {
         "dg_id": 11676,
         "player_name": "Finau, Tony",
+        "fin_text": "T46",
+        "score": "E"
+      },
+      {
+        "dg_id": 13126,
+        "player_name": "Taylor, Nick",
         "fin_text": "T46",
         "score": "E"
       },
@@ -371,12 +371,6 @@
         "score": "+1"
       },
       {
-        "dg_id": 21944,
-        "player_name": "Moore, Taylor",
-        "fin_text": "T53",
-        "score": "+1"
-      },
-      {
         "dg_id": 29279,
         "player_name": "Suber, Jackson",
         "fin_text": "T53",
@@ -389,6 +383,18 @@
         "score": "+1"
       },
       {
+        "dg_id": 17780,
+        "player_name": "Pendrith, Taylor",
+        "fin_text": "T53",
+        "score": "+1"
+      },
+      {
+        "dg_id": 21944,
+        "player_name": "Moore, Taylor",
+        "fin_text": "T53",
+        "score": "+1"
+      },
+      {
         "dg_id": 25797,
         "player_name": "Hosono, Yusaku",
         "fin_text": "T53",
@@ -397,12 +403,6 @@
       {
         "dg_id": 13923,
         "player_name": "Lee, Sang-hee",
-        "fin_text": "T53",
-        "score": "+1"
-      },
-      {
-        "dg_id": 17780,
-        "player_name": "Pendrith, Taylor",
         "fin_text": "T53",
         "score": "+1"
       },
@@ -709,16 +709,16 @@
       "thru": 0,
       "rank": 30
     },
-    "8825": {
-      "name": "Brian Harman",
+    "25157": {
+      "name": "Lee Hodges",
       "pos": "T24",
       "score": -2,
       "today": 0,
       "thru": 0,
       "rank": 31
     },
-    "25157": {
-      "name": "Lee Hodges",
+    "8825": {
+      "name": "Brian Harman",
       "pos": "T24",
       "score": -2,
       "today": 0,
@@ -773,12 +773,12 @@
       "thru": 0,
       "rank": 38
     },
-    "23465": {
-      "name": "Max Greyserman",
+    "18424": {
+      "name": "Kevin Roy",
       "pos": "T36",
       "score": -1,
       "today": 0,
-      "thru": 0,
+      "thru": 1,
       "rank": 39
     },
     "15470": {
@@ -789,21 +789,13 @@
       "thru": 0,
       "rank": 40
     },
-    "18424": {
-      "name": "Kevin Roy",
-      "pos": "T36",
-      "score": -1,
-      "today": 0,
-      "thru": 1,
-      "rank": 41
-    },
-    "19729": {
-      "name": "Takumi Kanaya",
+    "23465": {
+      "name": "Max Greyserman",
       "pos": "T36",
       "score": -1,
       "today": 0,
       "thru": 0,
-      "rank": 42
+      "rank": 41
     },
     "28635": {
       "name": "Matt McCarty",
@@ -811,10 +803,18 @@
       "score": -1,
       "today": 0,
       "thru": 0,
-      "rank": 43
+      "rank": 42
     },
     "27164": {
       "name": "Chandler Phillips",
+      "pos": "T36",
+      "score": -1,
+      "today": 0,
+      "thru": 0,
+      "rank": 43
+    },
+    "19729": {
+      "name": "Takumi Kanaya",
       "pos": "T36",
       "score": -1,
       "today": 0,
@@ -853,24 +853,24 @@
       "thru": 0,
       "rank": 48
     },
-    "13126": {
-      "name": "Nick Taylor",
-      "pos": "T46",
-      "score": 0,
-      "today": 0,
-      "thru": 0,
-      "rank": 49
-    },
     "11276": {
       "name": "Billy Horschel",
       "pos": "T46",
       "score": 0,
       "today": 0,
       "thru": 0,
-      "rank": 50
+      "rank": 49
     },
     "11676": {
       "name": "Tony Finau",
+      "pos": "T46",
+      "score": 0,
+      "today": 0,
+      "thru": 0,
+      "rank": 50
+    },
+    "13126": {
+      "name": "Nick Taylor",
       "pos": "T46",
       "score": 0,
       "today": 0,
@@ -901,21 +901,13 @@
       "thru": 0,
       "rank": 54
     },
-    "21944": {
-      "name": "Taylor Moore",
-      "pos": "T53",
-      "score": 1,
-      "today": 0,
-      "thru": 0,
-      "rank": 55
-    },
     "29279": {
       "name": "Jackson Suber",
       "pos": "T53",
       "score": 1,
       "today": 0,
       "thru": 0,
-      "rank": 56
+      "rank": 55
     },
     "14636": {
       "name": "Jordan Spieth",
@@ -923,26 +915,34 @@
       "score": 1,
       "today": 0,
       "thru": 0,
+      "rank": 56
+    },
+    "17780": {
+      "name": "Taylor Pendrith",
+      "pos": "T53",
+      "score": 1,
+      "today": 0,
+      "thru": 0,
       "rank": 57
     },
-    "25797": {
-      "name": "Yusaku Hosono",
+    "21944": {
+      "name": "Taylor Moore",
       "pos": "T53",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 58
     },
-    "13923": {
-      "name": "Sang-hee Lee",
+    "25797": {
+      "name": "Yusaku Hosono",
       "pos": "T53",
       "score": 1,
       "today": 0,
-      "thru": 0,
+      "thru": 1,
       "rank": 59
     },
-    "17780": {
-      "name": "Taylor Pendrith",
+    "13923": {
+      "name": "Sang-hee Lee",
       "pos": "T53",
       "score": 1,
       "today": 0,
