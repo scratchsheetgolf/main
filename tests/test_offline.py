@@ -1143,6 +1143,23 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertFalse(post.call_args.kwargs["draft"])
         self.assertIn("movers_computed_from_feed", qa.call_args.args[0])
 
+    def test_recap_now_refuses_unfinished_round_and_posts_a_finished_one(self):
+        live = self._r2_live()
+        prev = {"event_name": "Fake Open", "last_picks": {"event_name": "Fake Open", "picks": {}}}
+        unfinished = {**live, "data": [{**live["data"][0], "thru": 12}] + live["data"][1:]}
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=unfinished), \
+             mock.patch.object(state, "load", return_value=prev):
+            self.assertIn("isn't complete", pipeline.run_recap_now("pga")["status"])
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=live), \
+             mock.patch.object(datagolf, "get_live_hole_stats", return_value={}), \
+             mock.patch.object(state, "load", return_value=prev), \
+             mock.patch.object(content, "qa_review", return_value=(False, "FAIL: x")), \
+             mock.patch.object(pipeline, "_post_carousel_everywhere", return_value={"DRAFT": True}) as post:
+            out = pipeline.run_recap_now("pga")
+        self.assertEqual(out["round"], 2)
+        self.assertTrue(post.call_args.kwargs["draft"])                 # QA failure -> draft, never a post
+        self.assertTrue(post.call_args.args[1].startswith("QA HELD (FAIL: x)"))
+
     def test_recap_falls_back_to_single_card(self):
         live = self._r2_live()
         prev = {"event_name": "Fake Open", "leader_name": "Al Lead", "last_leaderboard_post_ts": 9e12,

@@ -1,0 +1,69 @@
+name: Post round recap now
+
+# Manual only. Posts the round recap carousel for the round that just finished (e.g. a round that
+# wrapped before the carousel existed). Refuses unless the round is complete and the event isn't
+# final; same QA gate as the automatic recap (a QA failure goes to Telegram as a draft instead).
+on:
+  workflow_dispatch:
+    inputs:
+      tour:
+        description: 'pga or euro'
+        required: true
+        default: 'pga'
+      dry_run:
+        description: 'true = build and attach the slides, post nothing'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write  # image_host.py pushes the slides to the media branch
+
+concurrency:  # don't overlap the live poll's state commits
+  group: live-round
+  cancel-in-progress: false
+
+jobs:
+  recap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install card fonts
+        run: |
+          mkdir -p ~/.local/share/fonts
+          cp fonts/*.ttf ~/.local/share/fonts/
+          fc-cache -f
+
+      - name: Post the recap
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_DRAFTS_TOKEN: ${{ secrets.TELEGRAM_DRAFTS_TOKEN }}
+          TELEGRAM_DRAFTS_CHAT_ID: ${{ secrets.TELEGRAM_DRAFTS_CHAT_ID }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+          POST_PLATFORMS: ${{ vars.POST_PLATFORMS }}
+        run: |
+          git config user.name "scratch-sheet-bot"
+          git config user.email "bot@users.noreply.github.com"
+          FLAG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"; fi
+          python pipeline.py recap --tour "${{ inputs.tour }}" $FLAG
+
+      - name: Attach the slides
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: recap-${{ inputs.tour }}
+          path: output/recap_${{ inputs.tour }}/
+          if-no-files-found: ignore
