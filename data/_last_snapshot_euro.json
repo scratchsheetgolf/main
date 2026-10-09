@@ -40,7 +40,7 @@
   },
   "event_name": "Open de Espa\u00f1a presented by Madrid",
   "leader_name": "Eugenio Chacarra",
-  "last_leaderboard_post_ts": 1791507633.9220073,
+  "last_leaderboard_post_ts": 1791511526.1740603,
   "standings": {
     "event_name": "Open de Espa\u00f1a presented by Madrid",
     "round": 1,
@@ -1538,5 +1538,31 @@
   "wraps": [
     1
   ],
-  "last_leaderboard_top5": null
+  "last_leaderboard_top5": [
+    {
+      "pos": "T1",
+      "name": "Eugenio Chacarra",
+      "score": "-5"
+    },
+    {
+      "pos": "T1",
+      "name": "Connor Syme",
+      "score": "-5"
+    },
+    {
+      "pos": "T1",
+      "name": "Grant Forrest",
+      "score": "-5"
+    },
+    {
+      "pos": "T4",
+      "name": "Daniel Hillier",
+      "score": "-4"
+    },
+    {
+      "pos": "T4",
+      "name": "Jacob Skov Olesen",
+      "score": "-4"
+    }
+  ]
 }
