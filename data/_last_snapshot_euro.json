@@ -113,27 +113,27 @@
         "score": "-4"
       },
       {
-        "dg_id": 7960,
-        "player_name": "List, Luke",
-        "fin_text": "T5",
-        "score": "-4"
-      },
-      {
         "dg_id": 20730,
         "player_name": "Perez, Victor",
-        "fin_text": "T13",
+        "fin_text": "T12",
         "score": "-3"
       },
       {
         "dg_id": 16497,
         "player_name": "Dean, Joe",
-        "fin_text": "T13",
+        "fin_text": "T12",
+        "score": "-3"
+      },
+      {
+        "dg_id": 7960,
+        "player_name": "List, Luke",
+        "fin_text": "T12",
         "score": "-3"
       },
       {
         "dg_id": 20844,
         "player_name": "Mazzoli, Stefano",
-        "fin_text": "T13",
+        "fin_text": "T12",
         "score": "-3"
       },
       {
@@ -161,12 +161,6 @@
         "score": "-2"
       },
       {
-        "dg_id": 23816,
-        "player_name": "Valimaki, Sami",
-        "fin_text": "T16",
-        "score": "-2"
-      },
-      {
         "dg_id": 22087,
         "player_name": "Paul, Jeremy",
         "fin_text": "T16",
@@ -187,73 +181,79 @@
       {
         "dg_id": 13900,
         "player_name": "Lowry, Shane",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 14780,
         "player_name": "Lagergren, Joakim",
-        "fin_text": "T24",
-        "score": "-1"
-      },
-      {
-        "dg_id": 10201,
-        "player_name": "Guerrier, Julien",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 15680,
         "player_name": "Winther, Jeff",
-        "fin_text": "T24",
+        "fin_text": "T23",
+        "score": "-1"
+      },
+      {
+        "dg_id": 10201,
+        "player_name": "Guerrier, Julien",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 19421,
         "player_name": "Du Plessis, Hennie",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 20084,
         "player_name": "Lindberg, Mikael",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 28239,
         "player_name": "Guillamoundeguy, Oihan",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 16549,
         "player_name": "Paratore, Renato",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 7655,
         "player_name": "Molinari, Francesco",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
-        "dg_id": 12321,
-        "player_name": "Aphibarnrat, Kiradech",
-        "fin_text": "T24",
+        "dg_id": 23816,
+        "player_name": "Valimaki, Sami",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 12734,
         "player_name": "Scrivener, Jason",
-        "fin_text": "T24",
+        "fin_text": "T23",
+        "score": "-1"
+      },
+      {
+        "dg_id": 12321,
+        "player_name": "Aphibarnrat, Kiradech",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
         "dg_id": 24497,
         "player_name": "Robinson Thompson, Brandon",
-        "fin_text": "T24",
+        "fin_text": "T23",
         "score": "-1"
       },
       {
@@ -275,18 +275,6 @@
         "score": "E"
       },
       {
-        "dg_id": 18722,
-        "player_name": "Gouveia, Ricardo",
-        "fin_text": "T36",
-        "score": "E"
-      },
-      {
-        "dg_id": 7887,
-        "player_name": "Garcia-Heredia, Alfredo",
-        "fin_text": "T36",
-        "score": "E"
-      },
-      {
         "dg_id": 24127,
         "player_name": "Hidalgo, Angel",
         "fin_text": "T36",
@@ -299,14 +287,14 @@
         "score": "E"
       },
       {
-        "dg_id": 23549,
-        "player_name": "Celli, Filippo",
+        "dg_id": 11763,
+        "player_name": "Wu, Ashun",
         "fin_text": "T36",
         "score": "E"
       },
       {
-        "dg_id": 13374,
-        "player_name": "Van Driel, Darius",
+        "dg_id": 18722,
+        "player_name": "Gouveia, Ricardo",
         "fin_text": "T36",
         "score": "E"
       },
@@ -317,14 +305,20 @@
         "score": "E"
       },
       {
-        "dg_id": 14016,
-        "player_name": "Campillo, Jorge",
+        "dg_id": 23549,
+        "player_name": "Celli, Filippo",
         "fin_text": "T36",
         "score": "E"
       },
       {
-        "dg_id": 11763,
-        "player_name": "Wu, Ashun",
+        "dg_id": 7887,
+        "player_name": "Garcia-Heredia, Alfredo",
+        "fin_text": "T36",
+        "score": "E"
+      },
+      {
+        "dg_id": 14016,
+        "player_name": "Campillo, Jorge",
         "fin_text": "T36",
         "score": "E"
       },
@@ -349,121 +343,127 @@
       {
         "dg_id": 22322,
         "player_name": "McKibbin, Tom",
-        "fin_text": "T51",
-        "score": "+1"
-      },
-      {
-        "dg_id": 18770,
-        "player_name": "Rozner, Antoine",
-        "fin_text": "T51",
-        "score": "+1"
-      },
-      {
-        "dg_id": 28615,
-        "player_name": "Bairstow, Sam",
-        "fin_text": "T51",
-        "score": "+1"
-      },
-      {
-        "dg_id": 15676,
-        "player_name": "Norgaard, Niklas",
-        "fin_text": "T51",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 14196,
         "player_name": "Meronk, Adrian",
-        "fin_text": "T51",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
-        "dg_id": 22736,
-        "player_name": "Rosenmueller, Thomas",
-        "fin_text": "T51",
+        "dg_id": 18770,
+        "player_name": "Rozner, Antoine",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 15676,
+        "player_name": "Norgaard, Niklas",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 28615,
+        "player_name": "Bairstow, Sam",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 28473,
         "player_name": "Ballester, Jose Luis",
-        "fin_text": "T51",
-        "score": "+1"
-      },
-      {
-        "dg_id": 14784,
-        "player_name": "Law, David",
-        "fin_text": "T51",
-        "score": "+1"
-      },
-      {
-        "dg_id": 14987,
-        "player_name": "Laporta, Francesco",
-        "fin_text": "T51",
-        "score": "+1"
-      },
-      {
-        "dg_id": 22259,
-        "player_name": "Del Rey, Alejandro",
-        "fin_text": "T51",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 6093,
         "player_name": "Rose, Justin",
-        "fin_text": "T51",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
-        "dg_id": 32550,
-        "player_name": "Bryant, Davis",
-        "fin_text": "T51",
+        "dg_id": 22259,
+        "player_name": "Del Rey, Alejandro",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 22736,
+        "player_name": "Rosenmueller, Thomas",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 14987,
+        "player_name": "Laporta, Francesco",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 23733,
         "player_name": "LaCroix, Frederic",
-        "fin_text": "T51",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
-        "dg_id": 18517,
-        "player_name": "Soderberg, Sebastian",
-        "fin_text": "T51",
+        "dg_id": 32550,
+        "player_name": "Bryant, Davis",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 14784,
+        "player_name": "Law, David",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 18174,
         "player_name": "Ritchie, JC",
-        "fin_text": "T51",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 18517,
+        "player_name": "Soderberg, Sebastian",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 18105,
         "player_name": "Lawrence, Thriston",
-        "fin_text": "T51",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 13374,
+        "player_name": "Van Driel, Darius",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 27149,
         "player_name": "Rodrigues, Daniel",
-        "fin_text": "T51",
-        "score": "+1"
-      },
-      {
-        "dg_id": 11460,
-        "player_name": "Manassero, Matteo",
-        "fin_text": "T51",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 12258,
         "player_name": "Garcia Rodriguez, Sebastian",
-        "fin_text": "T51",
+        "fin_text": "T50",
+        "score": "+1"
+      },
+      {
+        "dg_id": 10418,
+        "player_name": "Lemke, Niklas",
+        "fin_text": "T50",
         "score": "+1"
       },
       {
         "dg_id": 9133,
         "player_name": "Larrazabal, Pablo",
-        "fin_text": "T51",
+        "fin_text": "T50",
         "score": "+1"
       }
     ]
@@ -482,7 +482,7 @@
       "pos": "2",
       "score": -6,
       "today": -1,
-      "thru": 8,
+      "thru": 9,
       "rank": 2
     },
     "26745": {
@@ -498,7 +498,7 @@
       "pos": "T3",
       "score": -5,
       "today": -1,
-      "thru": 11,
+      "thru": 12,
       "rank": 4
     },
     "21362": {
@@ -530,7 +530,7 @@
       "pos": "T5",
       "score": -4,
       "today": -3,
-      "thru": 7,
+      "thru": 8,
       "rank": 8
     },
     "16652": {
@@ -554,36 +554,36 @@
       "pos": "T5",
       "score": -4,
       "today": -1,
-      "thru": 7,
+      "thru": 8,
       "rank": 11
-    },
-    "7960": {
-      "name": "Luke List",
-      "pos": "T5",
-      "score": -4,
-      "today": -1,
-      "thru": 6,
-      "rank": 12
     },
     "20730": {
       "name": "Victor Perez",
-      "pos": "T13",
+      "pos": "T12",
+      "score": -3,
+      "today": 0,
+      "thru": 0,
+      "rank": 12
+    },
+    "16497": {
+      "name": "Joe Dean",
+      "pos": "T12",
       "score": -3,
       "today": 0,
       "thru": 0,
       "rank": 13
     },
-    "16497": {
-      "name": "Joe Dean",
-      "pos": "T13",
+    "7960": {
+      "name": "Luke List",
+      "pos": "T12",
       "score": -3,
       "today": 0,
-      "thru": 0,
+      "thru": 7,
       "rank": 14
     },
     "20844": {
       "name": "Stefano Mazzoli",
-      "pos": "T13",
+      "pos": "T12",
       "score": -3,
       "today": -3,
       "thru": 8,
@@ -610,7 +610,7 @@
       "pos": "T16",
       "score": -2,
       "today": -2,
-      "thru": 5,
+      "thru": 6,
       "rank": 18
     },
     "26008": {
@@ -621,21 +621,13 @@
       "thru": 0,
       "rank": 19
     },
-    "23816": {
-      "name": "Sami Valimaki",
-      "pos": "T16",
-      "score": -2,
-      "today": 0,
-      "thru": 11,
-      "rank": 20
-    },
     "22087": {
       "name": "Jeremy Paul",
       "pos": "T16",
       "score": -2,
       "today": -1,
       "thru": 6,
-      "rank": 21
+      "rank": 20
     },
     "26193": {
       "name": "Wenyi Ding",
@@ -643,7 +635,7 @@
       "score": -2,
       "today": 0,
       "thru": 0,
-      "rank": 22
+      "rank": 21
     },
     "26213": {
       "name": "Jeong Weon Ko",
@@ -651,91 +643,99 @@
       "score": -2,
       "today": 0,
       "thru": 0,
-      "rank": 23
+      "rank": 22
     },
     "13900": {
       "name": "Shane Lowry",
-      "pos": "T24",
+      "pos": "T23",
       "score": -1,
       "today": 0,
       "thru": 0,
-      "rank": 24
+      "rank": 23
     },
     "14780": {
       "name": "Joakim Lagergren",
-      "pos": "T24",
+      "pos": "T23",
       "score": -1,
       "today": -1,
       "thru": 5,
+      "rank": 24
+    },
+    "15680": {
+      "name": "Jeff Winther",
+      "pos": "T23",
+      "score": -1,
+      "today": 0,
+      "thru": 0,
       "rank": 25
     },
     "10201": {
       "name": "Julien Guerrier",
-      "pos": "T24",
+      "pos": "T23",
       "score": -1,
       "today": 0,
       "thru": 6,
       "rank": 26
     },
-    "15680": {
-      "name": "Jeff Winther",
-      "pos": "T24",
+    "19421": {
+      "name": "Hennie Du Plessis",
+      "pos": "T23",
       "score": -1,
       "today": 0,
       "thru": 0,
       "rank": 27
     },
-    "19421": {
-      "name": "Hennie Du Plessis",
-      "pos": "T24",
-      "score": -1,
-      "today": 0,
-      "thru": 0,
-      "rank": 28
-    },
     "20084": {
       "name": "Mikael Lindberg",
-      "pos": "T24",
+      "pos": "T23",
       "score": -1,
       "today": 2,
-      "thru": 13,
-      "rank": 29
+      "thru": 14,
+      "rank": 28
     },
     "28239": {
       "name": "Oihan Guillamoundeguy",
-      "pos": "T24",
+      "pos": "T23",
+      "score": -1,
+      "today": 0,
+      "thru": 0,
+      "rank": 29
+    },
+    "16549": {
+      "name": "Renato Paratore",
+      "pos": "T23",
       "score": -1,
       "today": 0,
       "thru": 0,
       "rank": 30
     },
-    "16549": {
-      "name": "Renato Paratore",
-      "pos": "T24",
+    "7655": {
+      "name": "Francesco Molinari",
+      "pos": "T23",
       "score": -1,
       "today": 0,
       "thru": 0,
       "rank": 31
     },
-    "7655": {
-      "name": "Francesco Molinari",
-      "pos": "T24",
+    "23816": {
+      "name": "Sami Valimaki",
+      "pos": "T23",
       "score": -1,
-      "today": 0,
-      "thru": 0,
+      "today": 1,
+      "thru": 12,
       "rank": 32
     },
-    "12321": {
-      "name": "Kiradech Aphibarnrat",
-      "pos": "T24",
+    "12734": {
+      "name": "Jason Scrivener",
+      "pos": "T23",
       "score": -1,
       "today": 0,
       "thru": 0,
       "rank": 33
     },
-    "12734": {
-      "name": "Jason Scrivener",
-      "pos": "T24",
+    "12321": {
+      "name": "Kiradech Aphibarnrat",
+      "pos": "T23",
       "score": -1,
       "today": 0,
       "thru": 0,
@@ -743,7 +743,7 @@
     },
     "24497": {
       "name": "Brandon Robinson Thompson",
-      "pos": "T24",
+      "pos": "T23",
       "score": -1,
       "today": 2,
       "thru": 9,
@@ -773,29 +773,13 @@
       "thru": 0,
       "rank": 38
     },
-    "18722": {
-      "name": "Ricardo Gouveia",
-      "pos": "T36",
-      "score": 0,
-      "today": 0,
-      "thru": 0,
-      "rank": 39
-    },
-    "7887": {
-      "name": "Alfredo Garcia-Heredia",
-      "pos": "T36",
-      "score": 0,
-      "today": 0,
-      "thru": 0,
-      "rank": 40
-    },
     "24127": {
       "name": "Angel Hidalgo",
       "pos": "T36",
       "score": 0,
       "today": -3,
       "thru": 10,
-      "rank": 41
+      "rank": 39
     },
     "29971": {
       "name": "Dan Bradbury",
@@ -803,7 +787,31 @@
       "score": 0,
       "today": -3,
       "thru": 8,
+      "rank": 40
+    },
+    "11763": {
+      "name": "Ashun Wu",
+      "pos": "T36",
+      "score": 0,
+      "today": -1,
+      "thru": 6,
+      "rank": 41
+    },
+    "18722": {
+      "name": "Ricardo Gouveia",
+      "pos": "T36",
+      "score": 0,
+      "today": 0,
+      "thru": 0,
       "rank": 42
+    },
+    "19190": {
+      "name": "Rikuya Hoshino",
+      "pos": "T36",
+      "score": 0,
+      "today": 0,
+      "thru": 0,
+      "rank": 43
     },
     "23549": {
       "name": "Filippo Celli",
@@ -811,18 +819,10 @@
       "score": 0,
       "today": 0,
       "thru": 11,
-      "rank": 43
-    },
-    "13374": {
-      "name": "Darius Van Driel",
-      "pos": "T36",
-      "score": 0,
-      "today": -1,
-      "thru": 7,
       "rank": 44
     },
-    "19190": {
-      "name": "Rikuya Hoshino",
+    "7887": {
+      "name": "Alfredo Garcia-Heredia",
       "pos": "T36",
       "score": 0,
       "today": 0,
@@ -837,21 +837,13 @@
       "thru": 8,
       "rank": 46
     },
-    "11763": {
-      "name": "Ashun Wu",
-      "pos": "T36",
-      "score": 0,
-      "today": -1,
-      "thru": 6,
-      "rank": 47
-    },
     "29712": {
       "name": "Quim Vidal",
       "pos": "T36",
       "score": 0,
       "today": 0,
       "thru": 0,
-      "rank": 48
+      "rank": 47
     },
     "14018": {
       "name": "Jens Dantorp",
@@ -859,19 +851,27 @@
       "score": 0,
       "today": 0,
       "thru": 0,
-      "rank": 49
+      "rank": 48
     },
     "19224": {
       "name": "David Micheluzzi",
       "pos": "T36",
       "score": 0,
       "today": -2,
-      "thru": 6,
-      "rank": 50
+      "thru": 7,
+      "rank": 49
     },
     "22322": {
       "name": "Tom McKibbin",
-      "pos": "T51",
+      "pos": "T50",
+      "score": 1,
+      "today": 0,
+      "thru": 0,
+      "rank": 50
+    },
+    "14196": {
+      "name": "Adrian Meronk",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
@@ -879,55 +879,55 @@
     },
     "18770": {
       "name": "Antoine Rozner",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 52
     },
-    "28615": {
-      "name": "Sam Bairstow",
-      "pos": "T51",
+    "15676": {
+      "name": "Niklas Norgaard",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 53
     },
-    "15676": {
-      "name": "Niklas Norgaard",
-      "pos": "T51",
+    "28615": {
+      "name": "Sam Bairstow",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 54
     },
-    "14196": {
-      "name": "Adrian Meronk",
-      "pos": "T51",
-      "score": 1,
-      "today": 0,
-      "thru": 0,
-      "rank": 55
-    },
-    "22736": {
-      "name": "Thomas Rosenmueller",
-      "pos": "T51",
-      "score": 1,
-      "today": 0,
-      "thru": 0,
-      "rank": 56
-    },
     "28473": {
       "name": "Jose Luis Ballester",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 1,
       "thru": 13,
+      "rank": 55
+    },
+    "6093": {
+      "name": "Justin Rose",
+      "pos": "T50",
+      "score": 1,
+      "today": 0,
+      "thru": 9,
+      "rank": 56
+    },
+    "22259": {
+      "name": "Alejandro Del Rey",
+      "pos": "T50",
+      "score": 1,
+      "today": 1,
+      "thru": 12,
       "rank": 57
     },
-    "14784": {
-      "name": "David Law",
-      "pos": "T51",
+    "22736": {
+      "name": "Thomas Rosenmueller",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
@@ -935,103 +935,103 @@
     },
     "14987": {
       "name": "Francesco Laporta",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 59
     },
-    "22259": {
-      "name": "Alejandro Del Rey",
-      "pos": "T51",
-      "score": 1,
-      "today": 1,
-      "thru": 11,
-      "rank": 60
-    },
-    "6093": {
-      "name": "Justin Rose",
-      "pos": "T51",
+    "23733": {
+      "name": "Frederic LaCroix",
+      "pos": "T50",
       "score": 1,
       "today": 0,
-      "thru": 9,
-      "rank": 61
+      "thru": 0,
+      "rank": 60
     },
     "32550": {
       "name": "Davis Bryant",
-      "pos": "T51",
+      "pos": "T50",
+      "score": 1,
+      "today": 0,
+      "thru": 0,
+      "rank": 61
+    },
+    "14784": {
+      "name": "David Law",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 62
     },
-    "23733": {
-      "name": "Frederic LaCroix",
-      "pos": "T51",
+    "18174": {
+      "name": "JC Ritchie",
+      "pos": "T50",
       "score": 1,
       "today": 0,
-      "thru": 0,
+      "thru": 5,
       "rank": 63
     },
     "18517": {
       "name": "Sebastian Soderberg",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 64
     },
-    "18174": {
-      "name": "JC Ritchie",
-      "pos": "T51",
-      "score": 1,
-      "today": 0,
-      "thru": 5,
-      "rank": 65
-    },
     "18105": {
       "name": "Thriston Lawrence",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
+      "rank": 65
+    },
+    "13374": {
+      "name": "Darius Van Driel",
+      "pos": "T50",
+      "score": 1,
+      "today": 0,
+      "thru": 8,
       "rank": 66
     },
     "27149": {
       "name": "Daniel Rodrigues",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
       "rank": 67
     },
-    "11460": {
-      "name": "Matteo Manassero",
-      "pos": "T51",
-      "score": 1,
-      "today": 0,
-      "thru": 8,
-      "rank": 68
-    },
     "12258": {
       "name": "Sebastian Garcia Rodriguez",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
+      "rank": 68
+    },
+    "10418": {
+      "name": "Niklas Lemke",
+      "pos": "T50",
+      "score": 1,
+      "today": 0,
+      "thru": 9,
       "rank": 69
     },
     "9133": {
       "name": "Pablo Larrazabal",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 1,
       "thru": 12,
       "rank": 70
     },
-    "10418": {
-      "name": "Niklas Lemke",
-      "pos": "T51",
+    "11460": {
+      "name": "Matteo Manassero",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 9,
@@ -1039,7 +1039,7 @@
     },
     "15867": {
       "name": "Michael Stewart",
-      "pos": "T51",
+      "pos": "T50",
       "score": 1,
       "today": 0,
       "thru": 0,
@@ -1053,12 +1053,12 @@
       "thru": 0,
       "rank": 73
     },
-    "28157": {
-      "name": "Tom Vaillant",
+    "10158": {
+      "name": "Joost Luiten",
       "pos": "T73",
       "score": 2,
-      "today": 2,
-      "thru": 5,
+      "today": 0,
+      "thru": 0,
       "rank": 74
     },
     "24185": {
@@ -1069,12 +1069,12 @@
       "thru": 0,
       "rank": 75
     },
-    "21677": {
-      "name": "Maximilian Steinlechner",
+    "28157": {
+      "name": "Tom Vaillant",
       "pos": "T73",
       "score": 2,
-      "today": 0,
-      "thru": 0,
+      "today": 2,
+      "thru": 6,
       "rank": 76
     },
     "21646": {
@@ -1082,24 +1082,8 @@
       "pos": "T73",
       "score": 2,
       "today": 1,
-      "thru": 12,
+      "thru": 13,
       "rank": 77
-    },
-    "15229": {
-      "name": "Brandon Stone",
-      "pos": "T73",
-      "score": 2,
-      "today": 1,
-      "thru": 7,
-      "rank": 78
-    },
-    "10158": {
-      "name": "Joost Luiten",
-      "pos": "T73",
-      "score": 2,
-      "today": 0,
-      "thru": 0,
-      "rank": 79
     },
     "11955": {
       "name": "Dylan Frittelli",
@@ -1107,15 +1091,15 @@
       "score": 2,
       "today": 0,
       "thru": 0,
-      "rank": 80
+      "rank": 78
     },
-    "12988": {
-      "name": "Ignacio Elvira Mijares",
+    "15229": {
+      "name": "Brandon Stone",
       "pos": "T73",
       "score": 2,
       "today": 1,
-      "thru": 9,
-      "rank": 81
+      "thru": 8,
+      "rank": 79
     },
     "27258": {
       "name": "Ben Schmidt",
@@ -1123,6 +1107,22 @@
       "score": 2,
       "today": 0,
       "thru": 5,
+      "rank": 80
+    },
+    "21677": {
+      "name": "Maximilian Steinlechner",
+      "pos": "T73",
+      "score": 2,
+      "today": 0,
+      "thru": 0,
+      "rank": 81
+    },
+    "12988": {
+      "name": "Ignacio Elvira Mijares",
+      "pos": "T73",
+      "score": 2,
+      "today": 1,
+      "thru": 10,
       "rank": 82
     },
     "15113": {
@@ -1133,21 +1133,13 @@
       "thru": 0,
       "rank": 83
     },
-    "7457": {
-      "name": "Rafa Cabrera Bello",
-      "pos": "T73",
-      "score": 2,
-      "today": 0,
-      "thru": 0,
-      "rank": 84
-    },
     "13731": {
       "name": "Ockie Strydom",
       "pos": "T73",
       "score": 2,
       "today": -1,
       "thru": 12,
-      "rank": 85
+      "rank": 84
     },
     "30034585": {
       "name": "Sergio Jimenez Romero",
@@ -1155,10 +1147,18 @@
       "score": 2,
       "today": 1,
       "thru": 6,
-      "rank": 86
+      "rank": 85
     },
     "34569": {
       "name": "Sebastian Desoisa",
+      "pos": "T73",
+      "score": 2,
+      "today": 0,
+      "thru": 0,
+      "rank": 86
+    },
+    "7457": {
+      "name": "Rafa Cabrera Bello",
       "pos": "T73",
       "score": 2,
       "today": 0,
@@ -1170,15 +1170,15 @@
       "pos": "T88",
       "score": 3,
       "today": 0,
-      "thru": 9,
+      "thru": 10,
       "rank": 88
     },
-    "20766": {
-      "name": "Dan Brown",
+    "17068": {
+      "name": "MJ Daffue",
       "pos": "T88",
       "score": 3,
-      "today": 0,
-      "thru": 0,
+      "today": -2,
+      "thru": 5,
       "rank": 89
     },
     "25131": {
@@ -1189,24 +1189,24 @@
       "thru": 8,
       "rank": 90
     },
-    "23610": {
-      "name": "Sean Crocker",
+    "20766": {
+      "name": "Dan Brown",
       "pos": "T88",
       "score": 3,
       "today": 0,
       "thru": 0,
       "rank": 91
     },
-    "17068": {
-      "name": "MJ Daffue",
-      "pos": "T88",
-      "score": 3,
-      "today": -2,
-      "thru": 5,
-      "rank": 92
-    },
     "29119": {
       "name": "Yanhan Zhou",
+      "pos": "T88",
+      "score": 3,
+      "today": 0,
+      "thru": 0,
+      "rank": 92
+    },
+    "23610": {
+      "name": "Sean Crocker",
       "pos": "T88",
       "score": 3,
       "today": 0,
@@ -1237,12 +1237,12 @@
       "thru": 0,
       "rank": 96
     },
-    "22231": {
-      "name": "Nicolai Von Dellingshausen",
+    "22465": {
+      "name": "Marco Penge",
       "pos": "T97",
       "score": 4,
-      "today": 0,
-      "thru": 0,
+      "today": 2,
+      "thru": 9,
       "rank": 97
     },
     "23416": {
@@ -1253,12 +1253,12 @@
       "thru": 0,
       "rank": 98
     },
-    "22465": {
-      "name": "Marco Penge",
+    "22231": {
+      "name": "Nicolai Von Dellingshausen",
       "pos": "T97",
       "score": 4,
-      "today": 2,
-      "thru": 9,
+      "today": 0,
+      "thru": 0,
       "rank": 99
     },
     "27588": {
@@ -1269,29 +1269,13 @@
       "thru": 9,
       "rank": 100
     },
-    "7679": {
-      "name": "Thomas Aiken",
-      "pos": "T97",
-      "score": 4,
-      "today": 2,
-      "thru": 5,
-      "rank": 101
-    },
     "22608": {
       "name": "Todd Clements",
       "pos": "T97",
       "score": 4,
       "today": 1,
       "thru": 11,
-      "rank": 102
-    },
-    "26991": {
-      "name": "Jayden Schaper",
-      "pos": "T97",
-      "score": 4,
-      "today": 2,
-      "thru": 8,
-      "rank": 103
+      "rank": 101
     },
     "25890": {
       "name": "Yurav Premlall",
@@ -1299,6 +1283,22 @@
       "score": 4,
       "today": 0,
       "thru": 0,
+      "rank": 102
+    },
+    "7679": {
+      "name": "Thomas Aiken",
+      "pos": "T97",
+      "score": 4,
+      "today": 2,
+      "thru": 5,
+      "rank": 103
+    },
+    "26991": {
+      "name": "Jayden Schaper",
+      "pos": "T97",
+      "score": 4,
+      "today": 2,
+      "thru": 8,
       "rank": 104
     },
     "14796": {
@@ -1317,13 +1317,21 @@
       "thru": 0,
       "rank": 106
     },
-    "7049": {
-      "name": "Richard Sterne",
+    "19635": {
+      "name": "Ivan Cantero Gutierrez",
       "pos": "T105",
       "score": 5,
       "today": 3,
       "thru": 11,
       "rank": 107
+    },
+    "7049": {
+      "name": "Richard Sterne",
+      "pos": "T105",
+      "score": 5,
+      "today": 3,
+      "thru": 12,
+      "rank": 108
     },
     "7334": {
       "name": "Bubba Watson",
@@ -1331,7 +1339,7 @@
       "score": 5,
       "today": 1,
       "thru": 12,
-      "rank": 108
+      "rank": 109
     },
     "20522": {
       "name": "Johannes Veerman",
@@ -1339,7 +1347,7 @@
       "score": 5,
       "today": 0,
       "thru": 11,
-      "rank": 109
+      "rank": 110
     },
     "11061": {
       "name": "James Morrison",
@@ -1347,7 +1355,7 @@
       "score": 5,
       "today": 0,
       "thru": 0,
-      "rank": 110
+      "rank": 111
     },
     "16896": {
       "name": "Jacques Kruyswijk",
@@ -1355,7 +1363,7 @@
       "score": 5,
       "today": 0,
       "thru": 0,
-      "rank": 111
+      "rank": 112
     },
     "20448": {
       "name": "Yuto Katsuragawa",
@@ -1363,7 +1371,7 @@
       "score": 5,
       "today": 1,
       "thru": 6,
-      "rank": 112
+      "rank": 113
     },
     "15993": {
       "name": "Michael Hollick",
@@ -1371,22 +1379,14 @@
       "score": 5,
       "today": 3,
       "thru": 7,
-      "rank": 113
+      "rank": 114
     },
     "23602": {
       "name": "Nicolai Hojgaard",
       "pos": "T105",
       "score": 5,
       "today": 2,
-      "thru": 9,
-      "rank": 114
-    },
-    "19635": {
-      "name": "Ivan Cantero Gutierrez",
-      "pos": "T105",
-      "score": 5,
-      "today": 3,
-      "thru": 11,
+      "thru": 10,
       "rank": 115
     },
     "30043275": {
@@ -1458,7 +1458,7 @@
       "pos": "T123",
       "score": 8,
       "today": 3,
-      "thru": 9,
+      "thru": 10,
       "rank": 124
     },
     "23892": {
@@ -1514,7 +1514,7 @@
       "pos": "131",
       "score": 13,
       "today": 3,
-      "thru": 6,
+      "thru": 7,
       "rank": 131
     },
     "12426": {
@@ -1600,7 +1600,7 @@
     "25611": {
       "round": 2,
       "start": 10,
-      "thru": 11,
+      "thru": 12,
       "today": -1,
       "course": "CC",
       "rel": {
@@ -1612,7 +1612,8 @@
         "15": 1,
         "18": -1,
         "1": 0,
-        "2": 2
+        "2": 2,
+        "3": 0
       }
     },
     "30445": {
@@ -1622,23 +1623,6 @@
       "today": 0,
       "course": "CC",
       "rel": {}
-    },
-    "22089": {
-      "round": 2,
-      "start": 1,
-      "thru": 8,
-      "today": -1,
-      "course": "CC",
-      "rel": {
-        "1": 0,
-        "2": -1,
-        "3": 1,
-        "4": -1,
-        "5": 0,
-        "6": -1,
-        "7": 0,
-        "8": 1
-      }
     },
     "23950": {
       "round": 2,
@@ -1674,7 +1658,25 @@
         "18": 1
       }
     },
-    "16497": {
+    "22089": {
+      "round": 2,
+      "start": 1,
+      "thru": 9,
+      "today": -1,
+      "course": "CC",
+      "rel": {
+        "1": 0,
+        "2": -1,
+        "3": 1,
+        "4": -1,
+        "5": 0,
+        "6": -1,
+        "7": 0,
+        "8": 1,
+        "9": 0
+      }
+    },
+    "13900": {
       "round": 2,
       "start": 1,
       "thru": 0,
@@ -1682,7 +1684,7 @@
       "course": "CC",
       "rel": {}
     },
-    "13900": {
+    "16497": {
       "round": 2,
       "start": 1,
       "thru": 0,
@@ -1701,7 +1703,7 @@
     "27811": {
       "round": 2,
       "start": 10,
-      "thru": 7,
+      "thru": 8,
       "today": -3,
       "course": "CC",
       "rel": {
@@ -1711,7 +1713,8 @@
         "13": 0,
         "14": -1,
         "15": 0,
-        "16": 0
+        "16": 0,
+        "17": 0
       }
     },
     "16652": {
@@ -1751,7 +1754,7 @@
     "14975": {
       "round": 2,
       "start": 1,
-      "thru": 7,
+      "thru": 8,
       "today": -1,
       "course": "CC",
       "rel": {
@@ -1761,7 +1764,30 @@
         "4": 0,
         "5": 0,
         "6": 0,
-        "7": -1
+        "7": -1,
+        "8": 0
+      }
+    },
+    "28984": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "14780": {
+      "round": 2,
+      "start": 1,
+      "thru": 5,
+      "today": -1,
+      "course": "CC",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": -1,
+        "5": 0
       }
     },
     "25601": {
@@ -1783,24 +1809,10 @@
         "10": 0
       }
     },
-    "14780": {
-      "round": 2,
-      "start": 1,
-      "thru": 5,
-      "today": -1,
-      "course": "CC",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": -1,
-        "5": 0
-      }
-    },
     "18027": {
       "round": 2,
       "start": 1,
-      "thru": 5,
+      "thru": 6,
       "today": -2,
       "course": "CC",
       "rel": {
@@ -1808,30 +1820,8 @@
         "2": -1,
         "3": 0,
         "4": -1,
-        "5": 0
-      }
-    },
-    "28984": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "7960": {
-      "round": 2,
-      "start": 10,
-      "thru": 6,
-      "today": -1,
-      "course": "CC",
-      "rel": {
-        "10": 0,
-        "11": -1,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0
+        "5": 0,
+        "6": 0
       }
     },
     "26008": {
@@ -1842,25 +1832,13 @@
       "course": "CC",
       "rel": {}
     },
-    "23816": {
+    "15680": {
       "round": 2,
       "start": 1,
-      "thru": 11,
+      "thru": 0,
       "today": 0,
       "course": "CC",
-      "rel": {
-        "1": 1,
-        "2": 1,
-        "3": -1,
-        "4": -1,
-        "5": 0,
-        "6": 0,
-        "7": -1,
-        "8": 1,
-        "9": -1,
-        "10": 0,
-        "11": 1
-      }
+      "rel": {}
     },
     "10201": {
       "round": 2,
@@ -1877,43 +1855,7 @@
         "6": 0
       }
     },
-    "15680": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
     "19421": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "20084": {
-      "round": 2,
-      "start": 10,
-      "thru": 13,
-      "today": 2,
-      "course": "CC",
-      "rel": {
-        "12": 0,
-        "13": 1,
-        "14": -1,
-        "15": 0,
-        "16": 0,
-        "17": 1,
-        "18": -1,
-        "1": 1,
-        "2": 1,
-        "3": 0,
-        "4": 0
-      }
-    },
-    "22322": {
       "round": 2,
       "start": 1,
       "thru": 0,
@@ -1936,6 +1878,51 @@
         "15": -1
       }
     },
+    "22322": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "7960": {
+      "round": 2,
+      "start": 10,
+      "thru": 7,
+      "today": 0,
+      "course": "CC",
+      "rel": {
+        "10": 0,
+        "11": -1,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": 1
+      }
+    },
+    "20084": {
+      "round": 2,
+      "start": 10,
+      "thru": 14,
+      "today": 2,
+      "course": "CC",
+      "rel": {
+        "12": 0,
+        "13": 1,
+        "14": -1,
+        "15": 0,
+        "16": 0,
+        "17": 1,
+        "18": -1,
+        "1": 1,
+        "2": 1,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    },
     "20844": {
       "round": 2,
       "start": 10,
@@ -1951,14 +1938,6 @@
         "15": 1
       }
     },
-    "18770": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
     "9531": {
       "round": 2,
       "start": 1,
@@ -1967,15 +1946,15 @@
       "course": "CC",
       "rel": {}
     },
-    "26193": {
+    "28239": {
       "round": 2,
-      "start": 10,
+      "start": 1,
       "thru": 0,
       "today": 0,
       "course": "CC",
       "rel": {}
     },
-    "28239": {
+    "14196": {
       "round": 2,
       "start": 1,
       "thru": 0,
@@ -1991,13 +1970,42 @@
       "course": "CC",
       "rel": {}
     },
-    "28615": {
+    "18770": {
       "round": 2,
-      "start": 10,
+      "start": 1,
       "thru": 0,
       "today": 0,
       "course": "CC",
       "rel": {}
+    },
+    "7655": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "23816": {
+      "round": 2,
+      "start": 1,
+      "thru": 12,
+      "today": 1,
+      "course": "CC",
+      "rel": {
+        "1": 1,
+        "2": 1,
+        "3": -1,
+        "4": -1,
+        "5": 0,
+        "6": 0,
+        "7": -1,
+        "8": 1,
+        "9": -1,
+        "10": 0,
+        "11": 1,
+        "12": 1
+      }
     },
     "14838": {
       "round": 2,
@@ -2015,23 +2023,7 @@
       "course": "CC",
       "rel": {}
     },
-    "7655": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "14196": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "18722": {
+    "28615": {
       "round": 2,
       "start": 10,
       "thru": 0,
@@ -2039,7 +2031,7 @@
       "course": "CC",
       "rel": {}
     },
-    "12321": {
+    "26193": {
       "round": 2,
       "start": 10,
       "thru": 0,
@@ -2047,13 +2039,24 @@
       "course": "CC",
       "rel": {}
     },
-    "22736": {
+    "24127": {
       "round": 2,
       "start": 10,
-      "thru": 0,
-      "today": 0,
+      "thru": 10,
+      "today": -3,
       "course": "CC",
-      "rel": {}
+      "rel": {
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": -1,
+        "14": 0,
+        "15": 0,
+        "16": -1,
+        "17": 0,
+        "18": -1,
+        "1": 0
+      }
     },
     "12734": {
       "round": 2,
@@ -2083,15 +2086,44 @@
         "4": 0
       }
     },
-    "14784": {
+    "6093": {
       "round": 2,
-      "start": 1,
-      "thru": 0,
+      "start": 10,
+      "thru": 9,
       "today": 0,
       "course": "CC",
-      "rel": {}
+      "rel": {
+        "10": 1,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": -1,
+        "15": 1,
+        "16": 0,
+        "17": -1,
+        "18": 0
+      }
     },
-    "7887": {
+    "22259": {
+      "round": 2,
+      "start": 10,
+      "thru": 12,
+      "today": 1,
+      "course": "CC",
+      "rel": {
+        "10": 0,
+        "11": 0,
+        "12": -1,
+        "13": 0,
+        "14": 0,
+        "15": 1,
+        "18": 0,
+        "1": 1,
+        "2": 0,
+        "3": 0
+      }
+    },
+    "12321": {
       "round": 2,
       "start": 10,
       "thru": 0,
@@ -2099,13 +2131,22 @@
       "course": "CC",
       "rel": {}
     },
-    "14987": {
+    "29971": {
       "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
+      "start": 10,
+      "thru": 8,
+      "today": -3,
       "course": "CC",
-      "rel": {}
+      "rel": {
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": -1,
+        "15": 0,
+        "16": -1,
+        "17": -1
+      }
     },
     "24497": {
       "round": 2,
@@ -2125,77 +2166,28 @@
         "9": 0
       }
     },
-    "22259": {
+    "11763": {
       "round": 2,
-      "start": 10,
-      "thru": 11,
-      "today": 1,
+      "start": 1,
+      "thru": 6,
+      "today": -1,
       "course": "CC",
       "rel": {
-        "10": 0,
-        "11": 0,
-        "12": -1,
-        "13": 0,
-        "14": 0,
-        "15": 1,
-        "18": 0,
-        "1": 1,
-        "2": 0
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": -1,
+        "6": 0
       }
     },
-    "24127": {
+    "18722": {
       "round": 2,
       "start": 10,
-      "thru": 10,
-      "today": -3,
-      "course": "CC",
-      "rel": {
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": -1,
-        "14": 0,
-        "15": 0,
-        "16": -1,
-        "17": 0,
-        "18": -1,
-        "1": 0
-      }
-    },
-    "29971": {
-      "round": 2,
-      "start": 10,
-      "thru": 8,
-      "today": -3,
-      "course": "CC",
-      "rel": {
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": -1,
-        "15": 0,
-        "16": -1,
-        "17": -1
-      }
-    },
-    "6093": {
-      "round": 2,
-      "start": 10,
-      "thru": 9,
+      "thru": 0,
       "today": 0,
       "course": "CC",
-      "rel": {
-        "10": 1,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": -1,
-        "15": 1,
-        "16": 0,
-        "17": -1,
-        "18": 0
-      }
+      "rel": {}
     },
     "26213": {
       "round": 2,
@@ -2205,17 +2197,29 @@
       "course": "CC",
       "rel": {}
     },
-    "28157": {
+    "22736": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "14987": {
       "round": 2,
       "start": 1,
-      "thru": 5,
-      "today": 2,
+      "thru": 0,
+      "today": 0,
       "course": "CC",
-      "rel": {
-        "1": 0,
-        "4": 0,
-        "5": 0
-      }
+      "rel": {}
+    },
+    "19190": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
     },
     "23549": {
       "round": 2,
@@ -2237,30 +2241,6 @@
         "11": 0
       }
     },
-    "32550": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "13374": {
-      "round": 2,
-      "start": 1,
-      "thru": 7,
-      "today": -1,
-      "course": "CC",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": 0,
-        "6": -1,
-        "7": 0
-      }
-    },
     "23733": {
       "round": 2,
       "start": 10,
@@ -2269,13 +2249,58 @@
       "course": "CC",
       "rel": {}
     },
-    "19190": {
+    "7887": {
       "round": 2,
       "start": 10,
       "thru": 0,
       "today": 0,
       "course": "CC",
       "rel": {}
+    },
+    "10158": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "32550": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "14784": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "24185": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "28157": {
+      "round": 2,
+      "start": 1,
+      "thru": 6,
+      "today": 2,
+      "course": "CC",
+      "rel": {
+        "1": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0
+      }
     },
     "14016": {
       "round": 2,
@@ -2292,7 +2317,21 @@
         "15": 0
       }
     },
-    "24185": {
+    "18174": {
+      "round": 2,
+      "start": 10,
+      "thru": 5,
+      "today": 0,
+      "course": "CC",
+      "rel": {
+        "10": 1,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": -1
+      }
+    },
+    "29712": {
       "round": 2,
       "start": 10,
       "thru": 0,
@@ -2300,22 +2339,7 @@
       "course": "CC",
       "rel": {}
     },
-    "11763": {
-      "round": 2,
-      "start": 1,
-      "thru": 6,
-      "today": -1,
-      "course": "CC",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": -1,
-        "6": 0
-      }
-    },
-    "29712": {
+    "14018": {
       "round": 2,
       "start": 10,
       "thru": 0,
@@ -2331,20 +2355,6 @@
       "course": "CC",
       "rel": {}
     },
-    "18174": {
-      "round": 2,
-      "start": 10,
-      "thru": 5,
-      "today": 0,
-      "course": "CC",
-      "rel": {
-        "10": 1,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": -1
-      }
-    },
     "18105": {
       "round": 2,
       "start": 1,
@@ -2353,26 +2363,10 @@
       "course": "CC",
       "rel": {}
     },
-    "14018": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "21677": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
     "21646": {
       "round": 2,
       "start": 1,
-      "thru": 12,
+      "thru": 13,
       "today": 1,
       "course": "CC",
       "rel": {
@@ -2384,7 +2378,83 @@
         "7": 0,
         "10": 0,
         "11": 1,
-        "12": 0
+        "12": 0,
+        "13": 0
+      }
+    },
+    "10419": {
+      "round": 2,
+      "start": 10,
+      "thru": 10,
+      "today": 0,
+      "course": "CC",
+      "rel": {
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": -1,
+        "15": 0,
+        "16": 1,
+        "17": -1,
+        "18": 0,
+        "1": 0
+      }
+    },
+    "13374": {
+      "round": 2,
+      "start": 1,
+      "thru": 8,
+      "today": 0,
+      "course": "CC",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": -1,
+        "7": 0,
+        "8": 1
+      }
+    },
+    "17068": {
+      "round": 2,
+      "start": 10,
+      "thru": 5,
+      "today": -2,
+      "course": "CC",
+      "rel": {
+        "10": -1,
+        "11": 1,
+        "12": -1,
+        "13": 0,
+        "14": -1
+      }
+    },
+    "11955": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "25131": {
+      "round": 2,
+      "start": 10,
+      "thru": 8,
+      "today": -1,
+      "course": "CC",
+      "rel": {
+        "10": 1,
+        "11": 1,
+        "12": 0,
+        "13": -1,
+        "14": -1,
+        "15": 0,
+        "16": 0,
+        "17": -1
       }
     },
     "27149": {
@@ -2398,7 +2468,7 @@
     "15229": {
       "round": 2,
       "start": 1,
-      "thru": 7,
+      "thru": 8,
       "today": 1,
       "course": "CC",
       "rel": {
@@ -2406,61 +2476,11 @@
         "2": 0,
         "3": 0,
         "6": 0,
-        "7": 1
-      }
-    },
-    "10158": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "10419": {
-      "round": 2,
-      "start": 10,
-      "thru": 9,
-      "today": 0,
-      "course": "CC",
-      "rel": {
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": -1,
-        "15": 0,
-        "16": 1,
-        "17": -1,
-        "18": 0
-      }
-    },
-    "11460": {
-      "round": 2,
-      "start": 1,
-      "thru": 8,
-      "today": 0,
-      "course": "CC",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": 0,
-        "6": 0,
-        "7": 0,
+        "7": 1,
         "8": 0
       }
     },
-    "11955": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "20766": {
+    "14796": {
       "round": 2,
       "start": 1,
       "thru": 0,
@@ -2471,6 +2491,78 @@
     "12258": {
       "round": 2,
       "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "27258": {
+      "round": 2,
+      "start": 1,
+      "thru": 5,
+      "today": 0,
+      "course": "CC",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+      }
+    },
+    "10418": {
+      "round": 2,
+      "start": 1,
+      "thru": 9,
+      "today": 0,
+      "course": "CC",
+      "rel": {
+        "1": 1,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": -1,
+        "6": 0,
+        "7": 0,
+        "8": 1,
+        "9": -1
+      }
+    },
+    "19224": {
+      "round": 2,
+      "start": 10,
+      "thru": 7,
+      "today": -2,
+      "course": "CC",
+      "rel": {
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": -1,
+        "14": -1,
+        "15": 0,
+        "16": 0
+      }
+    },
+    "20766": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "29119": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "21677": {
+      "round": 2,
+      "start": 10,
       "thru": 0,
       "today": 0,
       "course": "CC",
@@ -2492,158 +2584,6 @@
         "1": 2
       }
     },
-    "25131": {
-      "round": 2,
-      "start": 10,
-      "thru": 8,
-      "today": -1,
-      "course": "CC",
-      "rel": {
-        "10": 1,
-        "11": 1,
-        "12": 0,
-        "13": -1,
-        "14": -1,
-        "15": 0,
-        "16": 0,
-        "17": -1
-      }
-    },
-    "12988": {
-      "round": 2,
-      "start": 10,
-      "thru": 9,
-      "today": 1,
-      "course": "CC",
-      "rel": {
-        "10": 1,
-        "11": 1,
-        "12": 0,
-        "13": 0,
-        "14": -1,
-        "15": 0,
-        "16": -1,
-        "17": 1,
-        "18": 0
-      }
-    },
-    "27258": {
-      "round": 2,
-      "start": 1,
-      "thru": 5,
-      "today": 0,
-      "course": "CC",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": 0
-      }
-    },
-    "15113": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "10418": {
-      "round": 2,
-      "start": 1,
-      "thru": 9,
-      "today": 0,
-      "course": "CC",
-      "rel": {
-        "1": 1,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": -1,
-        "6": 0,
-        "7": 0,
-        "8": 1,
-        "9": -1
-      }
-    },
-    "23610": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "19224": {
-      "round": 2,
-      "start": 10,
-      "thru": 6,
-      "today": -2,
-      "course": "CC",
-      "rel": {
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": -1,
-        "14": -1,
-        "15": 0
-      }
-    },
-    "14796": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "17068": {
-      "round": 2,
-      "start": 10,
-      "thru": 5,
-      "today": -2,
-      "course": "CC",
-      "rel": {
-        "10": -1,
-        "11": 1,
-        "12": -1,
-        "13": 0,
-        "14": -1
-      }
-    },
-    "7457": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "15867": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "22231": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "23416": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
     "22465": {
       "round": 2,
       "start": 10,
@@ -2662,7 +2602,7 @@
         "18": 0
       }
     },
-    "29119": {
+    "23610": {
       "round": 2,
       "start": 10,
       "thru": 0,
@@ -2678,6 +2618,75 @@
       "course": "CC",
       "rel": {}
     },
+    "11460": {
+      "round": 2,
+      "start": 1,
+      "thru": 9,
+      "today": 0,
+      "course": "CC",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      }
+    },
+    "12988": {
+      "round": 2,
+      "start": 10,
+      "thru": 10,
+      "today": 1,
+      "course": "CC",
+      "rel": {
+        "10": 1,
+        "11": 1,
+        "12": 0,
+        "13": 0,
+        "14": -1,
+        "15": 0,
+        "16": -1,
+        "17": 1,
+        "18": 0,
+        "1": 0
+      }
+    },
+    "15867": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "23416": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "22231": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "20190": {
+      "round": 2,
+      "start": 10,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
     "6950": {
       "round": 2,
       "start": 10,
@@ -2686,15 +2695,7 @@
       "course": "CC",
       "rel": {}
     },
-    "28602": {
-      "round": 2,
-      "start": 10,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
-    "20190": {
+    "15113": {
       "round": 2,
       "start": 10,
       "thru": 0,
@@ -2719,6 +2720,54 @@
         "8": 0,
         "9": 0
       }
+    },
+    "22608": {
+      "round": 2,
+      "start": 1,
+      "thru": 11,
+      "today": 1,
+      "course": "CC",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": 0,
+        "6": 1,
+        "7": -1,
+        "8": 0,
+        "9": 0,
+        "10": 0,
+        "11": 0
+      }
+    },
+    "19635": {
+      "round": 2,
+      "start": 1,
+      "thru": 11,
+      "today": 3,
+      "course": "CC",
+      "rel": {
+        "1": -1,
+        "2": 1,
+        "3": 1,
+        "4": 0,
+        "5": 1,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 1,
+        "10": 0,
+        "11": 0
+      }
+    },
+    "25890": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
     },
     "13731": {
       "round": 2,
@@ -2756,29 +2805,36 @@
         "1": 0
       }
     },
-    "7049": {
+    "15326": {
       "round": 2,
       "start": 10,
-      "thru": 11,
-      "today": 3,
+      "thru": 10,
+      "today": 0,
       "course": "CC",
       "rel": {
-        "10": 1,
-        "11": 1,
+        "10": 0,
+        "11": 0,
         "12": 0,
         "13": 0,
-        "14": 0,
+        "14": -1,
         "15": 0,
-        "16": -1,
+        "16": 0,
         "17": 1,
         "18": 0,
-        "1": 1,
-        "2": 0
+        "1": 0
       }
     },
     "12426": {
       "round": 1,
       "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "28602": {
+      "round": 2,
+      "start": 10,
       "thru": 0,
       "today": 0,
       "course": "CC",
@@ -2800,6 +2856,14 @@
       }
     },
     "34569": {
+      "round": 2,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "CC",
+      "rel": {}
+    },
+    "7457": {
       "round": 2,
       "start": 1,
       "thru": 0,
@@ -2862,7 +2926,7 @@
     "32449": {
       "round": 2,
       "start": 1,
-      "thru": 9,
+      "thru": 10,
       "today": 3,
       "course": "CC",
       "rel": {
@@ -2872,7 +2936,8 @@
         "4": 0,
         "5": 0,
         "6": 1,
-        "7": -1
+        "7": -1,
+        "10": 0
       }
     },
     "23892": {
@@ -2922,25 +2987,6 @@
         "1": 1
       }
     },
-    "15326": {
-      "round": 2,
-      "start": 10,
-      "thru": 10,
-      "today": 0,
-      "course": "CC",
-      "rel": {
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": -1,
-        "15": 0,
-        "16": 0,
-        "17": 1,
-        "18": 0,
-        "1": 0
-      }
-    },
     "24369": {
       "round": 2,
       "start": 1,
@@ -2958,6 +3004,27 @@
         "8": 0,
         "9": 0,
         "10": 0
+      }
+    },
+    "7049": {
+      "round": 2,
+      "start": 10,
+      "thru": 12,
+      "today": 3,
+      "course": "CC",
+      "rel": {
+        "10": 1,
+        "11": 1,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": -1,
+        "17": 1,
+        "18": 0,
+        "1": 1,
+        "2": 0,
+        "3": 0
       }
     },
     "18241": {
@@ -3014,26 +3081,6 @@
         "15": 0,
         "16": 0,
         "1": 0
-      }
-    },
-    "22608": {
-      "round": 2,
-      "start": 1,
-      "thru": 11,
-      "today": 1,
-      "course": "CC",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 1,
-        "5": 0,
-        "6": 1,
-        "7": -1,
-        "8": 0,
-        "9": 0,
-        "10": 0,
-        "11": 0
       }
     },
     "20522": {
@@ -3106,7 +3153,7 @@
     "23602": {
       "round": 2,
       "start": 10,
-      "thru": 9,
+      "thru": 10,
       "today": 2,
       "course": "CC",
       "rel": {
@@ -3118,27 +3165,8 @@
         "15": 0,
         "16": 1,
         "17": 0,
-        "18": -1
-      }
-    },
-    "19635": {
-      "round": 2,
-      "start": 1,
-      "thru": 11,
-      "today": 3,
-      "course": "CC",
-      "rel": {
-        "1": -1,
-        "2": 1,
-        "3": 1,
-        "4": 0,
-        "5": 1,
-        "6": 0,
-        "7": 0,
-        "8": 0,
-        "9": 1,
-        "10": 0,
-        "11": 0
+        "18": -1,
+        "1": 0
       }
     },
     "30043275": {
@@ -3170,18 +3198,10 @@
         "15": 1
       }
     },
-    "25890": {
-      "round": 2,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "CC",
-      "rel": {}
-    },
     "19429": {
       "round": 2,
       "start": 10,
-      "thru": 6,
+      "thru": 7,
       "today": 3,
       "course": "CC",
       "rel": {
@@ -3190,7 +3210,8 @@
         "12": 1,
         "13": 1,
         "14": 1,
-        "15": 0
+        "15": 0,
+        "16": 0
       }
     }
   },
