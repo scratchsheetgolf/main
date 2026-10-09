@@ -161,8 +161,8 @@
         "score": "-4"
       },
       {
-        "dg_id": 14704,
-        "player_name": "Putnam, Andrew",
+        "dg_id": 11676,
+        "player_name": "Finau, Tony",
         "fin_text": "T13",
         "score": "-4"
       },
@@ -173,8 +173,8 @@
         "score": "-4"
       },
       {
-        "dg_id": 11676,
-        "player_name": "Finau, Tony",
+        "dg_id": 14704,
+        "player_name": "Putnam, Andrew",
         "fin_text": "T13",
         "score": "-4"
       },
@@ -197,14 +197,14 @@
         "score": "-3"
       },
       {
-        "dg_id": 6430,
-        "player_name": "Scott, Adam",
+        "dg_id": 16841,
+        "player_name": "Lee, Min Woo",
         "fin_text": "T23",
         "score": "-3"
       },
       {
-        "dg_id": 16841,
-        "player_name": "Lee, Min Woo",
+        "dg_id": 6430,
+        "player_name": "Scott, Adam",
         "fin_text": "T23",
         "score": "-3"
       },
@@ -287,6 +287,12 @@
         "score": "-1"
       },
       {
+        "dg_id": 21891,
+        "player_name": "Kitayama, Kurt",
+        "fin_text": "T40",
+        "score": "-1"
+      },
+      {
         "dg_id": 20706,
         "player_name": "Wallace, Matt",
         "fin_text": "T40",
@@ -335,62 +341,50 @@
         "score": "-1"
       },
       {
-        "dg_id": 21891,
-        "player_name": "Kitayama, Kurt",
-        "fin_text": "T49",
-        "score": "E"
-      },
-      {
         "dg_id": 32457,
         "player_name": "Keefer, Johnny",
-        "fin_text": "T49",
+        "fin_text": "T50",
         "score": "E"
       },
       {
         "dg_id": 14636,
         "player_name": "Spieth, Jordan",
-        "fin_text": "T49",
+        "fin_text": "T50",
         "score": "E"
       },
       {
         "dg_id": 18424,
         "player_name": "Roy, Kevin",
-        "fin_text": "T49",
-        "score": "E"
-      },
-      {
-        "dg_id": 28635,
-        "player_name": "McCarty, Matt",
-        "fin_text": "T49",
+        "fin_text": "T50",
         "score": "E"
       },
       {
         "dg_id": 13126,
         "player_name": "Taylor, Nick",
-        "fin_text": "T49",
+        "fin_text": "T50",
+        "score": "E"
+      },
+      {
+        "dg_id": 28635,
+        "player_name": "McCarty, Matt",
+        "fin_text": "T50",
         "score": "E"
       },
       {
         "dg_id": 25797,
         "player_name": "Hosono, Yusaku",
-        "fin_text": "T49",
+        "fin_text": "T50",
         "score": "E"
       },
       {
         "dg_id": 11773,
         "player_name": "Fujimoto, Yoshinori",
-        "fin_text": "T49",
+        "fin_text": "T50",
         "score": "E"
       },
       {
         "dg_id": 29279,
         "player_name": "Suber, Jackson",
-        "fin_text": "T57",
-        "score": "+1"
-      },
-      {
-        "dg_id": 12965,
-        "player_name": "Fowler, Rickie",
         "fin_text": "T57",
         "score": "+1"
       },
@@ -401,8 +395,20 @@
         "score": "+1"
       },
       {
+        "dg_id": 12965,
+        "player_name": "Fowler, Rickie",
+        "fin_text": "T57",
+        "score": "+1"
+      },
+      {
         "dg_id": 17780,
         "player_name": "Pendrith, Taylor",
+        "fin_text": "T57",
+        "score": "+1"
+      },
+      {
+        "dg_id": 13923,
+        "player_name": "Lee, Sang-hee",
         "fin_text": "T57",
         "score": "+1"
       },
@@ -419,12 +425,6 @@
         "score": "+1"
       },
       {
-        "dg_id": 13923,
-        "player_name": "Lee, Sang-hee",
-        "fin_text": "T57",
-        "score": "+1"
-      },
-      {
         "dg_id": 18634,
         "player_name": "McNealy, Maverick",
         "fin_text": "T64",
@@ -437,21 +437,21 @@
         "score": "+2"
       },
       {
+        "dg_id": 23014,
+        "player_name": "Theegala, Sahith",
+        "fin_text": "T64",
+        "score": "+2"
+      },
+      {
         "dg_id": 16283,
         "player_name": "Rodgers, Patrick",
         "fin_text": "T64",
         "score": "+2"
       },
       {
-        "dg_id": 23014,
-        "player_name": "Theegala, Sahith",
-        "fin_text": "T67",
-        "score": "+3"
-      },
-      {
         "dg_id": 31582,
         "player_name": "Nagasaki, Koshin",
-        "fin_text": "T67",
+        "fin_text": "68",
         "score": "+3"
       },
       {
@@ -498,7 +498,7 @@
       "pos": "4",
       "score": -7,
       "today": 0,
-      "thru": 8,
+      "thru": 9,
       "rank": 4
     },
     "15651": {
@@ -554,7 +554,7 @@
       "pos": "T9",
       "score": -5,
       "today": 1,
-      "thru": 4,
+      "thru": 5,
       "rank": 11
     },
     "9099": {
@@ -621,12 +621,12 @@
       "thru": 7,
       "rank": 19
     },
-    "14704": {
-      "name": "Andrew Putnam",
+    "11676": {
+      "name": "Tony Finau",
       "pos": "T13",
       "score": -4,
-      "today": 1,
-      "thru": 5,
+      "today": -4,
+      "thru": 8,
       "rank": 20
     },
     "25739": {
@@ -634,15 +634,15 @@
       "pos": "T13",
       "score": -4,
       "today": -1,
-      "thru": 4,
+      "thru": 5,
       "rank": 21
     },
-    "11676": {
-      "name": "Tony Finau",
+    "14704": {
+      "name": "Andrew Putnam",
       "pos": "T13",
       "score": -4,
-      "today": -4,
-      "thru": 8,
+      "today": 1,
+      "thru": 5,
       "rank": 22
     },
     "24550": {
@@ -658,7 +658,7 @@
       "pos": "T23",
       "score": -3,
       "today": -1,
-      "thru": 6,
+      "thru": 7,
       "rank": 24
     },
     "13562": {
@@ -669,20 +669,20 @@
       "thru": 6,
       "rank": 25
     },
-    "6430": {
-      "name": "Adam Scott",
-      "pos": "T23",
-      "score": -3,
-      "today": -1,
-      "thru": 6,
-      "rank": 26
-    },
     "16841": {
       "name": "Min Woo Lee",
       "pos": "T23",
       "score": -3,
       "today": 1,
       "thru": 3,
+      "rank": 26
+    },
+    "6430": {
+      "name": "Adam Scott",
+      "pos": "T23",
+      "score": -3,
+      "today": -1,
+      "thru": 7,
       "rank": 27
     },
     "17488": {
@@ -789,13 +789,21 @@
       "thru": 3,
       "rank": 40
     },
+    "21891": {
+      "name": "Kurt Kitayama",
+      "pos": "T40",
+      "score": -1,
+      "today": -1,
+      "thru": 8,
+      "rank": 41
+    },
     "20706": {
       "name": "Matt Wallace",
       "pos": "T40",
       "score": -1,
       "today": 0,
       "thru": 2,
-      "rank": 41
+      "rank": 42
     },
     "21074": {
       "name": "Keita Nakajima",
@@ -803,7 +811,7 @@
       "score": -1,
       "today": 1,
       "thru": 4,
-      "rank": 42
+      "rank": 43
     },
     "23465": {
       "name": "Max Greyserman",
@@ -811,15 +819,15 @@
       "score": -1,
       "today": 0,
       "thru": 4,
-      "rank": 43
+      "rank": 44
     },
     "15470": {
       "name": "Beau Hossler",
       "pos": "T40",
       "score": -1,
       "today": 0,
-      "thru": 4,
-      "rank": 44
+      "thru": 5,
+      "rank": 45
     },
     "19729": {
       "name": "Takumi Kanaya",
@@ -827,7 +835,7 @@
       "score": -1,
       "today": 0,
       "thru": 1,
-      "rank": 45
+      "rank": 46
     },
     "11276": {
       "name": "Billy Horschel",
@@ -835,7 +843,7 @@
       "score": -1,
       "today": -1,
       "thru": 4,
-      "rank": 46
+      "rank": 47
     },
     "28203": {
       "name": "Aguri Iwasaki",
@@ -843,7 +851,7 @@
       "score": -1,
       "today": -4,
       "thru": 9,
-      "rank": 47
+      "rank": 48
     },
     "25538": {
       "name": "Tomohiro Ishizaka",
@@ -851,19 +859,11 @@
       "score": -1,
       "today": 0,
       "thru": 9,
-      "rank": 48
-    },
-    "21891": {
-      "name": "Kurt Kitayama",
-      "pos": "T49",
-      "score": 0,
-      "today": 0,
-      "thru": 7,
       "rank": 49
     },
     "32457": {
       "name": "Johnny Keefer",
-      "pos": "T49",
+      "pos": "T50",
       "score": 0,
       "today": 3,
       "thru": 9,
@@ -871,7 +871,7 @@
     },
     "14636": {
       "name": "Jordan Spieth",
-      "pos": "T49",
+      "pos": "T50",
       "score": 0,
       "today": -1,
       "thru": 3,
@@ -879,39 +879,39 @@
     },
     "18424": {
       "name": "Kevin Roy",
-      "pos": "T49",
+      "pos": "T50",
       "score": 0,
       "today": 1,
       "thru": 9,
       "rank": 52
     },
-    "28635": {
-      "name": "Matt McCarty",
-      "pos": "T49",
-      "score": 0,
-      "today": 1,
-      "thru": 3,
-      "rank": 53
-    },
     "13126": {
       "name": "Nick Taylor",
-      "pos": "T49",
+      "pos": "T50",
       "score": 0,
       "today": 0,
-      "thru": 1,
+      "thru": 2,
+      "rank": 53
+    },
+    "28635": {
+      "name": "Matt McCarty",
+      "pos": "T50",
+      "score": 0,
+      "today": 1,
+      "thru": 4,
       "rank": 54
     },
     "25797": {
       "name": "Yusaku Hosono",
-      "pos": "T49",
+      "pos": "T50",
       "score": 0,
       "today": -1,
-      "thru": 8,
+      "thru": 9,
       "rank": 55
     },
     "11773": {
       "name": "Yoshinori Fujimoto",
-      "pos": "T49",
+      "pos": "T50",
       "score": 0,
       "today": -1,
       "thru": 9,
@@ -925,20 +925,20 @@
       "thru": 1,
       "rank": 57
     },
-    "12965": {
-      "name": "Rickie Fowler",
-      "pos": "T57",
-      "score": 1,
-      "today": -1,
-      "thru": 6,
-      "rank": 58
-    },
     "18474": {
       "name": "Alex Smalley",
       "pos": "T57",
       "score": 1,
       "today": 1,
       "thru": 3,
+      "rank": 58
+    },
+    "12965": {
+      "name": "Rickie Fowler",
+      "pos": "T57",
+      "score": 1,
+      "today": -1,
+      "thru": 6,
       "rank": 59
     },
     "17780": {
@@ -946,24 +946,8 @@
       "pos": "T57",
       "score": 1,
       "today": 0,
-      "thru": 1,
+      "thru": 2,
       "rank": 60
-    },
-    "23841": {
-      "name": "Rasmus Neergaard-Petersen",
-      "pos": "T57",
-      "score": 1,
-      "today": -2,
-      "thru": 10,
-      "rank": 61
-    },
-    "27164": {
-      "name": "Chandler Phillips",
-      "pos": "T57",
-      "score": 1,
-      "today": 2,
-      "thru": 9,
-      "rank": 62
     },
     "13923": {
       "name": "Sang-hee Lee",
@@ -971,6 +955,22 @@
       "score": 1,
       "today": 0,
       "thru": 4,
+      "rank": 61
+    },
+    "23841": {
+      "name": "Rasmus Neergaard-Petersen",
+      "pos": "T57",
+      "score": 1,
+      "today": -2,
+      "thru": 10,
+      "rank": 62
+    },
+    "27164": {
+      "name": "Chandler Phillips",
+      "pos": "T57",
+      "score": 1,
+      "today": 2,
+      "thru": 9,
       "rank": 63
     },
     "18634": {
@@ -989,25 +989,25 @@
       "thru": 6,
       "rank": 65
     },
+    "23014": {
+      "name": "Sahith Theegala",
+      "pos": "T64",
+      "score": 2,
+      "today": -1,
+      "thru": 9,
+      "rank": 66
+    },
     "16283": {
       "name": "Patrick Rodgers",
       "pos": "T64",
       "score": 2,
       "today": 0,
       "thru": 9,
-      "rank": 66
-    },
-    "23014": {
-      "name": "Sahith Theegala",
-      "pos": "T67",
-      "score": 3,
-      "today": 0,
-      "thru": 8,
       "rank": 67
     },
     "31582": {
       "name": "Koshin Nagasaki",
-      "pos": "T67",
+      "pos": "68",
       "score": 3,
       "today": 2,
       "thru": 5,
@@ -1018,7 +1018,7 @@
       "pos": "69",
       "score": 4,
       "today": 1,
-      "thru": 2,
+      "thru": 3,
       "rank": 69
     },
     "27900": {
@@ -1026,7 +1026,7 @@
       "pos": "70",
       "score": 6,
       "today": 0,
-      "thru": 1,
+      "thru": 2,
       "rank": 70
     },
     "26657": {
