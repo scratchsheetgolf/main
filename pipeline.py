@@ -17,7 +17,7 @@ from content import content
 from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
                     render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand,
                     render_reel, render_round_wrap)
-from distribute import image_host, post_x, post_meta, post_tiktok, notify_telegram
+from distribute import image_host, post_x, post_meta, post_tiktok, notify_telegram, music
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 
@@ -96,7 +96,7 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
             return results
         for name, fn in [
             ("facebook", lambda: post_meta.post_to_facebook_page(public_url, caption)),
-            ("instagram", lambda: post_meta.post_to_instagram(public_url, caption)),
+            ("instagram", lambda: _instagram_post(local_image_path, public_url, caption)),
             ("tiktok", lambda: post_tiktok.post_photo([public_url], tiktok_title or caption[:90], caption)),
         ]:
             if name in url_platforms:
@@ -105,6 +105,21 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
                 except Exception as e:
                     results[name] = f"FAILED: {e}"
     return results
+
+
+def _instagram_post(local_image_path: str, public_url: str, caption: str):
+    """Instagram gets a 9 s Reel of the card with a licensed music clip (Reels reach non-followers);
+    if there's no clip/key or the Reel fails at any step, it falls back to the plain image post."""
+    reel_note = "no music clip available"
+    clip = music.pick_clip()
+    if clip:
+        try:
+            reel = render_reel([{"path": local_image_path, "seconds": 9}],
+                               os.path.splitext(local_image_path)[0] + "_reel.mp4", audio=clip)
+            return {"reel": post_meta.post_reel_to_instagram(reel, caption)}
+        except Exception as e:
+            reel_note = f"reel failed ({type(e).__name__}: {str(e)[:200]})"
+    return {"image": post_meta.post_to_instagram(public_url, caption), "note": reel_note}
 
 
 def _caption(post_type: str, summary: str, event_tag: str, fallback: str, allow_fallback: bool):

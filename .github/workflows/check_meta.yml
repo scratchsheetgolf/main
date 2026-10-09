@@ -3,7 +3,8 @@ name: Check Meta credentials
 # Manual only. Verifies the Facebook Page + Instagram setup WITHOUT posting: the Page token is
 # valid, never expires and has the publishing permissions, the Page's linked Instagram account
 # matches META_IG_USER_ID, and (end to end) a sample card hosted the same way real posts are is
-# accepted by Instagram as an UNPUBLISHED container (never shown; expires in 24 h). Free.
+# accepted by Instagram as an UNPUBLISHED container (never shown; expires in 24 h), and the same for
+# a music Reel built exactly like a live post's. Free.
 on:
   workflow_dispatch: {}
 
@@ -25,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install ffmpeg (Reel test)
+        run: command -v ffmpeg || { sudo apt-get update -q && sudo apt-get install -y -q ffmpeg; }
+
       - name: Install card fonts
         run: |
           mkdir -p ~/.local/share/fonts
@@ -41,9 +45,16 @@ jobs:
           url=$(python -c 'from distribute import image_host; print(image_host.publish_image("output/previews/sample/weekly_picks.png"))' | tail -n 1)
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
+      - name: Build a music Reel from the sample card like a live post
+        env:
+          AUDIO_KEY: ${{ secrets.AUDIO_KEY }}
+        run: |
+          python -c 'from distribute import music; from render import render_reel; c = music.pick_clip(); assert c, "no clip: AUDIO_KEY missing or decrypt failed"; render_reel([{"path": "output/previews/sample/weekly_picks.png", "seconds": 9}], "output/check_reel.mp4", audio=c)'
+          ffprobe -v error -show_entries stream=codec_type -of csv=p=0 output/check_reel.mp4
+
       - name: Check credentials (no post)
         env:
           META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
           META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
           META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
-        run: python -m distribute.post_meta --check "${{ steps.host.outputs.url }}"
+        run: python -m distribute.post_meta --check "${{ steps.host.outputs.url }}" output/check_reel.mp4
