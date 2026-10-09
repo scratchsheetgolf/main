@@ -623,20 +623,66 @@ class ReelMusicTests(unittest.TestCase):
         self.assertFalse(any(c.endswith("media_publish") for c in calls))
 
     def test_instagram_falls_back_to_image_when_reel_fails(self):
-        with mock.patch.object(pipeline.music, "pick_clip", return_value="/tmp/clip.m4a"), \
-             mock.patch.object(pipeline, "render_reel", return_value="/tmp/r.mp4"), \
-             mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", side_effect=RuntimeError("boom")), \
+        with mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", side_effect=RuntimeError("boom")), \
              mock.patch.object(pipeline.post_meta, "post_to_instagram", return_value={"id": "img"}) as img:
-            out = pipeline._instagram_post("/tmp/card.png", "https://x/card.jpg", "cap")
+            out = pipeline._instagram_post("/tmp/r.mp4", "", "https://x/card.jpg", "cap")
         img.assert_called_once_with("https://x/card.jpg", "cap")
         self.assertIn("reel failed", out["note"])
-        with mock.patch.object(pipeline.music, "pick_clip", return_value="/tmp/clip.m4a"), \
-             mock.patch.object(pipeline, "render_reel", return_value="/tmp/r.mp4"), \
-             mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", return_value={"id": "reel"}) as reel, \
+        with mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", return_value={"id": "reel"}) as reel, \
              mock.patch.object(pipeline.post_meta, "post_to_instagram") as img2:
-            self.assertEqual(pipeline._instagram_post("/tmp/card.png", "u", "cap"), {"reel": {"id": "reel"}})
+            self.assertEqual(pipeline._instagram_post("/tmp/r.mp4", "", "u", "cap"), {"reel": {"id": "reel"}})
         reel.assert_called_once_with("/tmp/r.mp4", "cap", thumb_offset_ms=3000)
         img2.assert_not_called()
+        with mock.patch.object(pipeline.post_meta, "post_to_instagram", return_value={"id": "img"}):   # no Reel built
+            self.assertEqual(pipeline._instagram_post(None, "no music clip available", "u", "cap"),
+                             {"image": {"id": "img"}, "note": "no music clip available"})
+
+    def test_facebook_gets_the_same_reel_and_falls_back_to_the_photo(self):
+        with mock.patch.object(pipeline.post_meta, "post_reel_to_facebook", return_value={"video_id": "v"}) as fb, \
+             mock.patch.object(pipeline.post_meta, "post_to_facebook_page") as photo:
+            self.assertEqual(pipeline._facebook_post("/tmp/r.mp4", "", "u", "cap"), {"reel": {"video_id": "v"}})
+        fb.assert_called_once_with("/tmp/r.mp4", "cap")
+        photo.assert_not_called()
+        with mock.patch.object(pipeline.post_meta, "post_reel_to_facebook", side_effect=RuntimeError("boom")), \
+             mock.patch.object(pipeline.post_meta, "post_to_facebook_page", return_value={"id": "p"}) as photo:
+            out = pipeline._facebook_post("/tmp/r.mp4", "", "u", "cap")
+        photo.assert_called_once_with("u", "cap")
+        self.assertIn("reel failed", out["note"])
+
+    def test_reel_is_built_once_for_both_platforms(self):
+        with mock.patch.object(pipeline, "enabled_platforms", return_value={"facebook", "instagram"}), \
+             mock.patch.object(pipeline.image_host, "publish_image", return_value="https://x/c.jpg"), \
+             mock.patch.object(pipeline, "_build_reel", return_value=("/tmp/r.mp4", "")) as build, \
+             mock.patch.object(pipeline.post_meta, "post_reel_to_facebook", return_value={"video_id": "v"}), \
+             mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", return_value={"id": "i"}):
+            out = pipeline._post_everywhere("/tmp/card.png", "cap", hook="BRIDGEMAN LEADS")
+        build.assert_called_once_with("/tmp/card.png", "BRIDGEMAN LEADS")
+        self.assertEqual((out["facebook"], out["instagram"]), ({"reel": {"video_id": "v"}}, {"reel": {"id": "i"}}))
+
+    def test_facebook_reel_upload_flow(self):
+        from distribute import post_meta
+        calls = []
+        def fake_post(url, data=None, headers=None, timeout=None):
+            calls.append((url, dict(data) if isinstance(data, dict) else "BYTES"))
+            r = mock.Mock(ok=True)
+            r.json.return_value = {"video_id": "V1"}
+            return r
+        st = {"status": {"video_status": "upload_complete", "processing_phase": {"status": "complete"},
+                         "publishing_phase": {"status": "complete"}}}
+        with tempfile.NamedTemporaryFile(suffix=".mp4") as v, \
+             mock.patch.object(post_meta, "PAGE_ID", "P"), mock.patch.object(post_meta, "ACCESS_TOKEN", "T"), \
+             mock.patch.object(post_meta.requests, "post", side_effect=fake_post), \
+             mock.patch.object(post_meta, "_get", return_value=st):
+            v.write(b"video"); v.flush()
+            out = post_meta.post_reel_to_facebook(v.name, "cap")
+            self.assertEqual(out, {"video_id": "V1", "status": "upload_complete", "published": True})
+            self.assertEqual(calls[0][1]["upload_phase"], "start")
+            self.assertIn("rupload.facebook.com/video-upload/", calls[1][0])
+            self.assertEqual((calls[2][1]["upload_phase"], calls[2][1]["video_state"], calls[2][1]["description"]),
+                             ("finish", "PUBLISHED", "cap"))
+            with mock.patch.object(post_meta, "_get", return_value={"status": {"video_status": "error"}}):
+                with self.assertRaises(RuntimeError):
+                    post_meta.post_reel_to_facebook(v.name, "cap")
 
 class ReelHookTests(unittest.TestCase):
     def rows(self, *scores):

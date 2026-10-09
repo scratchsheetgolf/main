@@ -95,9 +95,11 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
         except Exception as e:
             results["image_host"] = f"FAILED: {e} (skipped {', '.join(sorted(url_platforms))})"
             return results
+        reel, reel_note = (_build_reel(local_image_path, hook) if url_platforms & {"facebook", "instagram"}
+                           else (None, ""))
         for name, fn in [
-            ("facebook", lambda: post_meta.post_to_facebook_page(public_url, caption)),
-            ("instagram", lambda: _instagram_post(local_image_path, public_url, caption, hook)),
+            ("facebook", lambda: _facebook_post(reel, reel_note, public_url, caption)),
+            ("instagram", lambda: _instagram_post(reel, reel_note, public_url, caption, hook)),
             ("tiktok", lambda: post_tiktok.post_photo([public_url], tiktok_title or caption[:90], caption)),
         ]:
             if name in url_platforms:
@@ -187,24 +189,44 @@ def build_round_recap(tour: str, event_name: str, live: dict, wrap: dict, holes:
 REEL_CLOSER = "stay tuned for more"   # written on in marker at the end of every Instagram Reel
 
 
-def _instagram_post(local_image_path: str, public_url: str, caption: str, hook: str = ""):
-    """Instagram gets a 9 s Reel of the card with a licensed music clip (Reels reach non-followers);
-    if there's no clip/key or the Reel fails at any step, it falls back to the plain image post."""
-    reel_note = "no music clip available"
+def _build_reel(local_image_path: str, hook: str = ""):
+    """(reel_path, note): the 9:16 music Reel of the card, built once for Instagram AND Facebook.
+    No clip/key or a render failure -> (None, why), and both platforms post the plain image."""
     clip = music.pick_clip()
-    if clip:
+    if not clip:
+        return None, "no music clip available"
+    try:
+        # Mike's cut: hook 1.9 s, card in 0.8 s, 6% push reached in 2.2 s, hold, slide out left 0.6 s,
+        # then the tilted marker closer 2.6 s: 10.5 s total (8.6 s without a hook)
+        return render_reel([{"path": local_image_path, "seconds": 6.0 if hook else 7.9, "deal": 0.8,
+                             "zoom": 0.06, "zoom_seconds": 2.2, "exit": 0.6, "hook": hook, "hook_fade_in": False,
+                             "closer": REEL_CLOSER, "closer_seconds": 2.6}],
+                           os.path.splitext(local_image_path)[0] + "_reel.mp4", audio=clip), ""
+    except Exception as e:
+        return None, f"reel failed ({type(e).__name__}: {str(e)[:200]})"
+
+
+def _instagram_post(reel: str, reel_note: str, public_url: str, caption: str, hook: str = ""):
+    """Instagram gets the Reel (Reels reach non-followers); if there's no Reel or it fails at any step,
+    the plain image post."""
+    if reel:
         try:
-            # Mike's cut: hook 1.9 s, card in 0.8 s, 6% push reached in 2.2 s, hold, slide out left 0.6 s,
-            # then the tilted marker closer 2.6 s: 10.5 s total (8.6 s without a hook)
-            reel = render_reel([{"path": local_image_path, "seconds": 6.0 if hook else 7.9, "deal": 0.8,
-                                 "zoom": 0.06, "zoom_seconds": 2.2, "exit": 0.6, "hook": hook, "hook_fade_in": False,
-                                 "closer": REEL_CLOSER, "closer_seconds": 2.6}],
-                               os.path.splitext(local_image_path)[0] + "_reel.mp4", audio=clip)
             # cover = the full-strength hook (0.5 s in), not a faded or blank first frame (first Reel insights)
             return {"reel": post_meta.post_reel_to_instagram(reel, caption, thumb_offset_ms=500 if hook else 3000)}
         except Exception as e:
             reel_note = f"reel failed ({type(e).__name__}: {str(e)[:200]})"
     return {"image": post_meta.post_to_instagram(public_url, caption), "note": reel_note}
+
+
+def _facebook_post(reel: str, reel_note: str, public_url: str, caption: str):
+    """Facebook gets the same Reel as a Page Reel (Mike 2026-10-09: the one Reel shared to Facebook drew
+    281 views vs 3 for an Instagram-only one); the photo post if there's no Reel or it fails."""
+    if reel:
+        try:
+            return {"reel": post_meta.post_reel_to_facebook(reel, caption)}
+        except Exception as e:
+            reel_note = f"reel failed ({type(e).__name__}: {str(e)[:200]})"
+    return {"image": post_meta.post_to_facebook_page(public_url, caption), "note": reel_note}
 
 
 def _caption(post_type: str, summary: str, event_tag: str, fallback: str, allow_fallback: bool):
