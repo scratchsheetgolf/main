@@ -317,14 +317,14 @@
         "score": "E"
       },
       {
-        "dg_id": 18424,
-        "player_name": "Roy, Kevin",
+        "dg_id": 11276,
+        "player_name": "Horschel, Billy",
         "fin_text": "T44",
         "score": "E"
       },
       {
-        "dg_id": 16395,
-        "player_name": "Kohles, Ben",
+        "dg_id": 18424,
+        "player_name": "Roy, Kevin",
         "fin_text": "T44",
         "score": "E"
       },
@@ -335,14 +335,14 @@
         "score": "E"
       },
       {
-        "dg_id": 11276,
-        "player_name": "Horschel, Billy",
+        "dg_id": 13126,
+        "player_name": "Taylor, Nick",
         "fin_text": "T44",
         "score": "E"
       },
       {
-        "dg_id": 13126,
-        "player_name": "Taylor, Nick",
+        "dg_id": 16395,
+        "player_name": "Kohles, Ben",
         "fin_text": "T44",
         "score": "E"
       },
@@ -389,14 +389,14 @@
         "score": "+1"
       },
       {
-        "dg_id": 25797,
-        "player_name": "Hosono, Yusaku",
+        "dg_id": 17780,
+        "player_name": "Pendrith, Taylor",
         "fin_text": "T54",
         "score": "+1"
       },
       {
-        "dg_id": 17780,
-        "player_name": "Pendrith, Taylor",
+        "dg_id": 25797,
+        "player_name": "Hosono, Yusaku",
         "fin_text": "T54",
         "score": "+1"
       },
@@ -413,22 +413,16 @@
         "score": "+1"
       },
       {
-        "dg_id": 27364,
-        "player_name": "Thompson, Davis",
-        "fin_text": "T62",
-        "score": "+2"
-      },
-      {
         "dg_id": 12965,
         "player_name": "Fowler, Rickie",
         "fin_text": "T62",
         "score": "+2"
       },
       {
-        "dg_id": 17881,
-        "player_name": "Yu, Kevin",
-        "fin_text": "T64",
-        "score": "+3"
+        "dg_id": 27364,
+        "player_name": "Thompson, Davis",
+        "fin_text": "T62",
+        "score": "+2"
       },
       {
         "dg_id": 23014,
@@ -437,14 +431,14 @@
         "score": "+3"
       },
       {
-        "dg_id": 16283,
-        "player_name": "Rodgers, Patrick",
+        "dg_id": 17881,
+        "player_name": "Yu, Kevin",
         "fin_text": "T64",
         "score": "+3"
       },
       {
-        "dg_id": 26657,
-        "player_name": "Fisk, Steven",
+        "dg_id": 16283,
+        "player_name": "Rodgers, Patrick",
         "fin_text": "T64",
         "score": "+3"
       },
@@ -461,9 +455,15 @@
         "score": "+3"
       },
       {
+        "dg_id": 26657,
+        "player_name": "Fisk, Steven",
+        "fin_text": "T69",
+        "score": "+4"
+      },
+      {
         "dg_id": 23841,
         "player_name": "Neergaard-Petersen, Rasmus",
-        "fin_text": "70",
+        "fin_text": "T69",
         "score": "+4"
       }
     ]
@@ -490,7 +490,7 @@
       "pos": "T3",
       "score": -6,
       "today": 0,
-      "thru": 0,
+      "thru": 1,
       "rank": 3
     },
     "28159": {
@@ -594,7 +594,7 @@
       "pos": "T12",
       "score": -4,
       "today": -1,
-      "thru": 2,
+      "thru": 3,
       "rank": 16
     },
     "22833": {
@@ -738,7 +738,7 @@
       "pos": "T24",
       "score": -2,
       "today": 1,
-      "thru": 2,
+      "thru": 3,
       "rank": 34
     },
     "19682": {
@@ -818,7 +818,7 @@
       "pos": "T44",
       "score": 0,
       "today": 0,
-      "thru": 0,
+      "thru": 1,
       "rank": 44
     },
     "18474": {
@@ -829,20 +829,20 @@
       "thru": 0,
       "rank": 45
     },
+    "11276": {
+      "name": "Billy Horschel",
+      "pos": "T44",
+      "score": 0,
+      "today": 0,
+      "thru": 0,
+      "rank": 46
+    },
     "18424": {
       "name": "Kevin Roy",
       "pos": "T44",
       "score": 0,
       "today": 1,
       "thru": 2,
-      "rank": 46
-    },
-    "16395": {
-      "name": "Ben Kohles",
-      "pos": "T44",
-      "score": 0,
-      "today": 0,
-      "thru": 0,
       "rank": 47
     },
     "21944": {
@@ -853,16 +853,16 @@
       "thru": 1,
       "rank": 48
     },
-    "11276": {
-      "name": "Billy Horschel",
+    "13126": {
+      "name": "Nick Taylor",
       "pos": "T44",
       "score": 0,
       "today": 0,
       "thru": 0,
       "rank": 49
     },
-    "13126": {
-      "name": "Nick Taylor",
+    "16395": {
+      "name": "Ben Kohles",
       "pos": "T44",
       "score": 0,
       "today": 0,
@@ -925,20 +925,20 @@
       "thru": 0,
       "rank": 57
     },
-    "25797": {
-      "name": "Yusaku Hosono",
-      "pos": "T54",
-      "score": 1,
-      "today": 0,
-      "thru": 1,
-      "rank": 58
-    },
     "17780": {
       "name": "Taylor Pendrith",
       "pos": "T54",
       "score": 1,
       "today": 0,
       "thru": 0,
+      "rank": 58
+    },
+    "25797": {
+      "name": "Yusaku Hosono",
+      "pos": "T54",
+      "score": 1,
+      "today": 0,
+      "thru": 1,
       "rank": 59
     },
     "13923": {
@@ -957,32 +957,32 @@
       "thru": 0,
       "rank": 61
     },
-    "27364": {
-      "name": "Davis Thompson",
-      "pos": "T62",
-      "score": 2,
-      "today": 0,
-      "thru": 0,
-      "rank": 62
-    },
     "12965": {
       "name": "Rickie Fowler",
       "pos": "T62",
       "score": 2,
       "today": 0,
       "thru": 0,
-      "rank": 63
+      "rank": 62
     },
-    "17881": {
-      "name": "Kevin Yu",
-      "pos": "T64",
-      "score": 3,
+    "27364": {
+      "name": "Davis Thompson",
+      "pos": "T62",
+      "score": 2,
       "today": 0,
       "thru": 0,
-      "rank": 64
+      "rank": 63
     },
     "23014": {
       "name": "Sahith Theegala",
+      "pos": "T64",
+      "score": 3,
+      "today": 0,
+      "thru": 1,
+      "rank": 64
+    },
+    "17881": {
+      "name": "Kevin Yu",
       "pos": "T64",
       "score": 3,
       "today": 0,
@@ -997,21 +997,13 @@
       "thru": 1,
       "rank": 66
     },
-    "26657": {
-      "name": "Steven Fisk",
-      "pos": "T64",
-      "score": 3,
-      "today": 0,
-      "thru": 0,
-      "rank": 67
-    },
     "28203": {
       "name": "Aguri Iwasaki",
       "pos": "T64",
       "score": 3,
       "today": 0,
       "thru": 1,
-      "rank": 68
+      "rank": 67
     },
     "14209": {
       "name": "Jinichiro Kozuma",
@@ -1019,14 +1011,22 @@
       "score": 3,
       "today": 0,
       "thru": 0,
+      "rank": 68
+    },
+    "26657": {
+      "name": "Steven Fisk",
+      "pos": "T69",
+      "score": 4,
+      "today": 1,
+      "thru": 1,
       "rank": 69
     },
     "23841": {
       "name": "Rasmus Neergaard-Petersen",
-      "pos": "70",
+      "pos": "T69",
       "score": 4,
       "today": 1,
-      "thru": 2,
+      "thru": 3,
       "rank": 70
     },
     "27900": {
