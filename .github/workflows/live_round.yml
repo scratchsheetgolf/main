@@ -57,6 +57,9 @@ jobs:
           fc-cache -f
           fc-list : family | grep -E "Anton|DM Serif Display|Permanent Marker|Barlow" || { echo "card fonts missing"; exit 1; }
 
+      - name: Install ffmpeg (Instagram Reels)
+        run: command -v ffmpeg || { sudo apt-get update -q && sudo apt-get install -y -q ffmpeg; }
+
       - name: Configure git identity for auto-commits
         run: |
           git config user.name "scratch-sheet-bot"
@@ -78,6 +81,7 @@ jobs:
           META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
           META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
           META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+          AUDIO_KEY: ${{ secrets.AUDIO_KEY }}
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
           POST_PLATFORMS: ${{ vars.POST_PLATFORMS }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

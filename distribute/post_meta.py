@@ -68,6 +68,42 @@ def post_to_instagram(image_url: str, caption: str) -> dict:
     return publish_resp.json()
 
 
+def post_reel_to_instagram(video_path: str, caption: str, publish: bool = True, wait_s: int = 240) -> dict:
+    """Uploads a Reel straight to Instagram (resumable upload: no public URL, so the licensed music
+    isn't hosted anywhere public), waits for processing, then publishes it (unless publish=False,
+    which leaves an unpublished container that's never shown and expires in 24 h)."""
+    import time
+    if not (IG_USER_ID and ACCESS_TOKEN):
+        raise RuntimeError("META_IG_USER_ID / META_PAGE_ACCESS_TOKEN not set.")
+    resp = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media",
+                         data={"media_type": "REELS", "upload_type": "resumable", "caption": caption,
+                               "share_to_feed": "true", "access_token": ACCESS_TOKEN}, timeout=30)
+    if not resp.ok:
+        raise RuntimeError(f"Reel container rejected: {resp.status_code} {resp.text[:300]}")
+    creation_id = resp.json()["id"]
+    with open(video_path, "rb") as f:
+        data = f.read()
+    up = requests.post(f"https://rupload.facebook.com/ig-api-upload/{GRAPH_VERSION}/{creation_id}",
+                       headers={"Authorization": f"OAuth {ACCESS_TOKEN}", "offset": "0",
+                                "file_size": str(len(data))}, data=data, timeout=120)
+    if not up.ok:
+        raise RuntimeError(f"Reel upload failed: {up.status_code} {up.text[:300]}")
+    status, deadline = None, time.time() + wait_s
+    while time.time() < deadline:
+        status = _get(creation_id, fields="status_code").get("status_code")
+        if status in ("FINISHED", "ERROR", "EXPIRED"):
+            break
+        time.sleep(5)
+    if status != "FINISHED":
+        raise RuntimeError(f"Reel didn't finish processing (status {status})")
+    if not publish:
+        return {"creation_id": creation_id, "status": status, "published": False}
+    pub = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media_publish",
+                        data={"creation_id": creation_id, "access_token": ACCESS_TOKEN}, timeout=30)
+    pub.raise_for_status()
+    return pub.json()
+
+
 NEEDED_SCOPES = {"pages_show_list", "pages_read_engagement", "pages_manage_posts",
                  "instagram_basic", "instagram_content_publish"}
 
@@ -80,7 +116,7 @@ def _get(path: str, **params) -> dict:
     return resp.json()
 
 
-def check(image_url: str = None) -> dict:
+def check(image_url: str = None, reel_path: str = None) -> dict:
     """Verifies the Meta setup WITHOUT posting: the token is a valid, non-expiring Page token with the
     publishing permissions, it belongs to META_PAGE_ID, and that Page's linked Instagram account is
     META_IG_USER_ID. Returns a report; 'problems' lists everything that would stop a post."""
@@ -122,8 +158,14 @@ def check(image_url: str = None) -> dict:
             container = _get(resp.json()["id"], fields="status_code").get("status_code")
             if container == "ERROR":
                 problems.append("Instagram accepted the image URL but failed to process it")
+    reel = None
+    if reel_path and not problems:   # the full Reel path minus the publish
+        try:
+            reel = post_reel_to_instagram(reel_path, "setup check (never published)", publish=False)["status"]
+        except Exception as e:
+            problems.append(f"Reel test failed: {e}")
     return {"page_name": page.get("name"), "instagram_username": ig.get("username"),
-            "instagram_test_container": container,
+            "instagram_test_container": container, "instagram_test_reel": reel,
             "app_id": info.get("app_id"), "token_type": info.get("type"),
             "expires": "never" if info.get("expires_at") in (0, None) else info.get("expires_at"),
             "scopes": sorted(scopes), "problems": problems}
@@ -132,7 +174,8 @@ def check(image_url: str = None) -> dict:
 if __name__ == "__main__":
     if "--check" in sys.argv:
         url = next((a for a in sys.argv[1:] if a.startswith("https://")), None)
-        result = check(url)
+        reel = next((a for a in sys.argv[1:] if a.endswith(".mp4")), None)
+        result = check(url, reel)
         print(result)
         if result["problems"]:
             sys.exit("Meta setup not ready: " + "; ".join(result["problems"]))

@@ -532,6 +532,84 @@ class InstagramImageTests(unittest.TestCase):
         self.assertEqual(post.call_count, 1)
         self.assertTrue(post.call_args[0][0].endswith("/222/media"))      # container only, no media_publish
 
+class ReelMusicTests(unittest.TestCase):
+    def _clip_dir(self, d, key, names=("a", "b")):
+        import subprocess
+        for n in names:   # a real 2 s tone, encrypted exactly like the committed clips
+            raw = os.path.join(d, f"{n}.m4a")
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=f=440:d=2",
+                            "-c:a", "aac", raw], check=True)
+            subprocess.run(["openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-iter", "200000", "-salt",
+                            "-pass", "env:AUDIO_KEY", "-in", raw, "-out", raw + ".enc"], check=True,
+                           env={**os.environ, "AUDIO_KEY": key})
+            os.remove(raw)
+
+    def test_pick_clip_decrypts_rotates_and_needs_the_key(self):
+        import datetime
+        from distribute import music
+        with tempfile.TemporaryDirectory() as d:
+            self._clip_dir(d, "k3y")
+            with mock.patch.object(music, "AUDIO_DIR", d):
+                with mock.patch.dict(os.environ, {"AUDIO_KEY": ""}):
+                    self.assertIsNone(music.pick_clip())                    # no key -> image post
+                with mock.patch.dict(os.environ, {"AUDIO_KEY": "wrong"}):
+                    self.assertIsNone(music.pick_clip())                    # bad key -> image post
+                with mock.patch.dict(os.environ, {"AUDIO_KEY": "k3y"}):
+                    t = datetime.datetime(2026, 10, 9, 14, tzinfo=datetime.timezone.utc)
+                    a = music.pick_clip(t)
+                    b = music.pick_clip(t + datetime.timedelta(hours=1))
+        self.assertEqual({os.path.basename(a), os.path.basename(b)}, {"a.m4a", "b.m4a"})  # next hour, next track
+
+    def test_reel_with_music_has_sound_and_the_videos_length(self):
+        import subprocess
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            card, tone = os.path.join(d, "card.png"), os.path.join(d, "tone.m4a")
+            Image.new("RGB", (1080, 1350), (240, 234, 219)).save(card)
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=f=440:d=9",
+                            "-c:a", "aac", tone], check=True)
+            out = render.render_reel([{"path": card, "seconds": 2}], os.path.join(d, "r.mp4"), audio=tone)
+            probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,width,height",
+                                    "-show_entries", "format=duration", "-of", "csv=p=0", out],
+                                   capture_output=True, text=True).stdout
+            self.assertFalse(os.path.exists(out + ".silent.mp4"))
+        self.assertIn("video,1080,1920", probe)
+        self.assertIn("audio", probe)
+        self.assertAlmostEqual(float(probe.strip().splitlines()[-1]), 2.0, delta=0.15)
+
+    def test_reel_check_never_publishes(self):
+        from distribute import post_meta
+        calls = []
+        def fake_post(url, **kw):
+            calls.append(url)
+            r = mock.MagicMock(ok=True)
+            r.json.return_value = {"id": "c9"}
+            return r
+        with tempfile.NamedTemporaryFile(suffix=".mp4") as v, \
+             mock.patch.multiple(post_meta, ACCESS_TOKEN="tok", IG_USER_ID="222"), \
+             mock.patch.object(post_meta.requests, "post", side_effect=fake_post), \
+             mock.patch.object(post_meta, "_get", return_value={"status_code": "FINISHED"}):
+            out = post_meta.post_reel_to_instagram(v.name, "x", publish=False)
+        self.assertEqual(out["status"], "FINISHED")
+        self.assertTrue(calls[0].endswith("/222/media") and "rupload.facebook.com" in calls[1])
+        self.assertFalse(any(c.endswith("media_publish") for c in calls))
+
+    def test_instagram_falls_back_to_image_when_reel_fails(self):
+        with mock.patch.object(pipeline.music, "pick_clip", return_value="/tmp/clip.m4a"), \
+             mock.patch.object(pipeline, "render_reel", return_value="/tmp/r.mp4"), \
+             mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", side_effect=RuntimeError("boom")), \
+             mock.patch.object(pipeline.post_meta, "post_to_instagram", return_value={"id": "img"}) as img:
+            out = pipeline._instagram_post("/tmp/card.png", "https://x/card.jpg", "cap")
+        img.assert_called_once_with("https://x/card.jpg", "cap")
+        self.assertIn("reel failed", out["note"])
+        with mock.patch.object(pipeline.music, "pick_clip", return_value="/tmp/clip.m4a"), \
+             mock.patch.object(pipeline, "render_reel", return_value="/tmp/r.mp4"), \
+             mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", return_value={"id": "reel"}) as reel, \
+             mock.patch.object(pipeline.post_meta, "post_to_instagram") as img2:
+            self.assertEqual(pipeline._instagram_post("/tmp/card.png", "u", "cap"), {"reel": {"id": "reel"}})
+        reel.assert_called_once_with("/tmp/r.mp4", "cap")
+        img2.assert_not_called()
+
 class MultiTourTests(PipelineDryRunTests):
     def test_tours_keep_separate_state(self):
         pipeline.run_pretournament_picks(dry_run=True, tour="pga")

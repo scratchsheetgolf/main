@@ -263,8 +263,9 @@ def render_hand(card_paths: list, event: str, out_path: str, kicker: str = "swip
     return out_path
 
 
-def render_reel(slides: list, out_path: str, fps: int = 30) -> str:
-    """Vertical 1080x1920 Reel (H.264, silent; music is added in the Instagram app).
+def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -> str:
+    """Vertical 1080x1920 Reel (H.264). Silent unless `audio` (a clip file) is given: then it's laid under
+    the video, cut to the video's length with a 1.5 s fade-out (otherwise music is added in the app).
     slides: [{"path": 4:5 png, "seconds": float, "top": heading, "sub": one-line meaning, "bottom": why line}]
     (text keys optional). Each card is "dealt" in: a quick snap with a small settling rotation, then a slow
     push-in; text sits above/below the card, inside Instagram's safe area. Hard cuts, no cross-fade. Needs ffmpeg."""
@@ -302,10 +303,11 @@ def render_reel(slides: list, out_path: str, fps: int = 30) -> str:
         return img.resize((CARD_W, int(img.height * CARD_W / img.width)), Image.LANCZOS)
 
     deal = 7                                         # frames for the snap-in
+    video_path = out_path + ".silent.mp4" if audio else out_path
     proc = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
          "-r", str(fps), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
-         "-pix_fmt", "yuv420p", "-movflags", "+faststart", out_path],
+         "-pix_fmt", "yuv420p", "-movflags", "+faststart", video_path],
         stdin=subprocess.PIPE)
     try:
         for sl in slides:
@@ -330,6 +332,14 @@ def render_reel(slides: list, out_path: str, fps: int = 30) -> str:
         rc = proc.wait()
     if rc != 0:
         raise RuntimeError(f"ffmpeg failed (exit {rc})")
+    if audio:
+        total = sum(max(int(sl.get("seconds", 1.6) * fps), deal + 1) for sl in slides) / fps
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video_path, "-i", audio,
+                        "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+                        "-af", f"apad,atrim=0:{total:.3f},afade=t=out:st={max(total - 1.5, 0):.3f}:d=1.5",
+                        "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-t", f"{total:.3f}",
+                        "-movflags", "+faststart", out_path], check=True)
+        os.remove(video_path)
     return out_path
 
 if __name__ == "__main__":
