@@ -128,7 +128,7 @@ lv = [head("live alert"),
       f'<text font-family="Anton" font-size="130" fill="{PAPER}" data-fit="880"><tspan x="92" y="450">__EVENT_LINE_1__</tspan><tspan x="92" y="590">__EVENT_LINE_2__</tspan></text>\n',
       frame_inner(),
       f'<text x="98" y="890" font-family="Permanent Marker" font-size="36" fill="{SHARPIE}" transform="rotate(-2 98 890)" data-fit="880">__REACTION__</text>\n',
-      hole_strip(1040, 10, blank=True),
+      "__SCORECARD__\n",   # filled per alert by tools/scorecard_strip.py: the player's real nine
       footer()]
 open(f"{OUT}/live_alert.svg", "w").write("".join(lv))
 # ---------- carousel: one slide per pick (four variants, one Sharpie mark each) ----------

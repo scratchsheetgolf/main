@@ -10,39 +10,7 @@
 <text font-family="Anton" font-size="130" fill="#F2ECDC" data-fit="880"><tspan x="92" y="450">__EVENT_LINE_1__</tspan><tspan x="92" y="590">__EVENT_LINE_2__</tspan></text>
 <rect x="48" y="48" width="984" height="1254" fill="none" stroke="#1E2A22" stroke-width="1"/>
 <text x="98" y="890" font-family="Permanent Marker" font-size="36" fill="#D3261F" transform="rotate(-2 98 890)" data-fit="880">__REACTION__</text>
-<g font-family="Barlow Condensed SemiBold" text-anchor="middle">
-<rect x="96" y="1040" width="888" height="96" fill="none" stroke="#1E2A22" stroke-width="2"/>
-<rect x="96" y="1040" width="888" height="48" fill="#2E5A3A"/>
-<text x="148" y="1074" font-size="24" fill="#F2ECDC" letter-spacing="3">HOLE</text>
-<text x="148" y="1122" font-size="24" fill="#1E2A22" letter-spacing="3">PAR</text>
-<line x1="200" y1="1040" x2="200" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="243" y="1075" font-size="28" fill="#F2ECDC">10</text>
-<text x="243" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="287" y1="1040" x2="287" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="330" y="1075" font-size="28" fill="#F2ECDC">11</text>
-<text x="330" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="374" y1="1040" x2="374" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="417" y="1075" font-size="28" fill="#F2ECDC">12</text>
-<text x="417" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="461" y1="1040" x2="461" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="504" y="1075" font-size="28" fill="#F2ECDC">13</text>
-<text x="504" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="548" y1="1040" x2="548" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="591" y="1075" font-size="28" fill="#F2ECDC">14</text>
-<text x="591" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="635" y1="1040" x2="635" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="678" y="1075" font-size="28" fill="#F2ECDC">15</text>
-<text x="678" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="722" y1="1040" x2="722" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="765" y="1075" font-size="28" fill="#F2ECDC">16</text>
-<text x="765" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="809" y1="1040" x2="809" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="852" y="1075" font-size="28" fill="#F2ECDC">17</text>
-<text x="852" y="1123" font-size="28" fill="#1E2A22"></text>
-<line x1="896" y1="1040" x2="896" y2="1136" stroke="#CFC5AC" stroke-width="2"/>
-<text x="939" y="1075" font-size="28" fill="#F2ECDC">18</text>
-<text x="939" y="1123" font-size="28" fill="#1E2A22"></text>
-</g>
+__SCORECARD__
 <text x="96" y="1262" font-family="Barlow Condensed SemiBold" font-size="26" fill="#6E6857" letter-spacing="4">ATTEST</text>
 <line x1="186" y1="1264" x2="560" y2="1264" stroke="#6E6857" stroke-width="1.5"/>
 <text x="214" y="1252" font-family="Permanent Marker" font-size="44" fill="#D3261F" transform="rotate(-4 214 1252)">SS</text>
