@@ -95,14 +95,14 @@
         "score": "-5"
       },
       {
-        "dg_id": 22760,
-        "player_name": "Hisatsune, Ryo",
+        "dg_id": 15651,
+        "player_name": "Ventura, Kristoffer",
         "fin_text": "T7",
         "score": "-5"
       },
       {
-        "dg_id": 15651,
-        "player_name": "Ventura, Kristoffer",
+        "dg_id": 22760,
+        "player_name": "Hisatsune, Ryo",
         "fin_text": "T7",
         "score": "-5"
       },
@@ -227,12 +227,6 @@
         "score": "-2"
       },
       {
-        "dg_id": 16394,
-        "player_name": "Jaeger, Stephan",
-        "fin_text": "T27",
-        "score": "-2"
-      },
-      {
         "dg_id": 25157,
         "player_name": "Hodges, Lee",
         "fin_text": "T27",
@@ -241,6 +235,12 @@
       {
         "dg_id": 8825,
         "player_name": "Harman, Brian",
+        "fin_text": "T27",
+        "score": "-2"
+      },
+      {
+        "dg_id": 16394,
+        "player_name": "Jaeger, Stephan",
         "fin_text": "T27",
         "score": "-2"
       },
@@ -305,20 +305,20 @@
         "score": "-1"
       },
       {
-        "dg_id": 18424,
-        "player_name": "Roy, Kevin",
-        "fin_text": "T38",
-        "score": "-1"
-      },
-      {
         "dg_id": 15470,
         "player_name": "Hossler, Beau",
         "fin_text": "T38",
         "score": "-1"
       },
       {
-        "dg_id": 19729,
-        "player_name": "Kanaya, Takumi",
+        "dg_id": 18424,
+        "player_name": "Roy, Kevin",
+        "fin_text": "T38",
+        "score": "-1"
+      },
+      {
+        "dg_id": 16395,
+        "player_name": "Kohles, Ben",
         "fin_text": "T38",
         "score": "-1"
       },
@@ -329,8 +329,8 @@
         "score": "-1"
       },
       {
-        "dg_id": 16395,
-        "player_name": "Kohles, Ben",
+        "dg_id": 19729,
+        "player_name": "Kanaya, Takumi",
         "fin_text": "T38",
         "score": "-1"
       },
@@ -347,14 +347,14 @@
         "score": "E"
       },
       {
-        "dg_id": 11276,
-        "player_name": "Horschel, Billy",
+        "dg_id": 13126,
+        "player_name": "Taylor, Nick",
         "fin_text": "T50",
         "score": "E"
       },
       {
-        "dg_id": 13126,
-        "player_name": "Taylor, Nick",
+        "dg_id": 11276,
+        "player_name": "Horschel, Billy",
         "fin_text": "T50",
         "score": "E"
       },
@@ -407,6 +407,18 @@
         "score": "+1"
       },
       {
+        "dg_id": 25797,
+        "player_name": "Hosono, Yusaku",
+        "fin_text": "T54",
+        "score": "+1"
+      },
+      {
+        "dg_id": 23841,
+        "player_name": "Neergaard-Petersen, Rasmus",
+        "fin_text": "T54",
+        "score": "+1"
+      },
+      {
         "dg_id": 31582,
         "player_name": "Nagasaki, Koshin",
         "fin_text": "T54",
@@ -419,33 +431,21 @@
         "score": "+1"
       },
       {
-        "dg_id": 25797,
-        "player_name": "Hosono, Yusaku",
-        "fin_text": "T54",
-        "score": "+1"
-      },
-      {
         "dg_id": 12965,
         "player_name": "Fowler, Rickie",
-        "fin_text": "T64",
+        "fin_text": "T65",
         "score": "+2"
       },
       {
         "dg_id": 17881,
         "player_name": "Yu, Kevin",
-        "fin_text": "T64",
-        "score": "+2"
-      },
-      {
-        "dg_id": 23841,
-        "player_name": "Neergaard-Petersen, Rasmus",
-        "fin_text": "T64",
+        "fin_text": "T65",
         "score": "+2"
       },
       {
         "dg_id": 16283,
         "player_name": "Rodgers, Patrick",
-        "fin_text": "T64",
+        "fin_text": "T65",
         "score": "+2"
       },
       {
@@ -533,20 +533,20 @@
       "thru": 3,
       "rank": 8
     },
-    "22760": {
-      "name": "Ryo Hisatsune",
-      "pos": "T7",
-      "score": -5,
-      "today": -1,
-      "thru": 4,
-      "rank": 9
-    },
     "15651": {
       "name": "Kristoffer Ventura",
       "pos": "T7",
       "score": -5,
       "today": 0,
       "thru": 0,
+      "rank": 9
+    },
+    "22760": {
+      "name": "Ryo Hisatsune",
+      "pos": "T7",
+      "score": -5,
+      "today": -1,
+      "thru": 4,
       "rank": 10
     },
     "18103": {
@@ -709,21 +709,13 @@
       "thru": 0,
       "rank": 30
     },
-    "16394": {
-      "name": "Stephan Jaeger",
-      "pos": "T27",
-      "score": -2,
-      "today": 0,
-      "thru": 0,
-      "rank": 31
-    },
     "25157": {
       "name": "Lee Hodges",
       "pos": "T27",
       "score": -2,
       "today": 0,
       "thru": 2,
-      "rank": 32
+      "rank": 31
     },
     "8825": {
       "name": "Brian Harman",
@@ -731,6 +723,14 @@
       "score": -2,
       "today": 0,
       "thru": 3,
+      "rank": 32
+    },
+    "16394": {
+      "name": "Stephan Jaeger",
+      "pos": "T27",
+      "score": -2,
+      "today": 0,
+      "thru": 0,
       "rank": 33
     },
     "21944": {
@@ -813,28 +813,28 @@
       "thru": 0,
       "rank": 43
     },
-    "18424": {
-      "name": "Kevin Roy",
-      "pos": "T38",
-      "score": -1,
-      "today": 0,
-      "thru": 5,
-      "rank": 44
-    },
     "15470": {
       "name": "Beau Hossler",
       "pos": "T38",
       "score": -1,
       "today": 0,
       "thru": 1,
-      "rank": 45
+      "rank": 44
     },
-    "19729": {
-      "name": "Takumi Kanaya",
+    "18424": {
+      "name": "Kevin Roy",
       "pos": "T38",
       "score": -1,
       "today": 0,
-      "thru": 0,
+      "thru": 5,
+      "rank": 45
+    },
+    "16395": {
+      "name": "Ben Kohles",
+      "pos": "T38",
+      "score": -1,
+      "today": -1,
+      "thru": 1,
       "rank": 46
     },
     "28635": {
@@ -845,12 +845,12 @@
       "thru": 0,
       "rank": 47
     },
-    "16395": {
-      "name": "Ben Kohles",
+    "19729": {
+      "name": "Takumi Kanaya",
       "pos": "T38",
       "score": -1,
-      "today": -1,
-      "thru": 1,
+      "today": 0,
+      "thru": 0,
       "rank": 48
     },
     "11773": {
@@ -869,16 +869,16 @@
       "thru": 0,
       "rank": 50
     },
-    "11276": {
-      "name": "Billy Horschel",
+    "13126": {
+      "name": "Nick Taylor",
       "pos": "T50",
       "score": 0,
       "today": 0,
       "thru": 0,
       "rank": 51
     },
-    "13126": {
-      "name": "Nick Taylor",
+    "11276": {
+      "name": "Billy Horschel",
       "pos": "T50",
       "score": 0,
       "today": 0,
@@ -946,24 +946,8 @@
       "pos": "T54",
       "score": 1,
       "today": 0,
-      "thru": 0,
-      "rank": 60
-    },
-    "31582": {
-      "name": "Koshin Nagasaki",
-      "pos": "T54",
-      "score": 1,
-      "today": 0,
       "thru": 1,
-      "rank": 61
-    },
-    "28203": {
-      "name": "Aguri Iwasaki",
-      "pos": "T54",
-      "score": 1,
-      "today": -2,
-      "thru": 4,
-      "rank": 62
+      "rank": 60
     },
     "25797": {
       "name": "Yusaku Hosono",
@@ -971,35 +955,51 @@
       "score": 1,
       "today": 0,
       "thru": 4,
-      "rank": 63
-    },
-    "12965": {
-      "name": "Rickie Fowler",
-      "pos": "T64",
-      "score": 2,
-      "today": 0,
-      "thru": 2,
-      "rank": 64
-    },
-    "17881": {
-      "name": "Kevin Yu",
-      "pos": "T64",
-      "score": 2,
-      "today": -1,
-      "thru": 3,
-      "rank": 65
+      "rank": 61
     },
     "23841": {
       "name": "Rasmus Neergaard-Petersen",
-      "pos": "T64",
+      "pos": "T54",
+      "score": 1,
+      "today": -2,
+      "thru": 6,
+      "rank": 62
+    },
+    "31582": {
+      "name": "Koshin Nagasaki",
+      "pos": "T54",
+      "score": 1,
+      "today": 0,
+      "thru": 1,
+      "rank": 63
+    },
+    "28203": {
+      "name": "Aguri Iwasaki",
+      "pos": "T54",
+      "score": 1,
+      "today": -2,
+      "thru": 4,
+      "rank": 64
+    },
+    "12965": {
+      "name": "Rickie Fowler",
+      "pos": "T65",
+      "score": 2,
+      "today": 0,
+      "thru": 2,
+      "rank": 65
+    },
+    "17881": {
+      "name": "Kevin Yu",
+      "pos": "T65",
       "score": 2,
       "today": -1,
-      "thru": 5,
+      "thru": 3,
       "rank": 66
     },
     "16283": {
       "name": "Patrick Rodgers",
-      "pos": "T64",
+      "pos": "T65",
       "score": 2,
       "today": 0,
       "thru": 4,
