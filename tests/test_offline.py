@@ -883,7 +883,7 @@ class PreviewCarouselTests(PipelineDryRunTests):
         posts = []
         def fake_post(path, caption, **kw):
             posts.append({"path": os.path.basename(path), "caption": caption, "draft": kw.get("draft"), "dry": kw.get("dry_run")})
-            return {"ok": True}
+            return {"DRAFT": True} if kw.get("draft") else {"platforms": ["facebook", "instagram"]}
         with mock.patch.object(datagolf, "get_live_in_play", side_effect=feeds + [live] * 3), \
              mock.patch.object(state, "load", return_value=prev), \
              mock.patch.object(state, "save") as saved, \
@@ -906,8 +906,37 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertEqual(by["live_alert.png"]["caption"], "Cy Hot goes 3 under on one hole (round 2, thru 11). Now 1 at -14.")
         writer.assert_not_called()                                           # no AI wording when unattended
         self.assertFalse(by["hot_take_live.png"]["draft"])                   # lead change -> QA passed -> posts
-        self.assertFalse(by["leaderboard_live.png"]["draft"])                # hourly leaderboard -> QA passed -> posts
-        self.assertEqual(self.qa_mock.call_count, 3)                         # every unattended post was reviewed
+        self.assertEqual(by["hot_take_live.png"]["caption"], "A b c d\n\nK")  # full take, not just the kicker
+        self.assertNotIn("leaderboard_live.png", by)                         # waits: something already posted this poll
+        self.assertEqual(self.qa_mock.call_count, 2)                         # every unattended post was reviewed
+        self.assertIn("lead_change_verified_by_code", self.qa_mock.call_args_list[0].args[0])
+
+    def test_auto_hourly_leaderboard_posts_when_nothing_else_did(self):
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
+        prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 0,
+                "live_scores": {"3": {"name": "Cy Hot", "pos": "1", "score": -14, "today": -7, "thru": 11, "rank": 1}},
+}
+        with mock.patch.object(pipeline, "MAX_ALERTS_PER_HOUR", 0):          # no alert this poll
+            posts, _, saved = self._auto_poll(rows, prev)
+        self.assertEqual([p["path"] for p in posts], ["leaderboard_live.png"])
+        self.assertFalse(posts[0]["draft"])
+        self.assertGreater(saved["last_public_post_ts"], 0)
+        import time as _t                                                    # an alert 10 min ago -> leaderboard waits
+        with mock.patch.object(pipeline, "MAX_ALERTS_PER_HOUR", 0):
+            posts, _, _ = self._auto_poll(rows, {**prev, "last_public_post_ts": _t.time() - 600})
+        self.assertEqual(posts, [])
+
+    def test_tied_leaders_swapping_order_is_not_a_lead_change(self):
+        tied = [{"dg_id": 1, "player_name": "Syme, Connor", "current_pos": "T1", "current_score": -6, "today": -2, "thru": 6},
+                {"dg_id": 2, "player_name": "Olesen, Thorbjorn", "current_pos": "T1", "current_score": -6, "today": -3, "thru": 9}]
+        prev = {"event_name": "Fake Invitational", "leader_name": "Connor Syme", "last_leaderboard_post_ts": 9e12}
+        posts, _, saved = self._auto_poll(list(reversed(tied)), prev)
+        self.assertEqual([p for p in posts if p["path"] == "hot_take_live.png"], [])
+        self.assertEqual(saved["leader_name"], "Connor Syme")               # keeps the last outright leader
+        ahead = [{**tied[1], "current_pos": "1", "current_score": -7}, {**tied[0], "current_pos": "2"}]
+        posts, _, saved = self._auto_poll(ahead, prev)                       # Olesen goes clear -> real change
+        self.assertEqual(len([p for p in posts if p["path"] == "hot_take_live.png"]), 1)
+        self.assertEqual(saved["leader_name"], "Thorbjorn Olesen")
 
     def test_auto_mode_holds_ai_posts_when_qa_fails(self):
         prev = {"event_name": "Fake Invitational", "leader_name": "Old Leader", "last_leaderboard_post_ts": 0}

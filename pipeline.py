@@ -355,6 +355,7 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
 
 
 MAX_ALERTS_PER_HOUR = 2   # per tour, rolling 60 min (Mike 2026-10-09: was 3 per round; testing more volume)
+POST_SPACING_MINUTES = 20   # minimum gap between an alert/hot take and the next hourly leaderboard
 
 
 def _qa_gate(tour: str, event_name: str, post_text: str, expect_final: bool, check_row=None, extra: dict = None):
@@ -482,6 +483,11 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     # only compare leaders within the same event: a fresh state or last week's leader isn't a lead change
     prev_leader = prev.get("leader_name") if prev.get("event_name") == event_name else None
     current_leader = transform.display_name(current_leaderboard[0].get("player_name", "")) if current_leaderboard else None
+    # A tie at the top isn't a lead change: tied players swap order in the feed from poll to poll, and every
+    # swap used to trigger a "just took the lead" take that QA then held (Open de Espana R2, 2026-10-09).
+    # Track the last OUTRIGHT leader instead, and keep the previous one while the top is tied.
+    solo_leader = transform.outright_leader(current_leaderboard)
+    tracked_leader = solo_leader or prev_leader
 
     # Auto mode (AUTO_POST on, unattended) posts everything, but every post first passes _qa_gate (fresh
     # feed re-check in code + independent Claude review against the voice doc's facts). A post that fails
@@ -489,7 +495,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     auto = not (dry_run or draft)
 
     # Trigger 1: leader change -> Hot Take (AI-written: in auto mode it posts only if QA passes)
-    if current_leader and prev_leader and current_leader != prev_leader:
+    if solo_leader and prev_leader and solo_leader != prev_leader:
         try:
             take = content.generate_hot_take(f"Tour: {TOUR_NAMES.get(tour, tour)}\n"
                                              + transform.lead_change_facts(live, prev_leader))
@@ -509,13 +515,18 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                     alt_path = os.path.join(OUTPUT_DIR, f"hot_take_live_alt{i}.png")
                     render_hot_take(lines=alt["lines"], kicker=alt["kicker"], out_path=alt_path)
                     alt_notes.append(f"{os.path.basename(alt_path)}: {' / '.join(alt['lines'])} {alt['kicker']}")
-            ht_draft, ht_caption = draft, take["kicker"]
+            # the caption is the full take, not just the kicker (which reads cut off on its own)
+            ht_caption = transform.hot_take_caption(take["lines"], take["kicker"], current_leaderboard)
+            ht_draft = draft
             if auto:   # unattended: the fresh feed must still have this leader, then the QA review
                 def same_leader(info, rows):
-                    lead = transform.display_name(rows[0].get("player_name", "")) if rows else None
-                    return lead == current_leader, ("" if lead == current_leader else "leader changed since the card was made")
+                    lead = transform.outright_leader(rows)
+                    return lead == solo_leader, ("" if lead == solo_leader else "leader changed since the card was made")
                 passed, why = _qa_gate(tour, event_name, f"CARD: {' / '.join(take['lines'])}\nCAPTION: {ht_caption}",
-                                       expect_final=False, check_row=same_leader)
+                                       expect_final=False, check_row=same_leader,
+                                       extra={"lead_change_verified_by_code": {
+                                           "previous_outright_leader": prev_leader, "new_outright_leader": solo_leader,
+                                           "how": "compared the previous 5-minute poll with this one"}})
                 if not passed:
                     ht_draft, ht_caption = True, f"QA HELD ({why}). Check before posting:\n{ht_caption}"
             actions_taken.append(("hot_take", _post_everywhere(image_path, ht_caption, dry_run=dry_run,
@@ -594,6 +605,14 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     last_post_ts = prev.get("last_leaderboard_post_ts", 0)
     minutes_since_last = (now - last_post_ts) / 60
 
+    # One post at a time: an hourly leaderboard right after an alert or hot take reads as a double post
+    # (alert + leaderboard 55 s apart, Open de Espana R2, 2026-10-09). The leaderboard waits for the
+    # next poll that's POST_SPACING_MINUTES clear of any public post. The final leaderboard never waits.
+    last_public = prev.get("last_public_post_ts", 0) if prev.get("event_name") == event_name else 0
+    if any(isinstance(r, dict) and r.get("platforms") for _, r in actions_taken):
+        last_public = now
+    spaced = (now - last_public) / 60 >= POST_SPACING_MINUTES
+
     final_done = final and prev.get("final_posted") == event_name   # one final leaderboard per event
     top5 = [{"pos": str(p.get("current_pos", "")),
              "name": transform.display_name(p.get("player_name", "")),
@@ -607,6 +626,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         actions_taken.append(("leaderboard", "skipped: final leaderboard already done for this event"))
     elif unchanged and minutes_since_last >= min_leaderboard_gap_minutes:
         actions_taken.append(("leaderboard", "skipped: top 5 unchanged since the last leaderboard"))
+    elif not final and minutes_since_last >= min_leaderboard_gap_minutes and not spaced:
+        actions_taken.append(("leaderboard", f"held: another post went out {(now - last_public) / 60:.0f} min ago"))
     elif final or minutes_since_last >= min_leaderboard_gap_minutes:
         image_path = os.path.join(OUTPUT_DIR, "leaderboard_live.png")
         render_leaderboard(event=event_name.upper(),
@@ -643,13 +664,15 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                                                               hook=transform.leader_hook(current_leaderboard, final))))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
+            if isinstance(actions_taken[-1][1], dict) and actions_taken[-1][1].get("platforms"):
+                last_public = now
             last_top5 = top5
             if final:
                 prev = {**prev, "final_posted": event_name}
     else:
         actions_taken.append(("leaderboard", f"skipped, only {minutes_since_last:.0f} min since last post"))
 
-    state.save({**prev, "event_name": event_name, "leader_name": current_leader,
+    state.save({**prev, "event_name": event_name, "leader_name": tracked_leader, "last_public_post_ts": last_public,
                 "last_leaderboard_post_ts": last_post_ts, "last_leaderboard_top5": last_top5,
                 "standings": transform.standings_snapshot(live),
                 "live_scores": transform.live_scores(live), "alerts": alerts, "wraps": wraps,

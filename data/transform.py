@@ -229,6 +229,38 @@ def standings_snapshot(live: dict, top_n: int = 70) -> dict:
                              "score": format_to_par(r.get("current_score"))} for r in rows]}
 
 
+def outright_leader(rows: list):
+    """Display name of the sole leader, or None when the top is tied (or scores are unreadable).
+    Tied players swap order between polls, so only an outright leader counts for lead changes."""
+    if not rows:
+        return None
+    top = _score_int(rows[0].get("current_score"))
+    if top is None:
+        return None
+    if len(rows) > 1:
+        second = _score_int(rows[1].get("current_score"))
+        if second is None or second <= top:
+            return None
+    return display_name(rows[0].get("player_name", ""))
+
+
+def hot_take_caption(lines: list, kicker: str, rows: list) -> str:
+    """Caption for a hot take: the card's ALL-CAPS take as a normal sentence, then the kicker.
+    The kicker alone ('— one shot back is close enough...') read as a cut-off caption (2026-10-09)."""
+    import re
+    text = re.sub(r"\s+", " ", " ".join(l.strip() for l in lines)).strip().lower()
+    # put player names back in proper case (longest first, so full names win over surnames)
+    names = sorted({display_name(r.get("player_name", "")) for r in rows[:30]} - {""}, key=len, reverse=True)
+    parts = {p for n in names for p in [n, *n.split()] if len(p) > 2}
+    for p in sorted(parts, key=len, reverse=True):
+        text = re.sub(rf"(?<![\w']){re.escape(p.lower())}(?![\w])", p, text)
+    text = text[:1].upper() + text[1:]
+    text = re.sub(r"(^|[.!?] )([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
+    tail = re.sub(r"^[\s\u2014\u2013-]+", "", kicker or "").strip()
+    tail = tail[:1].upper() + tail[1:]
+    return f"{text}\n\n{tail}" if tail else text
+
+
 def lead_change_facts(live: dict, prev_leader: str) -> str:
     """Plain-text facts for a lead-change hot take, from the in-play feed. Gives the writer real numbers
     (round, scores, margin) to work with; content.py rejects any number that isn't in here."""
