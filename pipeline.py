@@ -46,8 +46,9 @@ def enabled_platforms() -> set:
 
 
 def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "",
-                     dry_run: bool = False, draft: bool = False, alternatives: list = None, live: bool = False):
-    """Posts the same image+caption to all four platforms. Each call is wrapped
+                     dry_run: bool = False, draft: bool = False, alternatives: list = None, live: bool = False,
+                     hook: str = ""):
+    """Posts the same image+caption to all four platforms (hook = the Instagram Reel's data-only opening line). Each call is wrapped
     so one platform's failure (e.g. TikTok still pre-audit) doesn't block the rest.
 
     dry_run / draft skip every real network call (image hosting, all 4 platforms)
@@ -96,7 +97,7 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
             return results
         for name, fn in [
             ("facebook", lambda: post_meta.post_to_facebook_page(public_url, caption)),
-            ("instagram", lambda: _instagram_post(local_image_path, public_url, caption)),
+            ("instagram", lambda: _instagram_post(local_image_path, public_url, caption, hook)),
             ("tiktok", lambda: post_tiktok.post_photo([public_url], tiktok_title or caption[:90], caption)),
         ]:
             if name in url_platforms:
@@ -107,14 +108,21 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
     return results
 
 
-def _instagram_post(local_image_path: str, public_url: str, caption: str):
+REEL_CLOSER = "stay tuned for more"   # written on in marker at the end of every Instagram Reel
+
+
+def _instagram_post(local_image_path: str, public_url: str, caption: str, hook: str = ""):
     """Instagram gets a 9 s Reel of the card with a licensed music clip (Reels reach non-followers);
     if there's no clip/key or the Reel fails at any step, it falls back to the plain image post."""
     reel_note = "no music clip available"
     clip = music.pick_clip()
     if clip:
         try:
-            reel = render_reel([{"path": local_image_path, "seconds": 9, "deal": 0.8}],   # 0.8 s entrance (Mike)
+            # Mike's cut: hook 1.9 s, card in 0.8 s, 6% push reached in 2.2 s, hold, slide out left 0.6 s,
+            # then the tilted marker closer 2.6 s: 10.5 s total (8.6 s without a hook)
+            reel = render_reel([{"path": local_image_path, "seconds": 6.0 if hook else 7.9, "deal": 0.8,
+                                 "zoom": 0.06, "zoom_seconds": 2.2, "exit": 0.6, "hook": hook,
+                                 "closer": REEL_CLOSER, "closer_seconds": 2.6}],
                                os.path.splitext(local_image_path)[0] + "_reel.mp4", audio=clip)
             return {"reel": post_meta.post_reel_to_instagram(reel, caption)}
         except Exception as e:
@@ -412,7 +420,8 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
             out = _post_everywhere(image_path, f"QA HELD ({why}). Check before posting:\n{m['caption']}",
                                    dry_run=dry_run, draft=True, live=True)
             return {**out, "qa": why}
-        return {**_post_everywhere(image_path, m["caption"], dry_run=dry_run, draft=draft, live=True), "qa": "PASS"}
+        return {**_post_everywhere(image_path, m["caption"], dry_run=dry_run, draft=draft, live=True,
+                                   hook=f"{line1} {line2}"), "qa": "PASS"}
     try:
         res = content.generate_live_reaction(facts)
         if res:
@@ -433,7 +442,9 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
                       event_line_2=line2.upper(), reaction=reaction, out_path=image_path)
     alt_notes = [f"{o['event_line_1']} / {o['event_line_2']} — {o['reaction']}" for o in options[1:]]
     caption = f"{m['name']}: {reaction}" if reaction else m["name"]
-    return _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft, alternatives=alt_notes, live=True)
+    hook = " ".join(transform.moment_fallback(m)[:2])
+    return _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft, alternatives=alt_notes, live=True,
+                            hook=hook)
 
 
 def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_run: bool = False,
@@ -506,7 +517,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                 if not passed:
                     ht_draft, ht_caption = True, f"QA HELD ({why}). Check before posting:\n{ht_caption}"
             actions_taken.append(("hot_take", _post_everywhere(image_path, ht_caption, dry_run=dry_run,
-                                                               draft=ht_draft, alternatives=alt_notes, live=True)))
+                                                               draft=ht_draft, alternatives=alt_notes, live=True,
+                                                               hook=transform.leader_hook(current_leaderboard))))
 
     # Trigger 2: big moments (big hole / charge / collapse) -> Live Alert card. Capped so the account
     # doesn't read like a bot: at most one per poll, 20 min apart, MAX_LIVE_ALERTS per round.
@@ -550,7 +562,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                 if not passed:
                     wrap_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
             actions_taken.append(("round_wrap", _post_everywhere(image_path, caption, dry_run=dry_run,
-                                                                 draft=wrap_draft, live=False)))
+                                                                 draft=wrap_draft, live=False,
+                                                                 hook=transform.leader_hook(current_leaderboard))))
             if not dry_run:
                 wraps.append(current_round)
 
@@ -605,7 +618,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                 lb_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run,
                                                               draft=lb_draft,
-                                                              alternatives=alternatives, live=True)))
+                                                              alternatives=alternatives, live=True,
+                                                              hook=transform.leader_hook(current_leaderboard, final))))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
             last_top5 = top5

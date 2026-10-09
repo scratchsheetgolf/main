@@ -610,6 +610,35 @@ class ReelMusicTests(unittest.TestCase):
         reel.assert_called_once_with("/tmp/r.mp4", "cap")
         img2.assert_not_called()
 
+class ReelHookTests(unittest.TestCase):
+    def rows(self, *scores):
+        names = ["Bridgeman, Jacob", "Smith, Jordan", "Meissner, Mac", "Castillo, Ricky"]
+        return [{"player_name": n, "current_score": s, "current_pos": ""} for n, s in zip(names, scores)]
+
+    def test_leader_hook_only_says_what_the_feed_says(self):
+        self.assertEqual(transform.leader_hook(self.rows(-8, -7, -6)), "BRIDGEMAN LEADS BY 1")
+        self.assertEqual(transform.leader_hook(self.rows(-8, -8, -6)), "BRIDGEMAN AND SMITH SHARE THE LEAD")
+        self.assertEqual(transform.leader_hook(self.rows("-5", "-5", "-5", -4)), "3-WAY TIE AT -5")
+        self.assertEqual(transform.leader_hook(self.rows(-18, -15), final=True), "BRIDGEMAN WINS AT -18")
+        self.assertEqual(transform.leader_hook(self.rows(-18, -18), final=True), "")   # playoff: no claim
+        self.assertEqual(transform.leader_hook(self.rows(0, 1)), "BRIDGEMAN LEADS BY 1")
+        self.assertEqual(transform.leader_hook([]), "")
+
+    def test_reel_with_hook_runs_the_full_length(self):
+        import subprocess
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            card, tone = os.path.join(d, "card.png"), os.path.join(d, "tone.m4a")
+            Image.new("RGB", (1080, 1350), (240, 234, 219)).save(card)
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=f=440:d=9",
+                            "-c:a", "aac", tone], check=True)
+            out = render.render_reel([{"path": card, "seconds": 2, "hook": "Bridgeman leads by 1", "zoom": 0.03,
+                                       "closer": "stay tuned for more"}],
+                                     os.path.join(d, "r.mp4"), audio=tone)
+            dur = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out],
+                                 capture_output=True, text=True).stdout
+        self.assertAlmostEqual(float(dur), 6.5, delta=0.15)   # 1.9 s hook + 2 s card + 2.6 s closer
+
 class MultiTourTests(PipelineDryRunTests):
     def test_tours_keep_separate_state(self):
         pipeline.run_pretournament_picks(dry_run=True, tour="pga")

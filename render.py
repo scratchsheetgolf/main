@@ -267,7 +267,11 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
     """Vertical 1080x1920 Reel (H.264). Silent unless `audio` (a clip file) is given: then it's laid under
     the video, cut to the video's length with a 1.5 s fade-out (otherwise music is added in the app).
     slides: [{"path": 4:5 png, "seconds": float, "top": heading, "sub": one-line meaning, "bottom": why line}]
-    (text keys optional; "deal": seconds for the card's entrance, default a quick 7-frame snap). Each card is
+    (text keys optional; "deal": seconds for the card's entrance, default a quick 7-frame snap; "zoom": push-in
+    amount, default 0.02; "hook": big opening line that fades in, holds and fades out over "hook_seconds"
+    (default 1.9: 0.45 s fades, 1 s hold) before the card slides in; "closer": a red marker line written
+    on its own screen after the card, large and tilted with a snaking underline, over "closer_seconds"
+    (default 2.6); "zoom_seconds": reach the full push-in this fast, then hold; "exit": seconds to slide out left). Each card is
     "dealt" in: a snap with a small settling rotation, then a slow
     push-in; text sits above/below the card, inside Instagram's safe area. Hard cuts, no cross-fade. Needs ffmpeg."""
     import shutil
@@ -299,11 +303,87 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
             d.text((W // 2, 1600), sl["bottom"], font=f, fill=RED, anchor="mm")
         return bg
 
+    def closer_frames(text, total):
+        """Large red marker line at a tilt, written on left to right, then a snaking underline drawn the same
+        way, then a hold. Yields raw frames."""
+        layer = Image.new("RGBA", (W, 700), (0, 0, 0, 0))
+        d = ImageDraw.Draw(layer)
+        words, lines = text.upper().split(), []
+        f = fit(d, text.upper(), "Permanent Marker", 150, 960)
+        if f.size < 110 and len(words) > 1:          # long line: two lines at a bigger size
+            mid = (len(words) + 1) // 2
+            lines = [" ".join(words[:mid]), " ".join(words[mid:])]
+            f = fit(d, max(lines, key=lambda l: d.textlength(l, font=font("Permanent Marker", 150))),
+                    "Permanent Marker", 150, 960)
+        else:
+            lines = [text.upper()]
+        gap = int(f.size * 1.2)
+        y0 = 330 - gap * (len(lines) - 1) // 2
+        boxes = []
+        for i, line in enumerate(lines):
+            d.text((W // 2, y0 + i * gap), line, font=f, fill=RED + (255,), anchor="mm")
+            boxes.append(d.textbbox((W // 2, y0 + i * gap), line, font=f, anchor="mm"))
+        x0, x1 = min(b[0] for b in boxes), max(b[2] for b in boxes)
+        import math
+        zy, amp, wave, step = max(b[3] for b in boxes) + 45, 13, 170, 4   # smooth snake, ~170 px per wave
+        zig = [(x, zy + amp * math.sin(2 * math.pi * (x - x0) / wave)) for x in range(x0, x1 + step, step)]
+        write_n, zig_n = max(1, round(total * 0.4)), max(1, round(total * 0.2))
+        bg = Image.new("RGB", (W, H), PAPER)
+        def compose(text_upto, zig_upto):
+            part = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+            if text_upto > x0:
+                part.paste(layer.crop((0, 0, text_upto, layer.height)), (0, 0))
+            if zig_upto > x0:
+                pts = [pt for pt in zig if pt[0] <= zig_upto]
+                if len(pts) > 1:
+                    ImageDraw.Draw(part).line(pts, fill=RED + (255,), width=12, joint="curve")
+            rot = part.rotate(6, expand=False, resample=Image.BICUBIC)   # tilted up to the right
+            frame = bg.copy()
+            frame.paste(rot, (0, H // 2 - 350), rot)
+            return frame.tobytes()
+        held = None
+        for i in range(total):
+            if i < write_n:
+                yield compose(x0 + int((x1 - x0 + 30) * (i + 1) / write_n), 0)
+            elif i < write_n + zig_n:
+                yield compose(x1 + 30, x0 + int((x1 - x0 + step) * (i - write_n + 1) / zig_n))
+            else:
+                held = held or compose(x1 + 30, x1 + step)
+                yield held
+
     def card_img(path):
         img = Image.open(path).convert("RGBA")
         return img.resize((CARD_W, int(img.height * CARD_W / img.width)), Image.LANCZOS)
 
     deal_frames = lambda sl: max(2, round(sl.get("deal", 7 / fps) * fps))   # entrance length per slide
+    hook_frames = lambda sl: round(sl.get("hook_seconds", 1.9) * fps) if sl.get("hook") else 0
+
+    def hook_frame(text):
+        """The scroll-stopper: the hook alone, huge, up to three lines, centred."""
+        bg = Image.new("RGB", (W, H), PAPER)
+        d = ImageDraw.Draw(bg)
+        words, size = text.upper().split(), 230
+        while True:
+            f = font("Anton", size)
+            lines, cur = [], ""
+            for w in words:
+                trial = f"{cur} {w}".strip()
+                if d.textlength(trial, font=f) <= 960 or not cur:
+                    cur = trial
+                else:
+                    lines.append(cur)
+                    cur = w
+            lines.append(cur)
+            if (len(lines) <= 3 and all(d.textlength(l, font=f) <= 960 for l in lines)) or size <= 60:
+                break
+            size -= 6
+        gap = int(size * 1.15)
+        y0 = H // 2 - gap * (len(lines) - 1) // 2
+        for i, line in enumerate(lines):
+            d.text((W // 2, y0 + i * gap), line, font=f, fill=INK, anchor="mm")
+        d.line([(W // 2 - 220, y0 + gap * (len(lines) - 1) + int(size * 0.75)),
+                (W // 2 + 220, y0 + gap * (len(lines) - 1) + int(size * 0.75))], fill=RED, width=10)
+        return bg
     video_path = out_path + ".silent.mp4" if audio else out_path
     proc = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
@@ -312,17 +392,32 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
         stdin=subprocess.PIPE)
     try:
         for sl in slides:
+            if sl.get("hook"):                       # fade in, hold, fade out, then the card slides in
+                full, blank = hook_frame(sl["hook"]), Image.new("RGB", (W, H), PAPER)
+                total_h, fade = hook_frames(sl), round(sl.get("hook_fade", 0.45) * fps)
+                for i in range(total_h):
+                    a = min(1.0, (i + 1) / fade, (total_h - i) / fade)
+                    proc.stdin.write((full if a >= 1 else Image.blend(blank, full, a)).tobytes())
             bg, card = background(sl), card_img(sl["path"])
             deal = deal_frames(sl)
+            zoom = sl.get("zoom", 0.02)
             n = max(int(sl.get("seconds", 1.6) * fps), deal + 1)
+            exit_n = round(sl.get("exit", 0) * fps)          # slide out to the left at the end of the slide
+            zoom_n = round(sl.get("zoom_seconds", 0) * fps) or max(n - exit_n - deal, 1)
             for f in range(n):
                 if f < deal:                         # dealt in from fully off the right edge, settling turn
                     e = 1 - (1 - f / deal) ** 3          # frame 0 = e 0 = card entirely out of frame
                     start = W // 2 + card.width // 2 + 80   # +80 covers the rotated corner
                     angle, scale, dx = 3 * (1 - e), 1.0, int(start * (1 - e))
-                else:                                # slow push-in
+                else:                                # push-in, eased, done after zoom_n frames, then holds
                     angle, dx = 0.0, 0
-                    scale = 1.0 + 0.02 * (f - deal) / max(n - deal, 1)
+                    p = min(1.0, (f - deal) / max(zoom_n, 1))
+                    scale = 1.0 + zoom * (1 - (1 - p) ** 2)
+                    k = f - (n - exit_n)
+                    if exit_n and k >= 0:            # exit: accelerate off the left edge with a small turn
+                        e = ((k + 1) / exit_n) ** 2
+                        dx = -int((W // 2 + card.width * (1 + zoom) // 2 + 80) * e)
+                        angle = -3 * e
                 c = card.resize((int(card.width * scale), int(card.height * scale)), Image.BICUBIC)
                 if angle:
                     c = c.rotate(angle, expand=True, resample=Image.BICUBIC)
@@ -330,13 +425,18 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
                 cx, cy = W // 2 + dx, CARD_TOP + card.height // 2
                 frame.paste(c, (cx - c.width // 2, cy - c.height // 2), c)
                 proc.stdin.write(frame.tobytes())
+            if sl.get("closer"):                     # sign-off on its own screen: big, tilted, marker-written
+                for frame in closer_frames(sl["closer"], round(sl.get("closer_seconds", 2.6) * fps)):
+                    proc.stdin.write(frame)
     finally:
         proc.stdin.close()
         rc = proc.wait()
     if rc != 0:
         raise RuntimeError(f"ffmpeg failed (exit {rc})")
     if audio:
-        total = sum(max(int(sl.get("seconds", 1.6) * fps), deal_frames(sl) + 1) for sl in slides) / fps
+        total = sum(max(int(sl.get("seconds", 1.6) * fps), deal_frames(sl) + 1) + hook_frames(sl)
+                    + (round(sl.get("closer_seconds", 2.6) * fps) if sl.get("closer") else 0)
+                    for sl in slides) / fps
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video_path, "-i", audio,
                         "-map", "0:v", "-map", "1:a", "-c:v", "copy",
                         "-af", f"apad,atrim=0:{total:.3f},afade=t=out:st={max(total - 1.5, 0):.3f}:d=1.5",
