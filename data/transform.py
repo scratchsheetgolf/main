@@ -463,6 +463,16 @@ def round_wrap(live: dict, saved_picks: dict, event_tag: str = "") -> dict:
     by_id = {str(r.get("dg_id")): r for r in rows}
     lead = rows[0]
     leader, leader_score = display_name(lead.get("player_name", "")), format_to_par(lead.get("current_score"))
+    lead_phrase = f"{leader} leads at {leader_score}"
+    tied = [display_name(r.get("player_name", "")) for r in rows
+            if _score_int(r.get("current_score")) is not None
+            and _score_int(r.get("current_score")) == _score_int(lead.get("current_score"))]
+    if len(tied) > 1:   # "Bridgeman leads" when Mitchell is level got the PGA R2 wrap held by QA (2026-10-09)
+        last_names = [n.split()[-1] for n in tied]
+        leader = " & ".join(last_names) if len(tied) == 2 else (
+            ", ".join(last_names) if len(tied) == 3 else f"{len(tied)}-way tie")
+        lead_phrase = (f"{', '.join(tied[:-1])} and {tied[-1]} share the lead at {leader_score}" if len(tied) <= 3
+                       else f"{len(tied)} players share the lead at {leader_score}")
     picks, standing = [], {}
     for slot in ("win", "value", "fade", "sleeper"):
         pk = (saved_picks.get("picks") or {}).get(slot) or {}
@@ -488,7 +498,7 @@ def round_wrap(live: dict, saved_picks: dict, event_tag: str = "") -> dict:
         note = f"rough day for the card. {max(4 - int(rnd or 0), 0)} rounds to fix it."
     card = " · ".join(f"{slot.upper()} {last(n)} {p}" for slot, (n, p, _) in zip(("win", "value", "fade", "sleeper"),
                                                                                  [(a, b, c) for a, b, c in picks]))
-    caption = f"{info.get('event_name')} after round {rnd}: {leader} leads at {leader_score}. Our card: {card}."
+    caption = f"{info.get('event_name')} after round {rnd}: {lead_phrase}. Our card: {card}."
     if low:
         extra = f" Low round: {display_name(low.get('player_name', ''))} {format_to_par(_score_int(low.get('today')))}."
         if len(caption) + len(extra) <= 265:
@@ -496,7 +506,92 @@ def round_wrap(live: dict, saved_picks: dict, event_tag: str = "") -> dict:
     if event_tag:
         caption += f" {event_tag}"
     return {"round": rnd, "title": f"After Round {rnd}", "leader": leader, "leader_score": leader_score,
-            "picks": picks, "note": note, "caption": caption}
+            "lead_phrase": lead_phrase, "picks": picks, "note": note, "caption": caption,
+            "low": ({"name": display_name(low.get("player_name", "")), "today": _score_int(low.get("today")),
+                     "dg_id": str(low.get("dg_id"))} if low else None)}
+
+
+def _active_scored(live: dict) -> list:
+    """Players still in the event with a readable total and round score."""
+    return [r for r in live.get("data") or [] if str(r.get("current_pos", "")).upper() not in INACTIVE_POS
+            and _score_int(r.get("current_score")) is not None and _score_int(r.get("today")) is not None]
+
+
+def _ranks(scores: dict) -> dict:
+    """{id: total} -> {id: position}, golf-style (ties share the better position)."""
+    return {k: 1 + sum(1 for o in scores.values() if o < v) for k, v in scores.items()}
+
+
+def _pos_text(rank: int, scores: dict, k) -> str:
+    return ("T" if sum(1 for o in scores.values() if o == scores[k]) > 1 else "") + str(rank)
+
+
+def movers(live: dict, n: int = 5) -> list:
+    """Biggest climbs this round among the players still in the event: position before today
+    (total minus today's score) vs now, both ranked over the same field. Round 1 has no 'before',
+    so it returns []. Each: {name, dg_id, up, before, now, today}."""
+    rnd = (live.get("info") or {}).get("current_round")
+    if not rnd or int(rnd) < 2:
+        return []
+    rows = _active_scored(live)
+    now = {str(r.get("dg_id")): _score_int(r.get("current_score")) for r in rows}
+    before = {str(r.get("dg_id")): _score_int(r.get("current_score")) - _score_int(r.get("today")) for r in rows}
+    rn, rb = _ranks(now), _ranks(before)
+    out = [{"name": display_name(r.get("player_name", "")), "dg_id": k, "up": rb[k] - rn[k],
+            "before": _pos_text(rb[k], before, k), "now": _pos_text(rn[k], now, k),
+            "today": _score_int(r.get("today"))}
+           for r in rows for k in [str(r.get("dg_id"))] if rb[k] - rn[k] > 0]
+    return sorted(out, key=lambda m: (-m["up"], rn[m["dg_id"]]))[:n]
+
+
+def low_rounds(live: dict, n: int = 5) -> list:
+    """Today's best rounds: [(name, '-7')], lowest first."""
+    rows = sorted(_active_scored(live), key=lambda r: (_score_int(r.get("today")), _score_int(r.get("current_score"))))
+    return [(display_name(r.get("player_name", "")), format_to_par(_score_int(r.get("today")))) for r in rows[:n]]
+
+
+ROUND_CARD_MIN_HOLES = 14   # below this many tracked holes, the scorecard slide reads as mostly blank
+
+
+def round_of_day(live: dict, holes: dict, pars: dict):
+    """The low round of the day with its hole-by-hole card (front + back nine), or None when we
+    tracked fewer than ROUND_CARD_MIN_HOLES of its holes (missed polls leave holes blank, never guessed).
+    Among players tied for the low round, the one with the most tracked holes wins."""
+    rows = [r for r in _active_scored(live) if _thru_int(r.get("thru")) >= 18]
+    if not rows:
+        return None
+    best = min(_score_int(r.get("today")) for r in rows)
+    def known(r):
+        return len(((holes or {}).get(str(r.get("dg_id"))) or {}).get("rel") or {})
+    r = max((r for r in rows if _score_int(r.get("today")) == best), key=known)
+    if known(r) < ROUND_CARD_MIN_HOLES:
+        return None
+    h = holes[str(r.get("dg_id"))]
+    course_pars = (pars or {}).get(str(h.get("course") or "")) or (next(iter(pars.values())) if len(pars or {}) == 1 else {})
+    rel = h.get("rel") or {}
+    nine = lambda first: {"holes": list(range(first, first + 9)),
+                          "pars": [course_pars.get(str(x)) for x in range(first, first + 9)],
+                          "rel": [rel.get(str(x)) for x in range(first, first + 9)]}
+    return {"name": display_name(r.get("player_name", "")), "dg_id": str(r.get("dg_id")), "today": best,
+            "pos": str(r.get("current_pos", "")), "total": format_to_par(_score_int(r.get("current_score"))),
+            "known": len(rel), "front": nine(1), "back": nine(10)}
+
+
+def recap_caption(event_name: str, rnd, wrap: dict, moved: list, best, event_tag: str = "") -> str:
+    """Data-only caption for the round recap carousel."""
+    parts = [f"{event_name} after round {rnd}: {wrap['lead_phrase']}."]
+    if moved:
+        m = moved[0]
+        parts.append(f"Biggest climb: {m['name']}, up {m['up']} spots to {m['now']} ({format_to_par(m['today'])} today).")
+    if best:
+        parts.append(f"Round of the day: {best['name']} {format_to_par(best['today'])}.")
+    elif wrap.get("low"):
+        parts.append(f"Low round: {wrap['low']['name']} {format_to_par(wrap['low']['today'])}.")
+    card = " · ".join(f"{slot.upper()} {n.split()[-1] if n else ''} {p}"
+                      for slot, (n, p, _) in zip(("win", "value", "fade", "sleeper"), wrap["picks"]))
+    parts.append(f"Our card: {card}.")
+    text = " ".join(parts) + "\n\nSwipe for the full recap."
+    return text + (f" {event_tag}" if event_tag else "")
 
 
 def _to_par_int(score):

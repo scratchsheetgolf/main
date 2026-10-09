@@ -16,7 +16,7 @@ from data import datagolf, state, transform
 from content import content
 from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
                     render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand,
-                    render_reel, render_round_wrap)
+                    render_reel, render_round_wrap, render_round_of_day)
 from distribute import image_host, post_x, post_meta, post_tiktok, notify_telegram, music
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
@@ -106,6 +106,82 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
                 except Exception as e:
                     results[name] = f"FAILED: {e}"
     return results
+
+
+def _post_carousel_everywhere(paths: list, caption: str, dry_run: bool = False, draft: bool = False) -> dict:
+    """A multi-slide post: Instagram carousel + one Facebook post with all the photos. Drafts go to
+    Telegram as an album. X / TikTok aren't wired for carousels (X: no credits; TikTok: not approved)."""
+    if dry_run or draft:
+        caption_path = os.path.join(os.path.dirname(paths[0]), "caption.txt")
+        with open(caption_path, "w", encoding="utf-8") as f:
+            f.write(caption + "\n")
+        pinged = notify_telegram.send_album(paths, f"DRAFT carousel (post by hand)\n\n{caption}") if draft else None
+        return {"DRY_RUN" if dry_run else "DRAFT": True, "telegram": pinged,
+                "would_post_slides": [os.path.basename(x) for x in paths], "would_post_caption": caption,
+                "caption_file": caption_path}
+    platforms = enabled_platforms() & {"facebook", "instagram"}
+    results = {"platforms": sorted(platforms), "slides": len(paths)}
+    if not platforms:
+        return results
+    try:
+        urls = [image_host.publish_image(x) for x in paths]
+    except Exception as e:
+        results["image_host"] = f"FAILED: {e}"
+        return results
+    for name, fn in [("facebook", lambda: post_meta.post_album_to_facebook(urls, caption)),
+                     ("instagram", lambda: post_meta.post_carousel_to_instagram(urls, caption))]:
+        if name in platforms:
+            try:
+                results[name] = fn()
+            except Exception as e:
+                results[name] = f"FAILED: {e}"
+    return results
+
+
+def build_round_recap(tour: str, event_name: str, live: dict, wrap: dict, holes: dict, pars: dict,
+                      event_tag: str = "") -> dict:
+    """Round recap carousel (data only): leaderboard, movers, round of the day (or low rounds),
+    our card, closer. Returns {"slides": [paths], "caption", "facts"}; facts go to the QA review."""
+    rnd = wrap["round"]
+    short = transform.short_event_name(event_name).upper()
+    line = f"{tour_label(tour)}{short}"
+    out_dir = os.path.join(OUTPUT_DIR, f"recap_{tour}")
+    os.makedirs(out_dir, exist_ok=True)
+    slides = []
+    def slide(name):
+        slides.append(os.path.join(out_dir, name))
+        return slides[-1]
+    rows = transform.sorted_leaderboard(live)
+    top5 = [{"pos": str(r.get("current_pos", "")), "name": transform.display_name(r.get("player_name", "")),
+             "score": transform.format_to_par(r.get("current_score"))} for r in rows[:5]]
+    render_leaderboard(event=short, round_label=f"{tour_label(tour)}AFTER ROUND {rnd}", players=top5,
+                       out_path=slide("01_leaderboard.png"))
+    moved = transform.movers(live)
+    lows = transform.low_rounds(live)
+    if moved:
+        m = moved[0]
+        render_stat_list("Movers", f"{short} · ROUND {rnd}", "SPOTS UP", [(x["name"], f"+{x['up']}") for x in moved],
+                         f"{m['name'].split()[-1].lower()}: {m['before']} to {m['now']}.", slide("02_movers.png"),
+                         kicker="THE WRAP")
+    best = transform.round_of_day(live, holes, pars)
+    if best:
+        blanks = 18 - best["known"]
+        note = "low round of the day." if not blanks else f"low round of the day. {blanks} hole{'s' if blanks > 1 else ''} we didn't catch left blank."
+        render_round_of_day(best["name"], f"{line} · ROUND {rnd}", transform.format_to_par(best["today"]),
+                            f"NOW {best['pos']} AT {best['total']}", best["front"], best["back"], note,
+                            slide("03_round_of_the_day.png"))
+    elif lows:
+        render_stat_list("Low Rounds", f"{short} · ROUND {rnd}", "TODAY", lows,
+                         f"{lows[0][0].split()[-1].lower()} went {lows[0][1]}.", slide("03_low_rounds.png"),
+                         kicker="THE WRAP")
+    render_round_wrap(wrap["title"], line, wrap["leader"], wrap["leader_score"], wrap["picks"], wrap["note"],
+                      slide("04_our_card.png"))
+    render_closer(short, slide("05_closer.png"))
+    caption = transform.recap_caption(event_name, rnd, wrap, moved, best, event_tag)
+    facts = {"top_5": top5, "movers_computed_from_feed": moved, "low_rounds_today": lows,
+             "round_of_the_day": ({k: best[k] for k in ("name", "today", "pos", "total", "known")} if best else None),
+             "our_picks": wrap["picks"]}
+    return {"slides": slides, "caption": caption, "facts": facts}
 
 
 REEL_CLOSER = "stay tuned for more"   # written on in marker at the end of every Instagram Reel
@@ -580,22 +656,36 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
             actions_taken.append(("round_wrap", f"round {current_round} done; held until quiet hours end"))
         else:
             wrap = transform.round_wrap(live, saved_picks, event_tag)
+            # the recap carousel (Mike 2026-10-09); if building it fails, the single wrap card still goes out
+            try:
+                recap = build_round_recap(tour, event_name, live, wrap, holes, pars, event_tag)
+            except Exception as e:
+                print(f"recap carousel failed ({type(e).__name__}: {e}); posting the single wrap card", file=sys.stderr)
+                recap = None
             image_path = os.path.join(OUTPUT_DIR, "round_wrap.png")
-            render_round_wrap(wrap["title"], f"{tour_label(tour)}{transform.short_event_name(event_name).upper()}",
-                              wrap["leader"], wrap["leader_score"], wrap["picks"], wrap["note"], image_path)
-            caption, wrap_draft = wrap["caption"], draft
+            if not recap:
+                render_round_wrap(wrap["title"], f"{tour_label(tour)}{transform.short_event_name(event_name).upper()}",
+                                  wrap["leader"], wrap["leader_score"], wrap["picks"], wrap["note"], image_path)
+            caption, wrap_draft = (recap["caption"] if recap else wrap["caption"]), draft
             if auto:
                 def same_wrap(info, rows):
                     fresh = transform.round_wrap({"info": info, "data": rows}, saved_picks, event_tag)
                     same = (fresh["picks"], fresh["leader"], fresh["leader_score"]) == (wrap["picks"], wrap["leader"], wrap["leader_score"])
                     return same, ("" if same else "standings changed since the card was made")
+                # the reviewer sees only a fresh top 5; give it the rest of what the slides were built from,
+                # or a correct "low round" looks invented (PGA R2 wrap held, 2026-10-09)
+                facts = recap["facts"] if recap else {"low_round_today": wrap.get("low")}
                 passed, why = _qa_gate(tour, event_name, f"CARD: {wrap}\nCAPTION: {caption}", expect_final=False,
-                                       check_row=same_wrap)
+                                       check_row=same_wrap, extra={"computed_from_this_feed": facts})
                 if not passed:
                     wrap_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
-            actions_taken.append(("round_wrap", _post_everywhere(image_path, caption, dry_run=dry_run,
-                                                                 draft=wrap_draft, live=False,
-                                                                 hook=transform.leader_hook(current_leaderboard))))
+            if recap:
+                actions_taken.append(("round_wrap", _post_carousel_everywhere(recap["slides"], caption,
+                                                                              dry_run=dry_run, draft=wrap_draft)))
+            else:
+                actions_taken.append(("round_wrap", _post_everywhere(image_path, caption, dry_run=dry_run,
+                                                                     draft=wrap_draft, live=False,
+                                                                     hook=transform.leader_hook(current_leaderboard))))
             if not dry_run:
                 wraps.append(current_round)
 

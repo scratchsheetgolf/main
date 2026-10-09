@@ -174,7 +174,7 @@ for slot, label in [("win", "WIN"), ("value", "VALUE"), ("fade", "FADE"), ("slee
 
 # ---------- carousel: generic top-5 list ----------
 lrows = [456, 576, 696, 816, 936]
-sl = [head("stat list"), frame_inner(), topline("THIS WEEK'S CARD"),
+sl = [head("stat list"), frame_inner(), topline("__KICKER__"),
       f'<text x="540" y="268" font-family="DM Serif Display" font-size="76" fill="{INK}" text-anchor="middle" data-fit="880">__TITLE__</text>\n',
       f'<text x="540" y="320" font-family="Barlow SemiBold" font-size="24" fill="{PENCIL}" letter-spacing="3" text-anchor="middle" data-fit="880">__SUBTITLE__</text>\n',
       f'<rect x="80" y="352" width="920" height="54" fill="{GREEN}"/>\n',

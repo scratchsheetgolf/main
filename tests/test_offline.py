@@ -501,6 +501,34 @@ class MetaCheckTests(unittest.TestCase):
         unlinked = self.run_check(self.GOOD_TOKEN, {"name": "The Scratch Sheet"})["problems"]
         self.assertIn("no Instagram Business/Creator account is linked to this Page", unlinked)
 
+class MetaCarouselTests(unittest.TestCase):
+    def test_instagram_carousel_and_facebook_album_call_order(self):
+        from distribute import post_meta
+        calls, n = [], iter(range(100))
+        def fake_post(url, data=None, timeout=None):
+            calls.append((url.rsplit("/", 1)[-1], dict(data)))
+            r = mock.Mock(ok=True)
+            r.json.return_value = {"id": f"id{next(n)}"}
+            return r
+        with mock.patch.object(post_meta, "PAGE_ID", "P"), mock.patch.object(post_meta, "IG_USER_ID", "IG"), \
+             mock.patch.object(post_meta, "ACCESS_TOKEN", "T"), \
+             mock.patch.object(post_meta.requests, "post", side_effect=fake_post), \
+             mock.patch.object(post_meta, "_get", return_value={"status_code": "FINISHED", "permalink": "L"}):
+            out = post_meta.post_carousel_to_instagram(["u1", "u2", "u3"], "cap")
+            self.assertEqual([c[0] for c in calls], ["media"] * 4 + ["media_publish"])
+            self.assertTrue(all(c[1]["is_carousel_item"] == "true" for c in calls[:3]))
+            self.assertEqual((calls[3][1]["media_type"], calls[3][1]["children"], calls[3][1]["caption"]),
+                             ("CAROUSEL", "id0,id1,id2", "cap"))
+            self.assertEqual(out["permalink"], "L")
+            with self.assertRaises(ValueError):
+                post_meta.post_carousel_to_instagram(["only one"], "cap")
+            calls.clear()
+            post_meta.post_album_to_facebook(["u1", "u2"], "cap")
+            self.assertEqual([c[0] for c in calls], ["photos", "photos", "feed"])
+            self.assertEqual(calls[0][1]["published"], "false")
+            self.assertEqual(calls[2][1]["attached_media[1]"], '{"media_fbid":"id' + "%d" % 6 + '"}')
+
+
 class InstagramImageTests(unittest.TestCase):
     def test_png_cards_are_hosted_as_jpeg(self):
         from PIL import Image
@@ -1045,17 +1073,91 @@ class PreviewCarouselTests(PipelineDryRunTests):
                  mock.patch.object(state, "save") as saved, \
                  mock.patch.object(notify_telegram, "quiet_now", return_value=quiet), \
                  mock.patch.object(pipeline, "render_round_wrap") as card, \
-                 mock.patch.object(pipeline, "_post_everywhere", return_value={"ok": True}) as post:
+                 mock.patch.object(pipeline, "_post_carousel_everywhere", return_value={"DRAFT": True}) as post:
                 out = pipeline.run_live_poll(draft=True)
             return dict(out["actions"]), card, post, saved.call_args.args[0]
         acts, card, post, saved = poll(prev, quiet=True)
         self.assertIn("held until quiet hours end", acts["round_wrap"])
         card.assert_not_called()
         acts, card, post, saved = poll(prev, quiet=False)
-        card.assert_called_once()
+        card.assert_called_once()                                   # the "our card" slide of the recap
+        slides = [os.path.basename(x) for x in post.call_args.args[0]]
+        self.assertEqual(slides, ["01_leaderboard.png", "03_low_rounds.png", "04_our_card.png", "05_closer.png"])
         self.assertEqual(saved["wraps"], [1])
         acts, card, post, saved = poll({**prev, "wraps": [1]}, quiet=False)
         self.assertNotIn("round_wrap", acts)
+
+    def _r2_live(self):
+        # round 2: totals and today's scores -> positions before today vs now
+        rows = [{"dg_id": 1, "player_name": "Lead, Al", "current_pos": "T1", "current_score": -9, "today": -2, "thru": 18},
+                {"dg_id": 2, "player_name": "Tie, Bo", "current_pos": "T1", "current_score": -9, "today": -3, "thru": 18},
+                {"dg_id": 3, "player_name": "Climb, Cy", "current_pos": "3", "current_score": -8, "today": -8, "thru": 18},
+                {"dg_id": 4, "player_name": "Drop, Di", "current_pos": "4", "current_score": -1, "today": 6, "thru": 18},
+                {"dg_id": 5, "player_name": "Flat, Ed", "current_pos": "5", "current_score": 0, "today": 0, "thru": 18}]
+        return {"info": {"event_name": "Fake Open", "current_round": 2}, "data": rows}
+
+    def test_movers_rank_before_and_after_today(self):
+        live = self._r2_live()
+        mv = transform.movers(live)
+        # before today: Al -7, Di -7 (T1), Bo -6 (3), Cy 0, Ed 0 (T4). Now: Al/Bo T1, Cy 3, Di 4, Ed 5
+        self.assertEqual([(m["name"], m["up"], m["before"], m["now"]) for m in mv],
+                         [("Bo Tie", 2, "3", "T1"), ("Cy Climb", 1, "T4", "3")])
+        self.assertNotIn("Di Drop", [m["name"] for m in mv])        # fell: not a mover
+        self.assertEqual(transform.movers(self._wrap_live()), [])   # round 1: no "before"
+        self.assertEqual(transform.low_rounds(live)[0], ("Cy Climb", "-8"))
+
+    def test_round_of_the_day_needs_enough_tracked_holes(self):
+        live = self._r2_live()
+        rel = {str(h): (-1 if h in (2, 5, 7, 9, 11, 14, 16, 18) else 0) for h in range(1, 19) if h not in (12, 13)}
+        holes = {"3": {"round": 2, "start": 1, "thru": 18, "today": -8, "course": "C", "rel": rel}}
+        pars = {"C": {str(h): 4 for h in range(1, 19)}}
+        best = transform.round_of_day(live, holes, pars)
+        self.assertEqual((best["name"], best["today"], best["known"]), ("Cy Climb", -8, 16))
+        self.assertEqual(best["back"]["rel"][2:4], [None, None])     # 12 and 13 stay blank, never guessed
+        self.assertEqual(best["front"]["pars"], [4] * 9)
+        few = {"3": {**holes["3"], "rel": dict(list(rel.items())[:10])}}
+        self.assertIsNone(transform.round_of_day(live, few, pars))
+
+    def test_tied_leaders_share_the_lead_in_the_wrap(self):
+        w = transform.round_wrap(self._r2_live(), {"picks": {}})
+        self.assertEqual(w["leader"], "Lead & Tie")
+        self.assertTrue(w["caption"].startswith("Fake Open after round 2: Al Lead and Bo Tie share the lead at -9."))
+
+    def test_recap_carousel_posts_slides_and_gives_qa_the_facts(self):
+        live = self._r2_live()
+        picks = {"event_name": "Fake Open", "picks": {"win": {"name": "Al Lead", "dg_id": 1}}}
+        prev = {"event_name": "Fake Open", "leader_name": "Al Lead", "last_leaderboard_post_ts": 9e12, "last_picks": picks}
+        from distribute import notify_telegram
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=live), \
+             mock.patch.object(datagolf, "get_live_hole_stats", return_value={}), \
+             mock.patch.object(state, "load", return_value=prev), mock.patch.object(state, "save"), \
+             mock.patch.object(notify_telegram, "quiet_now", return_value=False), \
+             mock.patch.object(content, "qa_review", return_value=(True, "PASS")) as qa, \
+             mock.patch.object(pipeline, "_post_carousel_everywhere",
+                               return_value={"platforms": ["facebook", "instagram"]}) as post:
+            out = pipeline.run_live_poll(dry_run=False, draft=False)
+        slides, caption = post.call_args.args
+        self.assertEqual([os.path.basename(x) for x in slides],
+                         ["01_leaderboard.png", "02_movers.png", "03_low_rounds.png", "04_our_card.png", "05_closer.png"])
+        self.assertIn("Biggest climb: Bo Tie, up 2 spots to T1 (-3 today).", caption)
+        self.assertFalse(post.call_args.kwargs["draft"])
+        self.assertIn("movers_computed_from_feed", qa.call_args.args[0])
+
+    def test_recap_falls_back_to_single_card(self):
+        live = self._r2_live()
+        prev = {"event_name": "Fake Open", "leader_name": "Al Lead", "last_leaderboard_post_ts": 9e12,
+                "last_picks": {"event_name": "Fake Open", "picks": {}}}
+        from distribute import notify_telegram
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=live), \
+             mock.patch.object(datagolf, "get_live_hole_stats", return_value={}), \
+             mock.patch.object(state, "load", return_value=prev), mock.patch.object(state, "save"), \
+             mock.patch.object(notify_telegram, "quiet_now", return_value=False), \
+             mock.patch.object(pipeline, "build_round_recap", side_effect=RuntimeError("font")), \
+             mock.patch.object(pipeline, "render_round_wrap") as card, \
+             mock.patch.object(pipeline, "_post_everywhere", return_value={"DRAFT": True}) as single:
+            pipeline.run_live_poll(draft=True)
+        card.assert_called_once()
+        self.assertEqual(os.path.basename(single.call_args.args[0]), "round_wrap.png")
 
     def test_photo_library_lookup_and_credit(self):
         from tools import player_photos

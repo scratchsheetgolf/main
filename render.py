@@ -185,10 +185,11 @@ def render_pick_detail(slot: str, player: str, event: str, model_win: str, books
     return _fill_and_render(f"pick_{slot}.svg", tokens, out_path)
 
 
-def render_stat_list(title: str, subtitle: str, header: str, rows: list, note: str, out_path: str) -> str:
+def render_stat_list(title: str, subtitle: str, header: str, rows: list, note: str, out_path: str,
+                     kicker: str = "THIS WEEK'S CARD") -> str:
     """Carousel top-5 list. rows: up to 5 (name, value) pairs; the top value gets the Sharpie circle."""
     rows = (list(rows)[:5] + [("", "")] * 5)[:5]
-    tokens = {"title": title, "subtitle": subtitle, "header": header, "note": note}
+    tokens = {"title": title, "subtitle": subtitle, "header": header, "note": note, "kicker": kicker}
     for i, (name, value) in enumerate(rows, start=1):
         tokens[f"name_{i}"] = name
         tokens[f"value_{i}"] = value
@@ -203,6 +204,17 @@ def render_round_wrap(title: str, subtitle: str, leader: str, leader_score: str,
     for i, (name, pos, score) in enumerate((list(picks) + [("", "", "")] * 4)[:4], start=1):
         tokens[f"name_{i}"], tokens[f"pos_{i}"], tokens[f"score_{i}"] = name, pos, score
     return _fill_and_render("round_wrap.svg", tokens, out_path)
+
+
+def render_round_of_day(player: str, subtitle: str, today: str, standing: str, front: dict, back: dict, note: str,
+                        out_path: str) -> str:
+    """Recap-carousel slide: the low round with both nines (transform.round_of_day), Sharpie scoring marks."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools"))
+    from scorecard_strip import strip
+    cards = strip(640, front["holes"], front["pars"], front["rel"]) + strip(830, back["holes"], back["pars"], back["rel"])
+    return _fill_and_render("round_of_day.svg", {"player": player, "subtitle": subtitle, "today": today,
+                                                 "standing": standing, "note": note}, out_path,
+                            raw_tokens={"scorecard": cards})
 
 
 def render_closer(event: str, out_path: str) -> str:
