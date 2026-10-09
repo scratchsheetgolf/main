@@ -501,6 +501,37 @@ class MetaCheckTests(unittest.TestCase):
         unlinked = self.run_check(self.GOOD_TOKEN, {"name": "The Scratch Sheet"})["problems"]
         self.assertIn("no Instagram Business/Creator account is linked to this Page", unlinked)
 
+class InstagramImageTests(unittest.TestCase):
+    def test_png_cards_are_hosted_as_jpeg(self):
+        from PIL import Image
+        from distribute import image_host
+        with tempfile.TemporaryDirectory() as d:
+            png = os.path.join(d, "card.png")
+            Image.new("RGBA", (40, 50), (10, 90, 60, 128)).save(png)
+            jpg = image_host.to_jpeg(png)
+            self.assertTrue(jpg.endswith("card.jpg"))
+            with Image.open(jpg) as im:
+                self.assertEqual((im.format, im.mode, im.size), ("JPEG", "RGB", (40, 50)))
+            self.assertEqual(image_host.to_jpeg(jpg), jpg)
+
+    def test_meta_check_makes_a_container_but_never_publishes(self):
+        from distribute import post_meta
+        token = MetaCheckTests.GOOD_TOKEN
+        def fake_get(url, params=None, timeout=None):
+            r = mock.MagicMock(ok=True)
+            r.json.return_value = (token if url.endswith("/debug_token") else
+                                   {"status_code": "FINISHED"} if url.endswith("/c1") else MetaCheckTests.PAGE)
+            return r
+        posted = mock.MagicMock(ok=True)
+        posted.json.return_value = {"id": "c1"}
+        with mock.patch.multiple(post_meta, PAGE_ID="111", ACCESS_TOKEN="tok", IG_USER_ID="222"), \
+             mock.patch.object(post_meta.requests, "get", side_effect=fake_get), \
+             mock.patch.object(post_meta.requests, "post", return_value=posted) as post:
+            out = post_meta.check("https://example.test/card.jpg")
+        self.assertEqual((out["instagram_test_container"], out["problems"]), ("FINISHED", []))
+        self.assertEqual(post.call_count, 1)
+        self.assertTrue(post.call_args[0][0].endswith("/222/media"))      # container only, no media_publish
+
 class MultiTourTests(PipelineDryRunTests):
     def test_tours_keep_separate_state(self):
         pipeline.run_pretournament_picks(dry_run=True, tour="pga")

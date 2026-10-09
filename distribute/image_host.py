@@ -10,14 +10,34 @@ access (the default GITHUB_TOKEN works fine for this within the same repo).
 """
 import os
 import subprocess
+import tempfile
 import time
+
+from PIL import Image
 
 REPO_SLUG = os.environ.get("GITHUB_REPOSITORY", "your-username/scratch-sheet")  # set automatically in Actions
 MEDIA_BRANCH = "media"
 
 
+def to_jpeg(local_path: str) -> str:
+    """Instagram's publishing API only accepts JPEG, so PNG cards are converted (white behind any
+    transparency). Returns a new .jpg path; a .jpg/.jpeg input is returned unchanged."""
+    if os.path.splitext(local_path)[1].lower() in (".jpg", ".jpeg"):
+        return local_path
+    img = Image.open(local_path)
+    if img.mode in ("RGBA", "LA", "P"):
+        img = img.convert("RGBA")
+        flat = Image.new("RGB", img.size, "white")
+        flat.paste(img, mask=img.split()[-1])
+        img = flat
+    out = os.path.join(tempfile.mkdtemp(), os.path.splitext(os.path.basename(local_path))[0] + ".jpg")
+    img.convert("RGB").save(out, "JPEG", quality=92)
+    return out
+
+
 def publish_image(local_path: str) -> str:
-    """Commits local_path to the media branch and returns its public raw URL."""
+    """Commits local_path (as JPEG, see to_jpeg) to the media branch and returns its public raw URL."""
+    local_path = to_jpeg(local_path)
     filename = f"{int(time.time())}_{os.path.basename(local_path)}"
     dest_rel_path = f"posts/{filename}"
 

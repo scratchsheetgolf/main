@@ -80,7 +80,7 @@ def _get(path: str, **params) -> dict:
     return resp.json()
 
 
-def check() -> dict:
+def check(image_url: str = None) -> dict:
     """Verifies the Meta setup WITHOUT posting: the token is a valid, non-expiring Page token with the
     publishing permissions, it belongs to META_PAGE_ID, and that Page's linked Instagram account is
     META_IG_USER_ID. Returns a report; 'problems' lists everything that would stop a post."""
@@ -111,7 +111,19 @@ def check() -> dict:
         problems.append("no Instagram Business/Creator account is linked to this Page")
     elif str(ig.get("id")) != str(IG_USER_ID):
         problems.append(f"Page's linked Instagram id is {ig.get('id')}, not META_IG_USER_ID {IG_USER_ID}")
+    container = None
+    if image_url and not problems:   # the real publish path minus the publish: proves Instagram can fetch
+        resp = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media",   # and accept
+                             data={"image_url": image_url, "caption": "setup check (never published)",  # our image
+                                   "access_token": ACCESS_TOKEN}, timeout=60)
+        if not resp.ok:
+            problems.append(f"Instagram rejected the test image: {resp.status_code} {resp.text[:300]}")
+        else:   # an unpublished container is never shown anywhere and expires after 24 hours
+            container = _get(resp.json()["id"], fields="status_code").get("status_code")
+            if container == "ERROR":
+                problems.append("Instagram accepted the image URL but failed to process it")
     return {"page_name": page.get("name"), "instagram_username": ig.get("username"),
+            "instagram_test_container": container,
             "app_id": info.get("app_id"), "token_type": info.get("type"),
             "expires": "never" if info.get("expires_at") in (0, None) else info.get("expires_at"),
             "scopes": sorted(scopes), "problems": problems}
@@ -119,7 +131,8 @@ def check() -> dict:
 
 if __name__ == "__main__":
     if "--check" in sys.argv:
-        result = check()
+        url = next((a for a in sys.argv[1:] if a.startswith("https://")), None)
+        result = check(url)
         print(result)
         if result["problems"]:
             sys.exit("Meta setup not ready: " + "; ".join(result["problems"]))
