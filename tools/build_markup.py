@@ -34,24 +34,6 @@ def footer():
             f'<text x="984" y="1262" font-family="Barlow SemiBold" font-size="30" fill="{GREEN}" text-anchor="end">@TheScratchSheet</text>\n</svg>\n')
 
 
-def hole_strip(y, first=1, blank=False):
-    """Decorative scorecard strip. blank=True leaves the PAR row empty: on the live alert, made-up pars
-    next to a real "THRU 15" would read as the actual course."""
-    pars = [""] * 9 if blank else [4, 4, 3, 5, 4, 3, 4, 5, 4]
-    s = [f'<g font-family="Barlow Condensed SemiBold" text-anchor="middle">',
-         f'<rect x="96" y="{y}" width="888" height="96" fill="none" stroke="{INK}" stroke-width="2"/>',
-         f'<rect x="96" y="{y}" width="888" height="48" fill="{GREEN}"/>',
-         f'<text x="148" y="{y+34}" font-size="24" fill="{PAPER}" letter-spacing="3">HOLE</text>',
-         f'<text x="148" y="{y+82}" font-size="24" fill="{INK}" letter-spacing="3">PAR</text>']
-    for i in range(9):
-        x = 200 + i * 87
-        s.append(f'<line x1="{x}" y1="{y}" x2="{x}" y2="{y+96}" stroke="{RULE}" stroke-width="2"/>')
-        s.append(f'<text x="{x+43}" y="{y+35}" font-size="28" fill="{PAPER}">{first+i}</text>')
-        s.append(f'<text x="{x+43}" y="{y+83}" font-size="28" fill="{INK}">{pars[i]}</text>')
-    s.append('</g>')
-    return "\n".join(s) + "\n"
-
-
 def topline(label):
     return (f'<text x="96" y="146" font-family="Barlow SemiBold" font-size="28" fill="{RED}" letter-spacing="8">{label}</text>\n'
             f'<text x="984" y="146" font-family="Barlow SemiBold" font-size="22" fill="{GREEN}" letter-spacing="6" text-anchor="end">THE SCRATCH SHEET</text>\n'
@@ -78,7 +60,7 @@ lb.append(footer())
 open(f"{OUT}/leaderboard.svg", "w").write("".join(lb))
 
 # ---------- hot take ----------
-ht = [head("hot take"), frame_inner(), hole_strip(96),
+ht = [head("hot take"), frame_inner(),
       f'<text x="110" y="330" font-family="Permanent Marker" font-size="64" fill="{SHARPIE}" transform="rotate(-4 110 330)">HOT TAKE</text>\n',
       f'<path d="{circle(262, 304, 196, 66, 7, 1.12)}" {MK}/>\n',
       f'<text font-family="Anton" font-size="110" fill="{INK}" data-fit="880">'
@@ -174,7 +156,7 @@ for slot, label in [("win", "WIN"), ("value", "VALUE"), ("fade", "FADE"), ("slee
 
 # ---------- carousel: generic top-5 list ----------
 lrows = [456, 576, 696, 816, 936]
-sl = [head("stat list"), frame_inner(), topline("THIS WEEK'S CARD"),
+sl = [head("stat list"), frame_inner(), topline("__KICKER__"),
       f'<text x="540" y="268" font-family="DM Serif Display" font-size="76" fill="{INK}" text-anchor="middle" data-fit="880">__TITLE__</text>\n',
       f'<text x="540" y="320" font-family="Barlow SemiBold" font-size="24" fill="{PENCIL}" letter-spacing="3" text-anchor="middle" data-fit="880">__SUBTITLE__</text>\n',
       f'<rect x="80" y="352" width="920" height="54" fill="{GREEN}"/>\n',
@@ -217,7 +199,7 @@ rw.append(footer())
 open(f"{OUT}/round_wrap.svg", "w").write("".join(rw))
 
 # ---------- carousel: closing slide ----------
-cl = [head("closer"), frame_inner(), hole_strip(96, 10),
+cl = [head("closer"), frame_inner(),
       f'<text x="540" y="560" font-family="Anton" font-size="200" fill="{INK}" text-anchor="middle">RECEIPTS</text>\n',
       f'<text x="540" y="760" font-family="Anton" font-size="200" fill="{INK}" text-anchor="middle">SUNDAY.</text>\n',
       f'<path d="{squiggle(250, 800, 580, 47, 7)}" {MK}/>\n',

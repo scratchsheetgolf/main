@@ -6,7 +6,12 @@ name: Check Meta credentials
 # accepted by Instagram as an UNPUBLISHED container (never shown; expires in 24 h), and the same for
 # a music Reel built exactly like a live post's. Free.
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      recap_tour:
+        description: 'Tour for the recap-carousel check (pga or euro)'
+        required: false
+        default: 'pga'
 
 permissions:
   contents: write  # image_host.py pushes the sample card to the media branch, like a real post
@@ -52,12 +57,29 @@ jobs:
           python -c 'from distribute import music; from render import render_reel; c = music.pick_clip(); assert c, "no clip: AUDIO_KEY missing or decrypt failed"; render_reel([{"path": "output/previews/sample/weekly_picks.png", "seconds": 6.0, "deal": 0.8, "zoom": 0.06, "zoom_seconds": 2.2, "exit": 0.6, "hook": "BRIDGEMAN LEADS BY 1", "hook_fade_in": False, "closer": "stay tuned for more", "closer_seconds": 2.6}], "output/check_reel.mp4", audio=c)'
           ffprobe -v error -show_entries stream=codec_type -of csv=p=0 output/check_reel.mp4
 
+      - name: Build the round recap carousel from the live feed (no post)
+        id: recap
+        continue-on-error: true   # no live event this week = nothing to build; the rest still runs
+        env:
+          DATAGOLF_API_KEY: ${{ secrets.DATAGOLF_API_KEY }}
+        run: |
+          urls=$(python tools/recap_check.py "${{ inputs.recap_tour || 'pga' }}" output/recap_check | tail -n 1)
+          echo "urls=$urls" >> "$GITHUB_OUTPUT"
+
+      - name: Recap slides for review
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: recap-check
+          path: output/recap_check/
+          if-no-files-found: ignore
+
       - name: Check credentials (no post)
         env:
           META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
           META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
           META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
-        run: python -m distribute.post_meta --check "${{ steps.host.outputs.url }}" output/check_reel.mp4
+        run: python -m distribute.post_meta --check "${{ steps.host.outputs.url }}" output/check_reel.mp4 "--carousel=${{ steps.recap.outputs.urls }}"
 
       - name: What's on Instagram right now (read-only)
         if: always()

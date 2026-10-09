@@ -64,6 +64,49 @@ def post_to_instagram(image_url: str, caption: str) -> dict:
     return _publish(creation_id)
 
 
+def post_album_to_facebook(image_urls: list, caption: str) -> dict:
+    """One Page post with several photos (the recap carousel): upload each unpublished, then attach."""
+    if not (PAGE_ID and ACCESS_TOKEN):
+        raise RuntimeError("META_PAGE_ID / META_PAGE_ACCESS_TOKEN not set.")
+    ids = []
+    for url in image_urls[:10]:
+        r = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{PAGE_ID}/photos",
+                          data={"url": url, "published": "false", "access_token": ACCESS_TOKEN}, timeout=30)
+        r.raise_for_status()
+        ids.append(r.json()["id"])
+    data = {"message": caption, "access_token": ACCESS_TOKEN}
+    data.update({f"attached_media[{i}]": f'{{"media_fbid":"{pid}"}}' for i, pid in enumerate(ids)})
+    resp = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{PAGE_ID}/feed", data=data, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def post_carousel_to_instagram(image_urls: list, caption: str, publish: bool = True) -> dict:
+    """Instagram carousel (2-10 JPEGs at public URLs): one child container per image, wait for each,
+    then a CAROUSEL container with the caption, wait, publish. publish=False stops before publishing
+    (the setup check): an unpublished container is never shown and expires after 24 h."""
+    if not (IG_USER_ID and ACCESS_TOKEN):
+        raise RuntimeError("META_IG_USER_ID / META_PAGE_ACCESS_TOKEN not set.")
+    if not 2 <= len(image_urls) <= 10:
+        raise ValueError(f"an Instagram carousel needs 2-10 images, got {len(image_urls)}")
+    children = []
+    for url in image_urls:
+        r = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media",
+                          data={"image_url": url, "is_carousel_item": "true", "access_token": ACCESS_TOKEN},
+                          timeout=30)
+        r.raise_for_status()
+        children.append(r.json()["id"])
+    for cid in children:
+        _wait_ready(cid, 90)
+    r = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media",
+                      data={"media_type": "CAROUSEL", "children": ",".join(children), "caption": caption,
+                            "access_token": ACCESS_TOKEN}, timeout=30)
+    r.raise_for_status()
+    parent = r.json()["id"]
+    status = _wait_ready(parent, 90)
+    return _publish(parent) if publish else {"id": parent, "status": status}
+
+
 def _wait_ready(creation_id: str, wait_s: int) -> str:
     import time
     status, deadline = None, time.time() + wait_s
@@ -139,7 +182,7 @@ def _get(path: str, **params) -> dict:
     return resp.json()
 
 
-def check(image_url: str = None, reel_path: str = None) -> dict:
+def check(image_url: str = None, reel_path: str = None, carousel_urls: list = None) -> dict:
     """Verifies the Meta setup WITHOUT posting: the token is a valid, non-expiring Page token with the
     publishing permissions, it belongs to META_PAGE_ID, and that Page's linked Instagram account is
     META_IG_USER_ID. Returns a report; 'problems' lists everything that would stop a post."""
@@ -188,8 +231,15 @@ def check(image_url: str = None, reel_path: str = None) -> dict:
                                           thumb_offset_ms=500)["status"]   # same cover setting as live posts
         except Exception as e:
             problems.append(f"Reel test failed: {e}")
+    carousel = None
+    if carousel_urls and not problems:   # the recap carousel path minus the publish
+        try:
+            carousel = post_carousel_to_instagram(carousel_urls, "setup check (never published)", publish=False)["status"]
+        except Exception as e:
+            problems.append(f"carousel test failed: {e}")
     return {"page_name": page.get("name"), "instagram_username": ig.get("username"),
             "instagram_test_container": container, "instagram_test_reel": reel,
+            "instagram_test_carousel": carousel,
             "app_id": info.get("app_id"), "token_type": info.get("type"),
             "expires": "never" if info.get("expires_at") in (0, None) else info.get("expires_at"),
             "scopes": sorted(scopes), "problems": problems}
@@ -202,7 +252,8 @@ if __name__ == "__main__":
     elif "--check" in sys.argv:
         url = next((a for a in sys.argv[1:] if a.startswith("https://")), None)
         reel = next((a for a in sys.argv[1:] if a.endswith(".mp4")), None)
-        result = check(url, reel)
+        slides = next((a[len("--carousel="):].split(",") for a in sys.argv[1:] if a.startswith("--carousel=") and len(a) > 11), None)
+        result = check(url, reel, slides)
         print(result)
         if result["problems"]:
             sys.exit("Meta setup not ready: " + "; ".join(result["problems"]))
