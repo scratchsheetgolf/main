@@ -114,7 +114,7 @@ def _instagram_post(local_image_path: str, public_url: str, caption: str):
     clip = music.pick_clip()
     if clip:
         try:
-            reel = render_reel([{"path": local_image_path, "seconds": 9}],
+            reel = render_reel([{"path": local_image_path, "seconds": 9, "deal": 0.8}],   # 0.8 s entrance (Mike)
                                os.path.splitext(local_image_path)[0] + "_reel.mp4", audio=clip)
             return {"reel": post_meta.post_reel_to_instagram(reel, caption)}
         except Exception as e:

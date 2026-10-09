@@ -267,7 +267,8 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
     """Vertical 1080x1920 Reel (H.264). Silent unless `audio` (a clip file) is given: then it's laid under
     the video, cut to the video's length with a 1.5 s fade-out (otherwise music is added in the app).
     slides: [{"path": 4:5 png, "seconds": float, "top": heading, "sub": one-line meaning, "bottom": why line}]
-    (text keys optional). Each card is "dealt" in: a quick snap with a small settling rotation, then a slow
+    (text keys optional; "deal": seconds for the card's entrance, default a quick 7-frame snap). Each card is
+    "dealt" in: a snap with a small settling rotation, then a slow
     push-in; text sits above/below the card, inside Instagram's safe area. Hard cuts, no cross-fade. Needs ffmpeg."""
     import shutil
     import subprocess
@@ -302,7 +303,7 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
         img = Image.open(path).convert("RGBA")
         return img.resize((CARD_W, int(img.height * CARD_W / img.width)), Image.LANCZOS)
 
-    deal = 7                                         # frames for the snap-in
+    deal_frames = lambda sl: max(2, round(sl.get("deal", 7 / fps) * fps))   # entrance length per slide
     video_path = out_path + ".silent.mp4" if audio else out_path
     proc = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
@@ -312,11 +313,13 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
     try:
         for sl in slides:
             bg, card = background(sl), card_img(sl["path"])
+            deal = deal_frames(sl)
             n = max(int(sl.get("seconds", 1.6) * fps), deal + 1)
             for f in range(n):
-                if f < deal:                         # dealt in from the right with a small settling turn
-                    e = 1 - (1 - (f + 1) / deal) ** 3
-                    angle, scale, dx = 3 * (1 - e), 1.0, int(420 * (1 - e))
+                if f < deal:                         # dealt in from fully off the right edge, settling turn
+                    e = 1 - (1 - f / deal) ** 3          # frame 0 = e 0 = card entirely out of frame
+                    start = W // 2 + card.width // 2 + 80   # +80 covers the rotated corner
+                    angle, scale, dx = 3 * (1 - e), 1.0, int(start * (1 - e))
                 else:                                # slow push-in
                     angle, dx = 0.0, 0
                     scale = 1.0 + 0.02 * (f - deal) / max(n - deal, 1)
@@ -333,7 +336,7 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
     if rc != 0:
         raise RuntimeError(f"ffmpeg failed (exit {rc})")
     if audio:
-        total = sum(max(int(sl.get("seconds", 1.6) * fps), deal + 1) for sl in slides) / fps
+        total = sum(max(int(sl.get("seconds", 1.6) * fps), deal_frames(sl) + 1) for sl in slides) / fps
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video_path, "-i", audio,
                         "-map", "0:v", "-map", "1:a", "-c:v", "copy",
                         "-af", f"apad,atrim=0:{total:.3f},afade=t=out:st={max(total - 1.5, 0):.3f}:d=1.5",
