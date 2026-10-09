@@ -98,7 +98,8 @@ def recent_media(limit: int = 8) -> list:
     return data
 
 
-def post_reel_to_instagram(video_path: str, caption: str, publish: bool = True, wait_s: int = 240) -> dict:
+def post_reel_to_instagram(video_path: str, caption: str, publish: bool = True, wait_s: int = 240,
+                           thumb_offset_ms: int = None) -> dict:
     """Uploads a Reel straight to Instagram (resumable upload: no public URL, so the licensed music
     isn't hosted anywhere public), waits for processing, then publishes it (unless publish=False,
     which leaves an unpublished container that's never shown and expires in 24 h)."""
@@ -107,7 +108,9 @@ def post_reel_to_instagram(video_path: str, caption: str, publish: bool = True, 
         raise RuntimeError("META_IG_USER_ID / META_PAGE_ACCESS_TOKEN not set.")
     resp = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media",
                          data={"media_type": "REELS", "upload_type": "resumable", "caption": caption,
-                               "share_to_feed": "true", "access_token": ACCESS_TOKEN}, timeout=30)
+                               "share_to_feed": "true", "access_token": ACCESS_TOKEN,
+                               **({"thumb_offset": str(thumb_offset_ms)} if thumb_offset_ms is not None else {})},
+                         timeout=30)
     if not resp.ok:
         raise RuntimeError(f"Reel container rejected: {resp.status_code} {resp.text[:300]}")
     creation_id = resp.json()["id"]
@@ -181,7 +184,8 @@ def check(image_url: str = None, reel_path: str = None) -> dict:
     reel = None
     if reel_path and not problems:   # the full Reel path minus the publish
         try:
-            reel = post_reel_to_instagram(reel_path, "setup check (never published)", publish=False)["status"]
+            reel = post_reel_to_instagram(reel_path, "setup check (never published)", publish=False,
+                                          thumb_offset_ms=500)["status"]   # same cover setting as live posts
         except Exception as e:
             problems.append(f"Reel test failed: {e}")
     return {"page_name": page.get("name"), "instagram_username": ig.get("username"),
