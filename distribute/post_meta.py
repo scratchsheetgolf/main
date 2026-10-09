@@ -58,14 +58,44 @@ def post_to_instagram(image_url: str, caption: str) -> dict:
     container_resp.raise_for_status()
     creation_id = container_resp.json()["id"]
 
-    # Step 2: publish it
-    publish_resp = requests.post(
-        f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media_publish",
-        data={"creation_id": creation_id, "access_token": ACCESS_TOKEN},
-        timeout=30,
-    )
-    publish_resp.raise_for_status()
-    return publish_resp.json()
+    # Step 2: wait until Instagram has fetched and processed the image (publishing straight away
+    # failed with a 400 on the first live alert, 2026-10-09), then publish
+    _wait_ready(creation_id, 90)
+    return _publish(creation_id)
+
+
+def _wait_ready(creation_id: str, wait_s: int) -> str:
+    import time
+    status, deadline = None, time.time() + wait_s
+    while time.time() < deadline:
+        status = _get(creation_id, fields="status_code").get("status_code")
+        if status in ("FINISHED", "ERROR", "EXPIRED"):
+            break
+        time.sleep(3)
+    if status != "FINISHED":
+        raise RuntimeError(f"Instagram didn't finish processing (status {status})")
+    return status
+
+
+def _publish(creation_id: str) -> dict:
+    """Publishes a finished container; returns {"id", "permalink"} so logs show where the post is."""
+    pub = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media_publish",
+                        data={"creation_id": creation_id, "access_token": ACCESS_TOKEN}, timeout=30)
+    if not pub.ok:
+        raise RuntimeError(f"Instagram publish failed: {pub.status_code} {pub.text[:300]}")
+    media_id = pub.json()["id"]
+    try:
+        link = _get(media_id, fields="permalink").get("permalink")
+    except Exception:
+        link = None
+    return {"id": media_id, "permalink": link}
+
+
+def recent_media(limit: int = 8) -> list:
+    """What's actually on the Instagram account right now (read-only)."""
+    data = _get(f"{IG_USER_ID}/media", fields="id,media_type,media_product_type,timestamp,permalink",
+                limit=limit).get("data") or []
+    return data
 
 
 def post_reel_to_instagram(video_path: str, caption: str, publish: bool = True, wait_s: int = 240) -> dict:
@@ -88,20 +118,10 @@ def post_reel_to_instagram(video_path: str, caption: str, publish: bool = True, 
                                 "file_size": str(len(data))}, data=data, timeout=120)
     if not up.ok:
         raise RuntimeError(f"Reel upload failed: {up.status_code} {up.text[:300]}")
-    status, deadline = None, time.time() + wait_s
-    while time.time() < deadline:
-        status = _get(creation_id, fields="status_code").get("status_code")
-        if status in ("FINISHED", "ERROR", "EXPIRED"):
-            break
-        time.sleep(5)
-    if status != "FINISHED":
-        raise RuntimeError(f"Reel didn't finish processing (status {status})")
+    status = _wait_ready(creation_id, wait_s)
     if not publish:
         return {"creation_id": creation_id, "status": status, "published": False}
-    pub = requests.post(f"https://graph.facebook.com/{GRAPH_VERSION}/{IG_USER_ID}/media_publish",
-                        data={"creation_id": creation_id, "access_token": ACCESS_TOKEN}, timeout=30)
-    pub.raise_for_status()
-    return pub.json()
+    return _publish(creation_id)
 
 
 NEEDED_SCOPES = {"pages_show_list", "pages_read_engagement", "pages_manage_posts",
@@ -172,7 +192,10 @@ def check(image_url: str = None, reel_path: str = None) -> dict:
 
 
 if __name__ == "__main__":
-    if "--check" in sys.argv:
+    if "--recent" in sys.argv:
+        for m in recent_media():
+            print(m)
+    elif "--check" in sys.argv:
         url = next((a for a in sys.argv[1:] if a.startswith("https://")), None)
         reel = next((a for a in sys.argv[1:] if a.endswith(".mp4")), None)
         result = check(url, reel)
