@@ -400,7 +400,8 @@ def _alert_row_check(m: dict):
     return check
 
 
-def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool, auto: bool = False):
+def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool, auto: bool = False,
+                scorecard: dict = None):
     """Render + post one Live Alert card. Drafts: lines from the writer (checked: numbers must be in the facts,
     and no eagle/ace wording when the moment was inferred), data-only fallback otherwise.
     auto (posting for real, unattended): data-only lines and caption, no AI wording at all."""
@@ -410,7 +411,7 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
         line1, line2, reaction = transform.moment_fallback(m)
         image_path = os.path.join(OUTPUT_DIR, "live_alert.png")
         render_live_alert(hole_moment=tour_label(tour) + m["hole_moment"], event_line_1=line1.upper(),
-                          event_line_2=line2.upper(), reaction=reaction, out_path=image_path)
+                          event_line_2=line2.upper(), reaction=reaction, out_path=image_path, scorecard=scorecard)
         extra = {"alert_player_previous_poll": {k: m[k] for k in ("prev_score", "prev_thru", "prev_pos") if k in m},
                  "alert_player_today_vs_par": m.get("today")}
         passed, why = _qa_gate(tour, event_name,
@@ -439,7 +440,7 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
         line1, line2, reaction = transform.moment_fallback(m)
     image_path = os.path.join(OUTPUT_DIR, "live_alert.png")
     render_live_alert(hole_moment=tour_label(tour) + m["hole_moment"], event_line_1=line1.upper(),
-                      event_line_2=line2.upper(), reaction=reaction, out_path=image_path)
+                      event_line_2=line2.upper(), reaction=reaction, out_path=image_path, scorecard=scorecard)
     alt_notes = [f"{o['event_line_1']} / {o['event_line_2']} — {o['reaction']}" for o in options[1:]]
     caption = f"{m['name']}: {reaction}" if reaction else m["name"]
     hook = " ".join(transform.moment_fallback(m)[:2])
@@ -527,6 +528,16 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     if not alerts or alerts.get("round") != current_round:
         alerts = {"round": current_round, "sent": [], "last_ts": 0}
     prev_scores = prev.get("live_scores") if prev.get("event_name") == event_name else {}
+    # hole-by-hole for the alert scorecard: learned from consecutive polls (see transform.track_holes)
+    same_event = prev.get("event_name") == event_name
+    holes = transform.track_holes(prev.get("holes") if same_event else {}, live)
+    pars = prev.get("pars") if same_event and prev.get("pars") else {}
+    if not pars:
+        try:
+            pars = transform.pars_from_hole_stats(datagolf.get_live_hole_stats(tour=tour), current_round)
+        except Exception as e:   # no pars = blank PAR row and plain numbers, never a failed alert
+            print(f"hole stats unavailable ({type(e).__name__}); scorecard without pars", file=sys.stderr)
+            pars = {}
     moments = [] if final else transform.detect_moments(live, prev_scores, alerts["sent"])
     now_ts = time_module.time()
     gap_ok = (now_ts - alerts.get("last_ts", 0)) / 60 >= 20
@@ -537,7 +548,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     alerts["times"] = recent
     if moments and len(recent) < MAX_ALERTS_PER_HOUR and gap_ok:
         m = moments[0]
-        actions_taken.append(("live_alert", _live_alert(m, tour, event_name, dry_run, draft, auto=auto)))
+        actions_taken.append(("live_alert", _live_alert(m, tour, event_name, dry_run, draft, auto=auto,
+                                                        scorecard=transform.alert_scorecard(m["dg_id"], holes, pars))))
         alerts["sent"].append(m["key"])
         if not dry_run:
             alerts["last_ts"] = now_ts
@@ -639,7 +651,8 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     state.save({**prev, "event_name": event_name, "leader_name": current_leader,
                 "last_leaderboard_post_ts": last_post_ts, "last_leaderboard_top5": last_top5,
                 "standings": transform.standings_snapshot(live),
-                "live_scores": transform.live_scores(live), "alerts": alerts, "wraps": wraps}, commit=not dry_run, tour=tour)
+                "live_scores": transform.live_scores(live), "alerts": alerts, "wraps": wraps,
+                "holes": holes, "pars": pars}, commit=not dry_run, tour=tour)
     return {"actions": actions_taken}
 
 

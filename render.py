@@ -87,12 +87,18 @@ def _apply_fit_and_score(svg: str, template_filename: str) -> str:
     return ET.tostring(root, encoding="unicode")
 
 
-def _fill_and_render(template_filename: str, tokens: dict, out_path: str) -> str:
-    """Loads an SVG template, replaces __TOKEN__ placeholders, fits text, rasterizes to PNG."""
+def _fill_and_render(template_filename: str, tokens: dict, out_path: str, raw_tokens: dict = None) -> str:
+    """Loads an SVG template, replaces __TOKEN__ placeholders, fits text, rasterizes to PNG.
+    raw_tokens are SVG fragments we generate ourselves (inserted unescaped)."""
     path = os.path.join(TEMPLATE_DIR, template_filename)
     with open(path, "r", encoding="utf-8") as f:
         svg = f.read()
 
+    for key, value in (raw_tokens or {}).items():
+        token = f"__{key.upper()}__"
+        if token not in svg:
+            raise ValueError(f"Token {token} not found in {template_filename} — check spelling.")
+        svg = svg.replace(token, value)
     for key, value in tokens.items():
         token = f"__{key.upper()}__"
         if token not in svg:
@@ -150,12 +156,19 @@ def render_intel_stat(stat: str, what_it_means: str, supporting_line: str, out_p
     return _fill_and_render("intel_stat.svg", tokens, out_path)
 
 
-def render_live_alert(hole_moment: str, event_line_1: str, event_line_2: str, reaction: str, out_path: str) -> str:
+def render_live_alert(hole_moment: str, event_line_1: str, event_line_2: str, reaction: str, out_path: str,
+                      scorecard: dict = None) -> str:
+    """scorecard: {"holes": [9], "pars": [int|None], "rel": [int|None]} (transform.alert_scorecard); the strip
+    marks birdies/eagles/bogeys/doubles in Sharpie. Without one, a blank 1-9 strip."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools"))
+    from scorecard_strip import strip
+    sc = scorecard or {"holes": list(range(1, 10)), "pars": [None] * 9, "rel": [None] * 9}
     tokens = {
         "hole_moment": hole_moment, "event_line_1": event_line_1,
         "event_line_2": event_line_2, "reaction": reaction,
     }
-    return _fill_and_render("live_alert.svg", tokens, out_path)
+    return _fill_and_render("live_alert.svg", tokens, out_path,
+                            raw_tokens={"scorecard": strip(1000, sc["holes"], sc["pars"], sc["rel"])})
 
 
 

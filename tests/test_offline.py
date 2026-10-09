@@ -639,6 +639,43 @@ class ReelHookTests(unittest.TestCase):
                                  capture_output=True, text=True).stdout
         self.assertAlmostEqual(float(dur), 6.5, delta=0.15)   # 1.9 s hook + 2 s card + 2.6 s closer
 
+class HoleTrackingTests(unittest.TestCase):
+    def feed(self, thru, today, rnd=2, end_hole=18, course="YH"):
+        return {"info": {"current_round": rnd}, "data": [{"dg_id": 7, "thru": thru, "today": today, "round": rnd,
+                                                         "end_hole": end_hole, "course": course}]}
+
+    def test_one_hole_between_polls_is_recorded_exactly(self):
+        h = transform.track_holes({}, self.feed(3, -1))
+        h = transform.track_holes(h, self.feed(4, -3))           # one hole, two better -> eagle on 4
+        h = transform.track_holes(h, self.feed(5, -2))           # bogey on 5
+        self.assertEqual(h["7"]["rel"], {"4": -2, "5": 1})
+
+    def test_missed_poll_leaves_holes_blank_instead_of_guessing(self):
+        h = transform.track_holes({}, self.feed(3, -1))
+        h = transform.track_holes(h, self.feed(5, -3))           # two holes, -2 total: can't split it
+        h = transform.track_holes(h, self.feed(6, -4))
+        self.assertEqual(h["7"]["rel"], {"6": -1})
+
+    def test_back_nine_starter_and_new_round(self):
+        h = transform.track_holes({}, self.feed(0, 0, end_hole=9))
+        h = transform.track_holes(h, self.feed(1, -1, end_hole=9))   # first hole played is the 10th
+        self.assertEqual(h["7"]["rel"], {"10": -1})
+        h = transform.track_holes(h, self.feed(0, 0, rnd=3))          # new round: fresh card
+        self.assertEqual(h["7"]["rel"], {})
+
+    def test_scorecard_shows_the_nine_with_pars_and_known_holes(self):
+        stats = {"courses": [{"course_code": "YH", "rounds": [{"holes": [{"hole": n, "par": 3 if n in (3, 7) else 4}
+                                                                          for n in range(1, 19)]}]}]}
+        pars = transform.pars_from_hole_stats(stats)
+        h = transform.track_holes({}, self.feed(1, 0))
+        h = transform.track_holes(h, self.feed(2, -1))
+        sc = transform.alert_scorecard("7", h, pars)
+        self.assertEqual(sc["holes"], list(range(1, 10)))
+        self.assertEqual(sc["pars"][:3], [4, 4, 3])
+        self.assertEqual(sc["rel"][:3], [None, -1, None])
+        h = transform.track_holes(h, self.feed(10, -3))               # on the back nine now
+        self.assertEqual(transform.alert_scorecard("7", h, pars)["holes"], list(range(10, 19)))
+
 class MultiTourTests(PipelineDryRunTests):
     def test_tours_keep_separate_state(self):
         pipeline.run_pretournament_picks(dry_run=True, tour="pga")

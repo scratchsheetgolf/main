@@ -286,6 +286,67 @@ def live_scores(live: dict) -> dict:
     return out
 
 
+# ---- Hole-by-hole, built from consecutive polls (the feed only has round totals) ----
+
+def start_hole(row: dict) -> int:
+    """10 for a back-nine starter (the feed's end_hole is 9), else 1."""
+    return 10 if str(row.get("end_hole", "")).strip() == "9" else 1
+
+
+def hole_number(start: int, n: int) -> int:
+    """The n-th hole a player plays this round, given where they started."""
+    return (start - 1 + n - 1) % 18 + 1
+
+
+def track_holes(prev: dict, live: dict) -> dict:
+    """Per-player hole scores for the current round, learned only when exactly ONE hole was played
+    between two polls (then that hole's score vs par = change in 'today'). If a poll was missed and a
+    player jumped 2+ holes, those holes stay unknown: never guessed. prev/returned shape:
+    {dg_id: {"round", "start", "thru", "today", "course", "rel": {"7": -1, ...}}}"""
+    rnd_default = (live.get("info") or {}).get("current_round")
+    out = {}
+    for r in live.get("data") or []:
+        dg = r.get("dg_id")
+        if dg is None:
+            continue
+        dg = str(dg)
+        rnd = r.get("round") or rnd_default
+        thru, today = _thru_int(r.get("thru")), _score_int(r.get("today"))
+        p = (prev or {}).get(dg)
+        if not p or p.get("round") != rnd or thru < (p.get("thru") or 0):
+            p = {"round": rnd, "start": start_hole(r), "thru": thru, "today": today,
+                 "course": r.get("course"), "rel": {}}
+        elif thru == p["thru"] + 1 and today is not None and p.get("today") is not None:
+            p = {**p, "rel": {**p["rel"], str(hole_number(p["start"], thru)): today - p["today"]}}
+        p = {**p, "thru": thru, "today": today}
+        out[dg] = p
+    return out
+
+
+def pars_from_hole_stats(stats: dict, rnd=None) -> dict:
+    """{course_code: {hole: par}} from DataGolf live-hole-stats (pars don't change by round)."""
+    out = {}
+    for c in (stats or {}).get("courses") or []:
+        rounds = c.get("rounds") or []
+        pick = next((x for x in rounds if x.get("round_num") == rnd), rounds[0] if rounds else {})
+        holes = {str(h.get("hole")): h.get("par") for h in pick.get("holes") or [] if h.get("par")}
+        if holes:
+            out[str(c.get("course_code") or "")] = holes
+    return out
+
+
+def alert_scorecard(dg_id: str, holes: dict, pars: dict) -> dict:
+    """The nine the player is on, their pars and known hole scores, for the alert card's strip.
+    {"holes": [9 numbers], "pars": [int|None], "rel": [int|None]}"""
+    h = (holes or {}).get(str(dg_id)) or {}
+    start, thru = h.get("start", 1), h.get("thru") or 0
+    first = start if thru <= 9 else (1 if start == 10 else 10)
+    nine = list(range(first, first + 9))
+    course_pars = (pars or {}).get(str(h.get("course") or "")) or (next(iter(pars.values())) if len(pars or {}) == 1 else {})
+    rel = h.get("rel") or {}
+    return {"holes": nine, "pars": [course_pars.get(str(n)) for n in nine], "rel": [rel.get(str(n)) for n in nine]}
+
+
 INFERRED_HOLE_WORDS = ["eagle", "albatross", "double eagle", "ace", "hole-in-one", "hole in one", "holed out"]
 
 
