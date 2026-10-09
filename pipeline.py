@@ -903,10 +903,44 @@ def probe(tour: str = "pga") -> dict:
     return out
 
 
+def run_recap_now(tour: str = "pga", dry_run: bool = False, event_tag: str = "") -> dict:
+    """Posts the round recap carousel for the round that just finished, on demand (e.g. a round wrapped
+    before the carousel existed). Refuses unless the round is complete and not final, so the feed still
+    shows exactly that round; same QA gate as the automatic recap, and a QA failure becomes a draft."""
+    live = datagolf.get_live_in_play(tour=tour)
+    prev = state.load(tour)
+    info = live.get("info") or {}
+    event_name = info.get("event_name") or ""
+    if transform.is_final(live):
+        return {"status": "refused: event is final (the final leaderboard covers it)"}
+    if not transform.round_complete(live):
+        return {"status": f"refused: round {info.get('current_round')} isn't complete, so the feed can't show a finished round"}
+    saved_picks = prev.get("last_picks") or {}
+    if transform.event_key(saved_picks.get("event_name")) != transform.event_key(event_name):
+        return {"status": "refused: no saved picks for this event"}
+    same = prev.get("event_name") == event_name
+    pars = prev.get("pars") if same and prev.get("pars") else {}
+    if not pars:
+        try:
+            pars = transform.pars_from_hole_stats(datagolf.get_live_hole_stats(tour=tour), info.get("current_round"))
+        except Exception:
+            pars = {}
+    wrap = transform.round_wrap(live, saved_picks, event_tag)
+    recap = build_round_recap(tour, event_name, live, wrap, prev.get("holes") if same else {}, pars, event_tag)
+    caption, draft = recap["caption"], False
+    if not dry_run:
+        passed, why = _qa_gate(tour, event_name, f"CARD: {wrap}\nCAPTION: {caption}", expect_final=False,
+                               extra={"computed_from_this_feed": recap["facts"]})
+        if not passed:
+            draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
+    return {"round": wrap["round"], "event": event_name,
+            "recap": _post_carousel_everywhere(recap["slides"], caption, dry_run=dry_run, draft=draft)}
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["picks", "live", "newsletter", "probe", "intel", "qa-selftest"])
+    parser.add_argument("action", choices=["picks", "live", "recap", "newsletter", "probe", "intel", "qa-selftest"])
     parser.add_argument("--tour", default="pga")
     parser.add_argument("--dry-run", action="store_true",
                          help="Run against real data/APIs but print what would be posted instead of posting it.")
@@ -921,6 +955,8 @@ if __name__ == "__main__":
         print(run_pretournament_picks(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
     elif args.action == "live":
         print(run_live_poll(args.tour, dry_run=args.dry_run, event_tag=args.event_tag, draft=args.draft))
+    elif args.action == "recap":   # manual: post the just-finished round's recap carousel now
+        print(run_recap_now(args.tour, dry_run=args.dry_run, event_tag=args.event_tag))
     elif args.action == "intel":
         print(run_weekly_intel(dry_run=args.dry_run, draft=args.draft, event_tag=args.event_tag))
     elif args.action == "probe":
