@@ -468,6 +468,39 @@ class XCheckTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "whitespace"):
                 post_x.check()
 
+class MetaCheckTests(unittest.TestCase):
+    GOOD_TOKEN = {"data": {"is_valid": True, "type": "PAGE", "expires_at": 0, "app_id": "9", "profile_id": "111",
+                           "scopes": ["pages_show_list", "pages_read_engagement", "pages_manage_posts",
+                                      "instagram_basic", "instagram_content_publish"]}}
+    PAGE = {"name": "The Scratch Sheet", "instagram_business_account": {"id": "222", "username": "scratchsheetgolf"}}
+
+    def run_check(self, token, page, **env):
+        from distribute import post_meta
+        def fake_get(url, params=None, timeout=None):
+            resp = mock.MagicMock(ok=True)
+            resp.json.return_value = token if url.endswith("/debug_token") else page
+            return resp
+        ids = {"PAGE_ID": "111", "ACCESS_TOKEN": "tok", "IG_USER_ID": "222", **env}
+        with mock.patch.multiple(post_meta, **ids), mock.patch.object(post_meta.requests, "get", side_effect=fake_get), \
+             mock.patch.object(post_meta.requests, "post") as post:
+            out = post_meta.check()
+        post.assert_not_called()   # a check never posts
+        return out
+
+    def test_good_setup_has_no_problems(self):
+        out = self.run_check(self.GOOD_TOKEN, self.PAGE)
+        self.assertEqual((out["page_name"], out["instagram_username"], out["expires"], out["problems"]),
+                         ("The Scratch Sheet", "scratchsheetgolf", "never", []))
+
+    def test_check_catches_user_token_missing_scope_and_wrong_ig(self):
+        bad = {"data": {**self.GOOD_TOKEN["data"], "type": "USER", "expires_at": 1999999999,
+                        "scopes": ["pages_show_list"]}}
+        problems = " | ".join(self.run_check(bad, self.PAGE, IG_USER_ID="333")["problems"])
+        for want in ("expected PAGE", "token expires", "instagram_content_publish", "not META_IG_USER_ID"):
+            self.assertIn(want, problems)
+        unlinked = self.run_check(self.GOOD_TOKEN, {"name": "The Scratch Sheet"})["problems"]
+        self.assertIn("no Instagram Business/Creator account is linked to this Page", unlinked)
+
 class MultiTourTests(PipelineDryRunTests):
     def test_tours_keep_separate_state(self):
         pipeline.run_pretournament_picks(dry_run=True, tour="pga")

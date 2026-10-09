@@ -1,0 +1,27 @@
+name: Check Meta credentials
+
+# Manual only. Verifies the Facebook Page + Instagram setup WITHOUT posting: the Page token is
+# valid, never expires and has the publishing permissions, and the Page's linked Instagram
+# account matches META_IG_USER_ID. Free (read-only Graph API calls).
+on:
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Check credentials (no post)
+        env:
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+        run: python -m distribute.post_meta --check
