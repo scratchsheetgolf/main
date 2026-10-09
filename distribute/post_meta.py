@@ -1,9 +1,10 @@
 """
 post_meta.py — posts to a Facebook Page and an Instagram Business/Creator
-account via the Meta Graph API. Free to use; the cost is time, not money —
-Meta requires App Review (~10 days) before a non-admin/tester can use these
-permissions in production. While waiting, you (as the app's admin) can test
-against your own Page/IG account immediately.
+account via the Meta Graph API. Free to use; the cost is time, not money.
+While the app is in Development mode, Page posts it makes are visible only to people
+with a role on the app (admins/testers), not the public. Going public needs Live mode,
+and that needs App Review (~10 days) for pages_manage_posts / instagram_content_publish.
+Start the review early; test end to end as the app admin while it's pending.
 
 Setup:
   1. developers.facebook.com -> create an App (type: Business)
@@ -16,13 +17,17 @@ Setup:
      GET /{page-id}?fields=instagram_business_account
   5. Env vars: META_PAGE_ID, META_PAGE_ACCESS_TOKEN, META_IG_USER_ID
 
+Check the token without posting:  python -m distribute.post_meta --check
+
 Important: Instagram's API requires image_url to be a public URL, not a file
 upload — use distribute/image_host.py to get one before calling post_to_instagram.
 """
 import os
+import sys
+
 import requests
 
-GRAPH_VERSION = "v21.0"
+GRAPH_VERSION = "v25.0"  # v21.0 is removed 21 Jan 2027; v25.0 is available until 29 Jul 2028
 PAGE_ID = os.environ.get("META_PAGE_ID")
 ACCESS_TOKEN = os.environ.get("META_PAGE_ACCESS_TOKEN")
 IG_USER_ID = os.environ.get("META_IG_USER_ID")
@@ -63,6 +68,60 @@ def post_to_instagram(image_url: str, caption: str) -> dict:
     return publish_resp.json()
 
 
+NEEDED_SCOPES = {"pages_show_list", "pages_read_engagement", "pages_manage_posts",
+                 "instagram_basic", "instagram_content_publish"}
+
+
+def _get(path: str, **params) -> dict:
+    resp = requests.get(f"https://graph.facebook.com/{GRAPH_VERSION}/{path}",
+                        params={**params, "access_token": ACCESS_TOKEN}, timeout=30)
+    if not resp.ok:  # Meta's error body says what's wrong (expired token, missing permission, bad id)
+        raise RuntimeError(f"Meta rejected GET {path}: {resp.status_code} {resp.text[:300]}")
+    return resp.json()
+
+
+def check() -> dict:
+    """Verifies the Meta setup WITHOUT posting: the token is a valid, non-expiring Page token with the
+    publishing permissions, it belongs to META_PAGE_ID, and that Page's linked Instagram account is
+    META_IG_USER_ID. Returns a report; 'problems' lists everything that would stop a post."""
+    missing = [n for n, v in [("META_PAGE_ID", PAGE_ID), ("META_PAGE_ACCESS_TOKEN", ACCESS_TOKEN),
+                              ("META_IG_USER_ID", IG_USER_ID)] if not v]
+    if missing:
+        raise RuntimeError(f"not set: {', '.join(missing)}")
+    for name, value in [("META_PAGE_ID", PAGE_ID), ("META_PAGE_ACCESS_TOKEN", ACCESS_TOKEN),
+                        ("META_IG_USER_ID", IG_USER_ID)]:
+        if value != value.strip():
+            raise RuntimeError(f"{name} has leading/trailing whitespace; re-set the secret without it")
+    problems = []
+    info = _get("debug_token", input_token=ACCESS_TOKEN).get("data") or {}
+    scopes = set(info.get("scopes") or [])
+    if not info.get("is_valid"):
+        problems.append("token is not valid")
+    if info.get("type") != "PAGE":
+        problems.append(f"token type is {info.get('type')}, expected PAGE (use the Page token from /me/accounts)")
+    if info.get("expires_at") not in (0, None):
+        problems.append("token expires; exchange for a long-lived user token first, then take the Page token")
+    if NEEDED_SCOPES - scopes:
+        problems.append(f"missing permissions: {', '.join(sorted(NEEDED_SCOPES - scopes))}")
+    if info.get("profile_id") and str(info.get("profile_id")) != str(PAGE_ID):
+        problems.append(f"token is for Page {info.get('profile_id')}, not META_PAGE_ID {PAGE_ID}")
+    page = _get(PAGE_ID, fields="name,instagram_business_account{id,username}")
+    ig = page.get("instagram_business_account") or {}
+    if not ig:
+        problems.append("no Instagram Business/Creator account is linked to this Page")
+    elif str(ig.get("id")) != str(IG_USER_ID):
+        problems.append(f"Page's linked Instagram id is {ig.get('id')}, not META_IG_USER_ID {IG_USER_ID}")
+    return {"page_name": page.get("name"), "instagram_username": ig.get("username"),
+            "app_id": info.get("app_id"), "token_type": info.get("type"),
+            "expires": "never" if info.get("expires_at") in (0, None) else info.get("expires_at"),
+            "scopes": sorted(scopes), "problems": problems}
+
+
 if __name__ == "__main__":
-    if not ACCESS_TOKEN:
+    if "--check" in sys.argv:
+        result = check()
+        print(result)
+        if result["problems"]:
+            sys.exit("Meta setup not ready: " + "; ".join(result["problems"]))
+    elif not ACCESS_TOKEN:
         print("No META_PAGE_ACCESS_TOKEN set — expected here. Module ready once App Review clears.")
