@@ -228,6 +228,18 @@ class DraftModeTests(PipelineDryRunTests):
         out = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=60)
         self.assertIn("skipped", out["actions"][-1][1])
 
+    def test_no_hourly_leaderboard_when_top5_unchanged(self):
+        first = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=0)
+        self.assertTrue(first["actions"][-1][1]["DRAFT"])
+        again = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=0)   # same feed: no news
+        self.assertEqual(again["actions"][-1][1], "skipped: top 5 unchanged since the last leaderboard")
+        moved = {**LIVE, "data": [dict(r) for r in LIVE["data"]]}
+        lead = min(moved["data"], key=lambda r: r["current_score"])
+        lead["current_score"] -= 1                                                  # leader birdies
+        with mock.patch.object(datagolf, "get_live_in_play", return_value=moved):
+            out = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=0)
+        self.assertTrue(out["actions"][-1][1]["DRAFT"])
+
 class ContentCheckTests(unittest.TestCase):
     """The checks that make a small model safe to use: limits, grounded numbers, retry, SKIP."""
 

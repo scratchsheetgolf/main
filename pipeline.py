@@ -536,13 +536,19 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     minutes_since_last = (now - last_post_ts) / 60
 
     final_done = final and prev.get("final_posted") == event_name   # one final leaderboard per event
+    top5 = [{"pos": str(p.get("current_pos", "")),
+             "name": transform.display_name(p.get("player_name", "")),
+             "score": transform.format_to_par(p.get("current_score"))}
+            for p in current_leaderboard[:5]]
+    # no news, no post: between rounds (or a quiet hour) the top 5 doesn't move, and the hourly
+    # timer alone kept drafting the same board every 60 min (Open de Espana after R1, 2026-10-08)
+    last_top5 = prev.get("last_leaderboard_top5") if prev.get("event_name") == event_name else None
+    unchanged = not final and top5 == last_top5
     if final_done:
         actions_taken.append(("leaderboard", "skipped: final leaderboard already done for this event"))
+    elif unchanged and minutes_since_last >= min_leaderboard_gap_minutes:
+        actions_taken.append(("leaderboard", "skipped: top 5 unchanged since the last leaderboard"))
     elif final or minutes_since_last >= min_leaderboard_gap_minutes:
-        top5 = [{"pos": str(p.get("current_pos", "")),
-                 "name": transform.display_name(p.get("player_name", "")),
-                 "score": transform.format_to_par(p.get("current_score"))}
-                for p in current_leaderboard[:5]]
         image_path = os.path.join(OUTPUT_DIR, "leaderboard_live.png")
         render_leaderboard(event=event_name.upper(),
                            round_label=tour_label(tour) + ("FINAL" if final else (f"ROUND {current_round} · LIVE" if current_round else "LIVE")),
@@ -576,13 +582,14 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                                                               alternatives=alternatives, live=True)))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
+            last_top5 = top5
             if final:
                 prev = {**prev, "final_posted": event_name}
     else:
         actions_taken.append(("leaderboard", f"skipped, only {minutes_since_last:.0f} min since last post"))
 
     state.save({**prev, "event_name": event_name, "leader_name": current_leader,
-                "last_leaderboard_post_ts": last_post_ts,
+                "last_leaderboard_post_ts": last_post_ts, "last_leaderboard_top5": last_top5,
                 "standings": transform.standings_snapshot(live),
                 "live_scores": transform.live_scores(live), "alerts": alerts, "wraps": wraps}, commit=not dry_run, tour=tour)
     return {"actions": actions_taken}
