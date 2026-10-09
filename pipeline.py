@@ -470,11 +470,12 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     prev_leader = prev.get("leader_name") if prev.get("event_name") == event_name else None
     current_leader = transform.display_name(current_leaderboard[0].get("player_name", "")) if current_leaderboard else None
 
-    # Auto mode (AUTO_POST on, unattended) posts ONLY live alerts + the final leaderboard, with data-only
-    # wording. Hot takes and hourly leaderboards still get made, but as Telegram drafts for Mike.
+    # Auto mode (AUTO_POST on, unattended) posts everything, but every post first passes _qa_gate (fresh
+    # feed re-check in code + independent Claude review against the voice doc's facts). A post that fails
+    # QA becomes a Telegram draft marked "QA HELD" instead. Alerts/final use data-only wording.
     auto = not (dry_run or draft)
 
-    # Trigger 1: leader change -> Hot Take (draft only in auto mode: it's AI-written)
+    # Trigger 1: leader change -> Hot Take (AI-written: in auto mode it posts only if QA passes)
     if current_leader and prev_leader and current_leader != prev_leader:
         try:
             take = content.generate_hot_take(f"Tour: {TOUR_NAMES.get(tour, tour)}\n"
@@ -495,8 +496,17 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                     alt_path = os.path.join(OUTPUT_DIR, f"hot_take_live_alt{i}.png")
                     render_hot_take(lines=alt["lines"], kicker=alt["kicker"], out_path=alt_path)
                     alt_notes.append(f"{os.path.basename(alt_path)}: {' / '.join(alt['lines'])} {alt['kicker']}")
-            actions_taken.append(("hot_take", _post_everywhere(image_path, take["kicker"], dry_run=dry_run,
-                                                               draft=draft or auto, alternatives=alt_notes, live=True)))
+            ht_draft, ht_caption = draft, take["kicker"]
+            if auto:   # unattended: the fresh feed must still have this leader, then the QA review
+                def same_leader(info, rows):
+                    lead = transform.display_name(rows[0].get("player_name", "")) if rows else None
+                    return lead == current_leader, ("" if lead == current_leader else "leader changed since the card was made")
+                passed, why = _qa_gate(tour, event_name, f"CARD: {' / '.join(take['lines'])}\nCAPTION: {ht_caption}",
+                                       expect_final=False, check_row=same_leader)
+                if not passed:
+                    ht_draft, ht_caption = True, f"QA HELD ({why}). Check before posting:\n{ht_caption}"
+            actions_taken.append(("hot_take", _post_everywhere(image_path, ht_caption, dry_run=dry_run,
+                                                               draft=ht_draft, alternatives=alt_notes, live=True)))
 
     # Trigger 2: big moments (big hole / charge / collapse) -> Live Alert card. Capped so the account
     # doesn't read like a bot: at most one per poll, 20 min apart, MAX_LIVE_ALERTS per round.
@@ -581,15 +591,16 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                         else f"{event_name} leaderboard: {current_leader} leads."),
               allow_fallback=dry_run or draft or not final,
             )
-        lb_draft = draft or (auto and not final)
-        if auto and final:   # unattended final leaderboard: same QA gate
+        lb_draft = draft
+        if auto:   # unattended leaderboard (hourly or final): same QA gate
             expected = [(p["pos"], p["name"], p["score"]) for p in top5]
             def same_top5(info, rows):
                 fresh = [(str(r.get("current_pos", "")), transform.display_name(r.get("player_name", "")),
                           transform.format_to_par(r.get("current_score"))) for r in rows[:5]]
                 return (fresh == expected), ("top 5 changed since the card was made" if fresh != expected else "")
-            passed, why = _qa_gate(tour, event_name, f"CARD: final top 5 {expected}\nCAPTION: {caption}",
-                                   expect_final=True, check_row=same_top5)
+            passed, why = _qa_gate(tour, event_name,
+                                   f"CARD: {'final ' if final else 'live '}top 5 {expected}\nCAPTION: {caption}",
+                                   expect_final=final, check_row=same_top5)
             if not passed:
                 lb_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run,

@@ -830,7 +830,7 @@ class PreviewCarouselTests(PipelineDryRunTests):
             pipeline.run_live_poll(dry_run=False, draft=False)
         return posts, writer, saved.call_args.args[0]
 
-    def test_auto_mode_posts_only_alerts_with_data_text(self):
+    def test_auto_mode_posts_everything_that_passes_qa(self):
         prev = {"event_name": "Fake Invitational", "leader_name": "Old Leader", "last_leaderboard_post_ts": 0,
                 "live_scores": {"3": {"name": "Cy Hot", "pos": "2", "score": -11, "today": -4, "thru": 10, "rank": 2}}}
         rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
@@ -839,8 +839,18 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertFalse(by["live_alert.png"]["draft"])                     # alert really posts
         self.assertEqual(by["live_alert.png"]["caption"], "Cy Hot goes 3 under on one hole (round 2, thru 11). Now 1 at -14.")
         writer.assert_not_called()                                           # no AI wording when unattended
-        self.assertTrue(by["hot_take_live.png"]["draft"])                    # lead change -> draft only
-        self.assertTrue(by["leaderboard_live.png"]["draft"])                 # hourly leaderboard -> draft only
+        self.assertFalse(by["hot_take_live.png"]["draft"])                   # lead change -> QA passed -> posts
+        self.assertFalse(by["leaderboard_live.png"]["draft"])                # hourly leaderboard -> QA passed -> posts
+        self.assertEqual(self.qa_mock.call_count, 3)                         # every unattended post was reviewed
+
+    def test_auto_mode_holds_ai_posts_when_qa_fails(self):
+        prev = {"event_name": "Fake Invitational", "leader_name": "Old Leader", "last_leaderboard_post_ts": 0}
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
+        posts, _, _ = self._auto_poll(rows, prev, qa=(False, "FAIL: off-voice"))
+        by = {p["path"]: p for p in posts}
+        for name in ("hot_take_live.png", "leaderboard_live.png"):
+            self.assertTrue(by[name]["draft"])
+            self.assertTrue(by[name]["caption"].startswith("QA HELD (FAIL: off-voice)"))
 
     def test_auto_mode_final_leaderboard_posts_once(self):
         rows = [{"dg_id": 1, "player_name": "Win, Al", "current_pos": "1", "current_score": -20, "today": -3, "thru": 18},
