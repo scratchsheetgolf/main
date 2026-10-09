@@ -748,6 +748,7 @@ def probe(tour: str = "pga") -> dict:
         "pre_tournament": lambda: datagolf.get_pre_tournament_predictions(tour=tour),
         "outrights_win": lambda: datagolf.get_outright_odds(market="win", tour=tour),
         "in_play": lambda: datagolf.get_live_in_play(tour=tour),
+        "live_hole_stats": lambda: datagolf.get_live_hole_stats(tour=tour),
         "dg_rankings": datagolf.get_dg_rankings,
         "skill_ratings": datagolf.get_skill_ratings,
     }
@@ -766,6 +767,9 @@ def probe(tour: str = "pga") -> dict:
                 summary["rows"] = len(rows)
                 if rows and isinstance(rows[0], dict):
                     summary["row_fields"] = sorted(rows[0])[:20]
+            if name == "live_hole_stats":   # course data, no players: show the nesting so pars can be read
+                import json
+                summary["sample"] = json.dumps(data, default=str)[:1500]
             out[name] = summary
         except Exception as e:
             out[name] = {"ok": False, "error": str(e)[:160].replace(datagolf.API_KEY or "<none>", "***")}
