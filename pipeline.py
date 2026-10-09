@@ -353,7 +353,7 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
     return result
 
 
-MAX_LIVE_ALERTS = 3   # per round, per tour
+MAX_ALERTS_PER_HOUR = 2   # per tour, rolling 60 min (Mike 2026-10-09: was 3 per round; testing more volume)
 
 
 def _qa_gate(tour: str, event_name: str, post_text: str, expect_final: bool, check_row=None, extra: dict = None):
@@ -521,22 +521,30 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                                                                hook=transform.leader_hook(current_leaderboard))))
 
     # Trigger 2: big moments (big hole / charge / collapse) -> Live Alert card. Capped so the account
-    # doesn't read like a bot: at most one per poll, 20 min apart, MAX_LIVE_ALERTS per round.
+    # doesn't read like a bot: at most one per poll, 20 min apart, MAX_ALERTS_PER_HOUR in any rolling hour.
+    # "sent" (moment keys) still resets each round so the same moment never alerts twice.
     alerts = prev.get("alerts") if prev.get("event_name") == event_name else None
     if not alerts or alerts.get("round") != current_round:
         alerts = {"round": current_round, "sent": [], "last_ts": 0}
     prev_scores = prev.get("live_scores") if prev.get("event_name") == event_name else {}
     moments = [] if final else transform.detect_moments(live, prev_scores, alerts["sent"])
-    gap_ok = (time_module.time() - alerts.get("last_ts", 0)) / 60 >= 20
-    if moments and len(alerts["sent"]) < MAX_LIVE_ALERTS and gap_ok:
+    now_ts = time_module.time()
+    gap_ok = (now_ts - alerts.get("last_ts", 0)) / 60 >= 20
+    recent = [t for t in alerts.get("times", []) if now_ts - t < 3600]   # survives round changes too
+    for t_ in (prev.get("alerts") or {}).get("times", []):
+        if now_ts - t_ < 3600 and t_ not in recent:
+            recent.append(t_)
+    alerts["times"] = recent
+    if moments and len(recent) < MAX_ALERTS_PER_HOUR and gap_ok:
         m = moments[0]
         actions_taken.append(("live_alert", _live_alert(m, tour, event_name, dry_run, draft, auto=auto)))
         alerts["sent"].append(m["key"])
         if not dry_run:
-            alerts["last_ts"] = time_module.time()
+            alerts["last_ts"] = now_ts
+            alerts["times"] = recent + [now_ts]
     elif moments:
-        actions_taken.append(("live_alert", f"held: {len(moments)} moment(s), cap {len(alerts['sent'])}/"
-                                            f"{MAX_LIVE_ALERTS} or under 20 min since the last alert"))
+        actions_taken.append(("live_alert", f"held: {len(moments)} moment(s), {len(recent)}/"
+                                            f"{MAX_ALERTS_PER_HOUR} in the last hour or under 20 min since the last alert"))
 
     # Trigger 2b: round wrap ("After Round N": leader + where our picks stand), once per round, data-only.
     # Held during quiet hours so overseas rounds become a morning post for a US audience.

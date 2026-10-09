@@ -894,6 +894,25 @@ class PreviewCarouselTests(PipelineDryRunTests):
         posts2, _, _ = self._auto_poll(rows, {**prev, "final_posted": "Fake Invitational"}, rnd=4)
         self.assertEqual([p for p in posts2 if p["path"] == "leaderboard_live.png"], [])
 
+    def test_alert_cap_is_two_per_rolling_hour(self):
+        import time as _t
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
+        live_prev = {"3": {"name": "Cy Hot", "pos": "2", "score": -11, "today": -4, "thru": 10, "rank": 2}}
+        now = _t.time()
+        def poll(times):
+            prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 9e12,
+                    "live_scores": live_prev,
+                    "alerts": {"round": 2, "sent": [], "last_ts": now - 25 * 60, "times": times}}
+            posts, _, saved = self._auto_poll(rows, prev)
+            return any(p["path"] == "live_alert.png" for p in posts), saved
+        posted, saved = poll([now - 25 * 60])                     # 1 in the last hour -> 2nd allowed
+        self.assertTrue(posted)
+        self.assertEqual(len(saved["alerts"]["times"]), 2)
+        posted, _ = poll([now - 50 * 60, now - 25 * 60])          # 2 in the last hour -> held
+        self.assertFalse(posted)
+        posted, _ = poll([now - 70 * 60, now - 25 * 60])          # oldest rolled off -> allowed
+        self.assertTrue(posted)
+
     def test_auto_alert_held_as_draft_when_qa_fails(self):
         prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 9e12,
                 "live_scores": {"3": {"name": "Cy Hot", "pos": "2", "score": -11, "today": -4, "thru": 10, "rank": 2}}}
