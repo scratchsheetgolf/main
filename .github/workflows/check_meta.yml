@@ -37,7 +37,9 @@ jobs:
           git config user.name "scratch-sheet-bot"
           git config user.email "bot@users.noreply.github.com"
           python preview_cards.py output/previews
-          echo "url=$(python -c 'from distribute import image_host; print(image_host.publish_image("output/previews/sample/weekly_picks.png"))')" >> "$GITHUB_OUTPUT"
+          # git prints to stdout while hosting; the URL is the last line
+          url=$(python -c 'from distribute import image_host; print(image_host.publish_image("output/previews/sample/weekly_picks.png"))' | tail -n 1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Check credentials (no post)
         env:
