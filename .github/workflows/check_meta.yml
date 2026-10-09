@@ -58,3 +58,11 @@ jobs:
           META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
           META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
         run: python -m distribute.post_meta --check "${{ steps.host.outputs.url }}" output/check_reel.mp4
+
+      - name: What's on Instagram right now (read-only)
+        if: always()
+        env:
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+        run: python -m distribute.post_meta --recent
