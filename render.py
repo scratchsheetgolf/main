@@ -409,7 +409,8 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
                 full, blank = hook_frame(sl["hook"]), Image.new("RGB", (W, H), PAPER)
                 total_h, fade = hook_frames(sl), round(sl.get("hook_fade", 0.45) * fps)
                 for i in range(total_h):
-                    a = min(1.0, (i + 1) / fade, (total_h - i) / fade)
+                    a_in = (i + 1) / fade if sl.get("hook_fade_in", True) else 1.0   # off = frame 1 is the hook
+                    a = min(1.0, a_in, (total_h - i) / fade)
                     proc.stdin.write((full if a >= 1 else Image.blend(blank, full, a)).tobytes())
             bg, card = background(sl), card_img(sl["path"])
             deal = deal_frames(sl)

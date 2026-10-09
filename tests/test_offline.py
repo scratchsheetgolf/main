@@ -607,7 +607,7 @@ class ReelMusicTests(unittest.TestCase):
              mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", return_value={"id": "reel"}) as reel, \
              mock.patch.object(pipeline.post_meta, "post_to_instagram") as img2:
             self.assertEqual(pipeline._instagram_post("/tmp/card.png", "u", "cap"), {"reel": {"id": "reel"}})
-        reel.assert_called_once_with("/tmp/r.mp4", "cap")
+        reel.assert_called_once_with("/tmp/r.mp4", "cap", thumb_offset_ms=3000)
         img2.assert_not_called()
 
 class ReelHookTests(unittest.TestCase):
