@@ -29,6 +29,27 @@ def tour_label(tour: str) -> str:
     return "" if tour == "pga" else f"{TOUR_NAMES.get(tour, tour).upper()} · "
 
 
+TOUR_TAGS = {"pga": "#PGATOUR", "euro": "#DPWorldTour", "alt": "#LIVGolf", "kft": "#KornFerryTour"}
+
+
+def hashtags(tour: str, event_name: str, event_tag: str = "") -> str:
+    """Tag line for Facebook/Instagram/TikTok captions: '#golf #PGATOUR #BaycurrentClassic' (+ a manual event
+    tag). Every post went out with none until 2026-10-10. Kept to 3-4: Instagram allows 5."""
+    event = "".join(w[:1].upper() + w[1:] for w in transform.event_key(event_name).split())
+    tags = ["#golf", TOUR_TAGS.get(tour, ""), f"#{event}" if event and event != "Live" else "", event_tag.strip()]
+    out = []
+    for t in tags:
+        if t and t.lower() not in [o.lower() for o in out]:
+            out.append(t)
+    return " ".join(out)
+
+
+def with_tags(caption: str, tags: str) -> str:
+    """Caption + tag line, skipping any tag the caption already has (a manual event tag, say)."""
+    extra = [t for t in (tags or "").split() if t.lower() not in caption.lower()]
+    return f"{caption}\n\n{' '.join(extra)}" if extra else caption
+
+
 ALL_PLATFORMS = {"x", "facebook", "instagram", "tiktok"}
 
 
@@ -47,7 +68,7 @@ def enabled_platforms() -> set:
 
 def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "",
                      dry_run: bool = False, draft: bool = False, alternatives: list = None, live: bool = False,
-                     hook: str = ""):
+                     hook: str = "", tags: str = ""):
     """Posts the same image+caption to all four platforms (hook = the Instagram Reel's data-only opening line). Each call is wrapped
     so one platform's failure (e.g. TikTok still pre-audit) doesn't block the rest.
 
@@ -56,8 +77,11 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
     pair by hand. The difference is in the callers: a dry run saves no state, a
     draft saves state exactly like a real post (so throttles, leader tracking and
     saved picks keep working while posting is manual)."""
+    if not (dry_run or draft) and transform.caption_problem(caption):   # never post a broken caption
+        draft, caption = True, f"QA HELD ({transform.caption_problem(caption)}). Check before posting:\n{caption}"
+    x_caption, caption = caption, with_tags(caption, tags)   # X has no room for tags; the rest get them
     if dry_run or draft:
-        tiktok_title = tiktok_title or caption[:90]
+        tiktok_title = tiktok_title or x_caption[:90]
         caption_path = os.path.splitext(local_image_path)[0] + ".txt"
         with open(caption_path, "w", encoding="utf-8") as f:
             f.write(f"{caption}\n\nTikTok title: {tiktok_title}\n")
@@ -84,7 +108,7 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
 
     if "x" in platforms:  # X takes a direct upload; it doesn't need the public image URL
         try:
-            results["x"] = post_x.post_image(local_image_path, caption)
+            results["x"] = post_x.post_image(local_image_path, x_caption)
         except Exception as e:
             results["x"] = f"FAILED: {e}"
 
@@ -100,7 +124,7 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
         for name, fn in [
             ("facebook", lambda: _facebook_post(reel, reel_note, public_url, caption)),
             ("instagram", lambda: _instagram_post(reel, reel_note, public_url, caption, hook)),
-            ("tiktok", lambda: post_tiktok.post_photo([public_url], tiktok_title or caption[:90], caption)),
+            ("tiktok", lambda: post_tiktok.post_photo([public_url], tiktok_title or x_caption[:90], caption)),
         ]:
             if name in url_platforms:
                 try:
@@ -110,9 +134,13 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
     return results
 
 
-def _post_carousel_everywhere(paths: list, caption: str, dry_run: bool = False, draft: bool = False) -> dict:
+def _post_carousel_everywhere(paths: list, caption: str, dry_run: bool = False, draft: bool = False,
+                              tags: str = "") -> dict:
     """A multi-slide post: Instagram carousel + one Facebook post with all the photos. Drafts go to
     Telegram as an album. X / TikTok aren't wired for carousels (X: no credits; TikTok: not approved)."""
+    if not (dry_run or draft) and transform.caption_problem(caption):
+        draft, caption = True, f"QA HELD ({transform.caption_problem(caption)}). Check before posting:\n{caption}"
+    caption = with_tags(caption, tags)
     if dry_run or draft:
         caption_path = os.path.join(os.path.dirname(paths[0]), "caption.txt")
         with open(caption_path, "w", encoding="utf-8") as f:
@@ -453,7 +481,7 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
 
 
 MAX_ALERTS_PER_HOUR = 2   # per tour, rolling 60 min (Mike 2026-10-09: was 3 per round; testing more volume)
-POST_SPACING_MINUTES = 20   # minimum gap between an alert/hot take and the next hourly leaderboard
+POST_SPACING_MINUTES = 20   # minimum gap before an alert or hourly leaderboard, after any public post
 
 
 def _qa_gate(tour: str, event_name: str, post_text: str, expect_final: bool, check_row=None, extra: dict = None):
@@ -501,7 +529,7 @@ def _alert_row_check(m: dict):
 
 
 def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool, auto: bool = False,
-                scorecard: dict = None):
+                scorecard: dict = None, tags: str = ""):
     """Render + post one Live Alert card. Drafts: lines from the writer (checked: numbers must be in the facts,
     and no eagle/ace wording when the moment was inferred), data-only fallback otherwise.
     auto (posting for real, unattended): data-only lines and caption, no AI wording at all."""
@@ -519,10 +547,10 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
                                expect_final=False, check_row=_alert_row_check(m), extra=extra)
         if not passed:   # never posts on doubt: goes to Mike as a draft with the reason
             out = _post_everywhere(image_path, f"QA HELD ({why}). Check before posting:\n{m['caption']}",
-                                   dry_run=dry_run, draft=True, live=True)
+                                   dry_run=dry_run, draft=True, live=True, tags=tags)
             return {**out, "qa": why}
         return {**_post_everywhere(image_path, m["caption"], dry_run=dry_run, draft=draft, live=True,
-                                   hook=f"{line1} {line2}"), "qa": "PASS"}
+                                   hook=f"{line1} {line2}", tags=tags), "qa": "PASS"}
     try:
         res = content.generate_live_reaction(facts)
         if res:
@@ -545,7 +573,7 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
     caption = f"{m['name']}: {reaction}" if reaction else m["name"]
     hook = " ".join(transform.moment_fallback(m)[:2])
     return _post_everywhere(image_path, caption, dry_run=dry_run, draft=draft, alternatives=alt_notes, live=True,
-                            hook=hook)
+                            hook=hook, tags=tags)
 
 
 def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_run: bool = False,
@@ -566,6 +594,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     event_name = (live.get("info") or {}).get("event_name") or prev.get("event_name") or "LIVE"
     current_round = (live.get("info") or {}).get("current_round")
     final = transform.is_final(live)
+    tags = hashtags(tour, event_name, event_tag)
     if dry_run:  # feed diagnostics for checking the docs' assumptions (no player data beyond the top 3)
         print("in-play info:", live.get("info"), file=sys.stderr)
         print("top 3 thru/round/end_hole:", [(r.get("current_pos"), r.get("thru"), r.get("round"), r.get("end_hole"))
@@ -629,7 +658,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                     ht_draft, ht_caption = True, f"QA HELD ({why}). Check before posting:\n{ht_caption}"
             actions_taken.append(("hot_take", _post_everywhere(image_path, ht_caption, dry_run=dry_run,
                                                                draft=ht_draft, alternatives=alt_notes, live=True,
-                                                               hook=transform.leader_hook(current_leaderboard))))
+                                                               hook=transform.leader_hook(current_leaderboard), tags=tags)))
 
     # Trigger 2: big moments (big hole / charge / collapse) -> Live Alert card. Capped so the account
     # doesn't read like a bot: at most one per poll, 20 min apart, MAX_ALERTS_PER_HOUR in any rolling hour.
@@ -656,14 +685,25 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         if now_ts - t_ < 3600 and t_ not in recent:
             recent.append(t_)
     alerts["times"] = recent
-    if moments and len(recent) < MAX_ALERTS_PER_HOUR and gap_ok:
+    # Alerts wait POST_SPACING_MINUTES after ANY public post for this tour, a hot take earlier in this
+    # same poll included: an alert 55 s after a leaderboard (Espana R2, 2026-10-09) and 6 min after one
+    # (Espana R3, 2026-10-10) told the same story twice. Hot takes don't wait: a lead change is new news.
+    last_public = prev.get("last_public_post_ts", 0) if prev.get("event_name") == event_name else 0
+    if any(isinstance(r, dict) and r.get("platforms") for _, r in actions_taken):
+        last_public = now_ts
+    alert_spaced = (now_ts - last_public) / 60 >= POST_SPACING_MINUTES
+    if moments and len(recent) < MAX_ALERTS_PER_HOUR and gap_ok and alert_spaced:
         m = moments[0]
         actions_taken.append(("live_alert", _live_alert(m, tour, event_name, dry_run, draft, auto=auto,
-                                                        scorecard=transform.alert_scorecard(m["dg_id"], holes, pars))))
+                                                        scorecard=transform.alert_scorecard(m["dg_id"], holes, pars),
+                                                        tags=tags)))
         alerts["sent"].append(m["key"])
         if not dry_run:
             alerts["last_ts"] = now_ts
             alerts["times"] = recent + [now_ts]
+    elif moments and not alert_spaced:
+        actions_taken.append(("live_alert", f"held: {len(moments)} moment(s), another post went out "
+                                            f"{(now_ts - last_public) / 60:.0f} min ago"))
     elif moments:
         actions_taken.append(("live_alert", f"held: {len(moments)} moment(s), {len(recent)}/"
                                             f"{MAX_ALERTS_PER_HOUR} in the last hour or under 20 min since the last alert"))
@@ -710,11 +750,11 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
                     wrap_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
             if recap:
                 actions_taken.append(("round_wrap", _post_carousel_everywhere(recap["slides"], caption,
-                                                                              dry_run=dry_run, draft=wrap_draft)))
+                                                                              dry_run=dry_run, draft=wrap_draft, tags=tags)))
             else:
                 actions_taken.append(("round_wrap", _post_everywhere(image_path, caption, dry_run=dry_run,
                                                                      draft=wrap_draft, live=False,
-                                                                     hook=transform.leader_hook(current_leaderboard))))
+                                                                     hook=transform.leader_hook(current_leaderboard), tags=tags)))
             if not dry_run:
                 wraps.append(current_round)
 
@@ -727,7 +767,6 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     # One post at a time: an hourly leaderboard right after an alert or hot take reads as a double post
     # (alert + leaderboard 55 s apart, Open de Espana R2, 2026-10-09). The leaderboard waits for the
     # next poll that's POST_SPACING_MINUTES clear of any public post. The final leaderboard never waits.
-    last_public = prev.get("last_public_post_ts", 0) if prev.get("event_name") == event_name else 0
     if any(isinstance(r, dict) and r.get("platforms") for _, r in actions_taken):
         last_public = now
     spaced = (now - last_public) / 60 >= POST_SPACING_MINUTES
@@ -788,7 +827,7 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run,
                                                               draft=lb_draft,
                                                               alternatives=alternatives, live=True,
-                                                              hook=transform.leader_hook(current_leaderboard, final))))
+                                                              hook=transform.leader_hook(current_leaderboard, final), tags=tags)))
         if not dry_run:  # a draft counts as posted, so the hourly throttle still applies
             last_post_ts = now
             if isinstance(actions_taken[-1][1], dict) and actions_taken[-1][1].get("platforms"):
@@ -971,7 +1010,8 @@ def run_recap_now(tour: str = "pga", dry_run: bool = False, event_tag: str = "")
         if not passed:
             draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
     return {"round": wrap["round"], "event": event_name,
-            "recap": _post_carousel_everywhere(recap["slides"], caption, dry_run=dry_run, draft=draft)}
+            "recap": _post_carousel_everywhere(recap["slides"], caption, dry_run=dry_run, draft=draft,
+                                               tags=hashtags(tour, event_name, event_tag))}
 
 
 if __name__ == "__main__":
