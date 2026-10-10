@@ -1,0 +1,20 @@
+name: Offline tests
+
+# Runs the offline suite (no network, no secrets, nothing posts) on every PR and on demand,
+# so a change can't merge on tests nobody ran.
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run the offline tests
+        run: python -m unittest tests.test_offline -v
