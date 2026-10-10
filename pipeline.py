@@ -673,6 +673,13 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     wraps = list(prev.get("wraps") or []) if prev.get("event_name") == event_name else []
     saved_picks = prev.get("last_picks") or {}
     have_picks = transform.event_key(saved_picks.get("event_name")) == transform.event_key(event_name)
+    if dry_run:
+        rows_ = live.get("data") or []
+        print("wrap check:", {"round": current_round, "wraps": wraps, "have_picks": have_picks, "final": final,
+                              "complete": transform.round_complete(live),
+                              "blocking": [(r.get("player_name"), r.get("current_pos"), r.get("thru")) for r in rows_
+                                           if str(r.get("current_pos", "")).upper() not in transform.INACTIVE_POS
+                                           and transform._thru_int(r.get("thru")) < 18][:5]}, file=sys.stderr)
     if not final and current_round and current_round not in wraps and have_picks and transform.round_complete(live):
         if notify_telegram.quiet_now():
             actions_taken.append(("round_wrap", f"round {current_round} done; held until quiet hours end"))
