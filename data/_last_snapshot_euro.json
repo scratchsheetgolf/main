@@ -40,7 +40,7 @@
   },
   "event_name": "Open de Espa\u00f1a presented by Madrid",
   "leader_name": "Grant Forrest",
-  "last_leaderboard_post_ts": 1791644442.220846,
+  "last_leaderboard_post_ts": 1791649545.608332,
   "standings": {
     "event_name": "Open de Espa\u00f1a presented by Madrid",
     "round": 3,
@@ -1550,29 +1550,29 @@
   ],
   "last_leaderboard_top5": [
     {
-      "pos": "1",
+      "pos": "T1",
       "name": "Joe Dean",
-      "score": "-15"
+      "score": "-13"
     },
     {
-      "pos": "T2",
+      "pos": "T1",
+      "name": "Grant Forrest",
+      "score": "-13"
+    },
+    {
+      "pos": "T3",
       "name": "Jacob Skov Olesen",
       "score": "-12"
     },
     {
-      "pos": "T2",
+      "pos": "T3",
       "name": "Victor Perez",
       "score": "-12"
     },
     {
-      "pos": "T2",
-      "name": "Grant Forrest",
-      "score": "-12"
-    },
-    {
-      "pos": "5",
+      "pos": "T3",
       "name": "Joel Girrbach",
-      "score": "-11"
+      "score": "-12"
     }
   ],
   "holes": {
@@ -4027,5 +4027,5 @@
       "18": 4
     }
   },
-  "last_public_post_ts": 1791648083.833041
+  "last_public_post_ts": 1791649545.608332
 }
