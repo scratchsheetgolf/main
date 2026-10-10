@@ -1161,20 +1161,6 @@ class PreviewCarouselTests(PipelineDryRunTests):
                 {"dg_id": 5, "player_name": "Flat, Ed", "current_pos": "5", "current_score": 0, "today": 0, "thru": 18}]
         return {"info": {"event_name": "Fake Open", "current_round": 2}, "data": rows}
 
-    def test_one_unmarked_non_starter_does_not_block_round_complete(self):
-        live = self._r2_live()
-        live["data"].append({"dg_id": 9, "player_name": "Never, Started", "current_pos": "T70", "current_score": 3,
-                             "today": None, "thru": 0})
-        self.assertTrue(transform.round_complete(live))
-        live["data"][0]["thru"] = 12                                          # someone still out there
-        self.assertFalse(transform.round_complete(live))
-        fresh = {**live, "data": [{**r, "thru": 0} for r in live["data"]]}   # next round not started
-        self.assertFalse(transform.round_complete(fresh))
-        many = self._r2_live()
-        many["data"] += [{"dg_id": 20 + i, "player_name": f"Late, P{i}", "current_pos": "", "current_score": 0,
-                          "today": 0, "thru": 0} for i in range(3)]          # a whole group yet to tee off
-        self.assertFalse(transform.round_complete(many))
-
     def test_live_caption_is_data_only(self):
         top5 = [{"pos": "1", "name": "Grant Forrest", "score": "-9"}, {"pos": "T2", "name": "Joel Girrbach", "score": "-8"},
                 {"pos": "T2", "name": "Connor Syme", "score": "-8"}, {"pos": "T4", "name": "A B", "score": "-7"}]

@@ -471,19 +471,10 @@ def live_caption(event_name: str, rnd, top5: list) -> str:
 INACTIVE_POS = ("CUT", "WD", "DQ", "MDF", "DNS")
 
 
-MAX_NON_STARTERS = 2   # rows stuck at thru 0 while everyone else is done: withdrawals the feed hasn't marked
-
-
 def round_complete(live: dict) -> bool:
-    """True once every player still in the event has finished the current round (thru 18 / F).
-    A couple of rows that never started (thru 0) while the rest of the field is done don't block it:
-    one unmarked non-starter held the Open de Espana R2 recap all evening (2026-10-09)."""
+    """True once every player still in the event has finished the current round (thru 18 / F)."""
     active = [r for r in live.get("data") or [] if str(r.get("current_pos", "")).upper() not in INACTIVE_POS]
-    # a tee time ("1:20 PM") means still to play and always blocks; only a bare 0 / blank is a non-starter
-    never = [r for r in active if str(r.get("thru") if r.get("thru") is not None else "").strip() in ("", "0")]
-    rest = [r for r in active if r not in never]
-    return (bool(rest) and all(_thru_int(r.get("thru")) >= 18 for r in rest)
-            and len(never) <= MAX_NON_STARTERS)
+    return bool(active) and all(_thru_int(r.get("thru")) >= 18 for r in active)
 
 
 def round_wrap(live: dict, saved_picks: dict, event_tag: str = "") -> dict:
