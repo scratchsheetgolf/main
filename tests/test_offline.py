@@ -232,7 +232,7 @@ class DraftModeTests(PipelineDryRunTests):
         first = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=0)
         self.assertTrue(first["actions"][-1][1]["DRAFT"])
         again = pipeline.run_live_poll(draft=True, min_leaderboard_gap_minutes=0)   # same feed: no news
-        self.assertEqual(again["actions"][-1][1], "skipped: top 5 unchanged since the last leaderboard")
+        self.assertEqual(again["actions"][-1][1], "skipped: top 3 unchanged since the last leaderboard")
         moved = {**LIVE, "data": [dict(r) for r in LIVE["data"]]}
         lead = min(moved["data"], key=lambda r: r["current_score"])
         lead["current_score"] -= 1                                                  # leader birdies
@@ -1058,6 +1058,20 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertEqual(fb.call_args.args[1], f"{cap}\n\n{tags}")
         self.assertEqual(ig.call_args.args[1], f"{cap}\n\n{tags}")
 
+    def test_hourly_leaderboard_skips_when_only_4th_or_5th_moved(self):
+        rows = [{"dg_id": i, "player_name": f"P{i}, A", "current_pos": str(i), "current_score": -15 + i, "today": -1, "thru": 9}
+                for i in range(1, 6)]
+        top5 = [{"pos": str(i), "name": f"A P{i}", "score": f"-{15 - i}"} for i in range(1, 6)]
+        prev = {"event_name": "Fake Invitational", "leader_name": "A P1", "last_leaderboard_post_ts": 0,
+                "last_leaderboard_top5": top5[:3] + [top5[4], top5[3]]}      # only 4th/5th differ
+        with mock.patch.object(pipeline, "MAX_ALERTS_PER_HOUR", 0):
+            posts, _, _ = self._auto_poll(rows, prev)
+        self.assertEqual(posts, [])
+        prev["last_leaderboard_top5"] = [top5[1], top5[0]] + top5[2:]          # top 2 swapped -> posts
+        with mock.patch.object(pipeline, "MAX_ALERTS_PER_HOUR", 0):
+            posts, _, _ = self._auto_poll(rows, prev)
+        self.assertEqual([p["path"] for p in posts], ["leaderboard_live.png"])
+
     def test_tied_leaders_swapping_order_is_not_a_lead_change(self):
         tied = [{"dg_id": 1, "player_name": "Syme, Connor", "current_pos": "T1", "current_score": -6, "today": -2, "thru": 6},
                 {"dg_id": 2, "player_name": "Olesen, Thorbjorn", "current_pos": "T1", "current_score": -6, "today": -3, "thru": 9}]
@@ -1093,7 +1107,7 @@ class PreviewCarouselTests(PipelineDryRunTests):
         posts2, _, _ = self._auto_poll(rows, {**prev, "final_posted": "Fake Invitational"}, rnd=4)
         self.assertEqual([p for p in posts2 if p["path"] == "leaderboard_live.png"], [])
 
-    def test_alert_cap_is_two_per_rolling_hour(self):
+    def test_alert_cap_is_one_per_rolling_hour(self):
         import time as _t
         rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
         live_prev = {"3": {"name": "Cy Hot", "pos": "2", "score": -11, "today": -4, "thru": 10, "rank": 2}}
@@ -1104,12 +1118,12 @@ class PreviewCarouselTests(PipelineDryRunTests):
                     "alerts": {"round": 2, "sent": [], "last_ts": now - 25 * 60, "times": times}}
             posts, _, saved = self._auto_poll(rows, prev)
             return any(p["path"] == "live_alert.png" for p in posts), saved
-        posted, saved = poll([now - 25 * 60])                     # 1 in the last hour -> 2nd allowed
+        posted, saved = poll([])                                  # none in the last hour -> allowed
         self.assertTrue(posted)
-        self.assertEqual(len(saved["alerts"]["times"]), 2)
-        posted, _ = poll([now - 50 * 60, now - 25 * 60])          # 2 in the last hour -> held
+        self.assertEqual(len(saved["alerts"]["times"]), 1)
+        posted, _ = poll([now - 25 * 60])                         # 1 in the last hour -> held
         self.assertFalse(posted)
-        posted, _ = poll([now - 70 * 60, now - 25 * 60])          # oldest rolled off -> allowed
+        posted, _ = poll([now - 70 * 60])                         # rolled off -> allowed
         self.assertTrue(posted)
 
     def test_auto_alert_held_as_draft_when_qa_fails(self):
