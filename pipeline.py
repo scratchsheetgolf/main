@@ -768,6 +768,14 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
             passed, why = _qa_gate(tour, event_name,
                                    f"CARD: {'final ' if final else 'live '}top 5 {expected}\nCAPTION: {caption}",
                                    expect_final=final, check_row=same_top5)
+            if not passed and not final:   # the AI caption overreached: retry with the data-only one
+                plain = transform.live_caption(event_name, current_round, top5) + (f" {event_tag}" if event_tag else "")
+                passed, why2 = _qa_gate(tour, event_name, f"CARD: live top 5 {expected}\nCAPTION: {plain}",
+                                        expect_final=False, check_row=same_top5)
+                if passed:
+                    caption = plain
+                else:
+                    why = f"{why}; data-only caption also failed: {why2}"
             if not passed:
                 lb_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run,

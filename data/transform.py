@@ -445,13 +445,45 @@ def final_caption(event_name: str, top5: list) -> str:
     return f"{event_name} final: {win['name']} wins at {win['score']}." + (f" Then: {rest}." if rest else "")
 
 
+def live_caption(event_name: str, rnd, top5: list) -> str:
+    """Data-only caption for an hourly leaderboard: who leads and by how much, nothing else. Used when
+    QA rejects the AI caption, so the board still posts (the España boards were all held, 2026-10-09)."""
+    scores = [(p, _score_int(p["score"])) for p in top5 if _score_int(p["score"]) is not None]
+    if not scores:
+        return f"{event_name}, round {rnd}: live leaderboard."
+    best = scores[0][1]
+    leaders = [p["name"] for p, sc in scores if sc == best]
+    chasers = [(p["name"], sc) for p, sc in scores if sc != best]
+    head = f"{event_name}, round {rnd}: "
+    if len(leaders) == 1:
+        head += f"{leaders[0]} leads at {top5[0]['score']}"
+    else:
+        head += f"{', '.join(leaders[:-1])} and {leaders[-1]} share the lead at {top5[0]['score']}"
+    if chasers:
+        nxt = chasers[0][1]
+        names = [n for n, sc in chasers if sc == nxt]
+        gap = nxt - best
+        head += (f", {gap} shot{'s' if gap != 1 else ''} clear of " if len(leaders) == 1 else f", {gap} ahead of ") \
+            + (" and ".join(names) if len(names) <= 2 else f"{len(names)} players") + f" ({format_to_par(nxt)})"
+    return head + "."
+
+
 INACTIVE_POS = ("CUT", "WD", "DQ", "MDF", "DNS")
 
 
+MAX_NON_STARTERS = 2   # rows stuck at thru 0 while everyone else is done: withdrawals the feed hasn't marked
+
+
 def round_complete(live: dict) -> bool:
-    """True once every player still in the event has finished the current round (thru 18 / F)."""
+    """True once every player still in the event has finished the current round (thru 18 / F).
+    A couple of rows that never started (thru 0) while the rest of the field is done don't block it:
+    one unmarked non-starter held the Open de Espana R2 recap all evening (2026-10-09)."""
     active = [r for r in live.get("data") or [] if str(r.get("current_pos", "")).upper() not in INACTIVE_POS]
-    return bool(active) and all(_thru_int(r.get("thru")) >= 18 for r in active)
+    # a tee time ("1:20 PM") means still to play and always blocks; only a bare 0 / blank is a non-starter
+    never = [r for r in active if str(r.get("thru") if r.get("thru") is not None else "").strip() in ("", "0")]
+    rest = [r for r in active if r not in never]
+    return (bool(rest) and all(_thru_int(r.get("thru")) >= 18 for r in rest)
+            and len(never) <= MAX_NON_STARTERS)
 
 
 def round_wrap(live: dict, saved_picks: dict, event_tag: str = "") -> dict:
