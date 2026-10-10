@@ -480,7 +480,8 @@ def run_pretournament_picks(tour: str = "pga", dry_run: bool = False, event_tag:
     return result
 
 
-MAX_ALERTS_PER_HOUR = 2   # per tour, rolling 60 min (Mike 2026-10-09: was 3 per round; testing more volume)
+MAX_ALERTS_PER_HOUR = 1   # per tour, rolling 60 min (2026-10-10 cadence test: ~20 posts/day on a 0-follower
+                          # account got 0-20 IG views each; was 2, and 3 per round before that)
 POST_SPACING_MINUTES = 20   # minimum gap before an alert or hourly leaderboard, after any public post
 
 
@@ -776,14 +777,14 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
              "name": transform.display_name(p.get("player_name", "")),
              "score": transform.format_to_par(p.get("current_score"))}
             for p in current_leaderboard[:5]]
-    # no news, no post: between rounds (or a quiet hour) the top 5 doesn't move, and the hourly
-    # timer alone kept drafting the same board every 60 min (Open de Espana after R1, 2026-10-08)
+    # no news, no post: the hourly leaderboard goes out only when the top 3 moved (top 5 until the
+    # 2026-10-10 cadence test; 4th/5th shuffling alone isn't a story). The card still shows the top 5.
     last_top5 = prev.get("last_leaderboard_top5") if prev.get("event_name") == event_name else None
-    unchanged = not final and top5 == last_top5
+    unchanged = not final and last_top5 is not None and top5[:3] == last_top5[:3]
     if final_done:
         actions_taken.append(("leaderboard", "skipped: final leaderboard already done for this event"))
     elif unchanged and minutes_since_last >= min_leaderboard_gap_minutes:
-        actions_taken.append(("leaderboard", "skipped: top 5 unchanged since the last leaderboard"))
+        actions_taken.append(("leaderboard", "skipped: top 3 unchanged since the last leaderboard"))
     elif not final and minutes_since_last >= min_leaderboard_gap_minutes and not spaced:
         actions_taken.append(("leaderboard", f"held: another post went out {(now - last_public) / 60:.0f} min ago"))
     elif final or minutes_since_last >= min_leaderboard_gap_minutes:
