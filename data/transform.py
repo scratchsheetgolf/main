@@ -261,6 +261,20 @@ def hot_take_caption(lines: list, kicker: str, rows: list) -> str:
     return f"{text}\n\n{tail}" if tail else text
 
 
+MIN_CAPTION_CHARS = 25
+
+
+def caption_problem(caption: str) -> str:
+    """Code check on a caption before a real post: '' if it reads like a whole caption, else the reason.
+    Catches a fragment like '— one shot back is close enough...' (Open de Espana R2, 2026-10-09)."""
+    text = (caption or "").strip()
+    if len(text) < MIN_CAPTION_CHARS:
+        return f"caption too short ({len(text)} chars)"
+    if text[0] in "—–-….,;:)" or text[0].islower():
+        return f"caption starts mid-sentence ({text[:20]!r})"
+    return ""
+
+
 def lead_change_facts(live: dict, prev_leader: str) -> str:
     """Plain-text facts for a lead-change hot take, from the in-play feed. Gives the writer real numbers
     (round, scores, margin) to work with; content.py rejects any number that isn't in here."""

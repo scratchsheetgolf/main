@@ -21,6 +21,8 @@ corporate "we appreciate your engagement"-style language.
 ## Language policy
 Light swearing is fine (damn, hell). No emojis unless they're doing real
 work (rare). No hashtag spam — max 1-2 if they're genuinely part of the joke.
+The pipeline appends a fixed tag line (#golf, the tour, the event) to Facebook
+and Instagram captions, so the caption text itself doesn't need discovery tags.
 
 ## Things we never do
 - Never sound like a press release or a broadcast recap

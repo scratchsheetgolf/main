@@ -427,8 +427,8 @@ class PlatformSwitchTests(unittest.TestCase):
              mock.patch.object(pipeline.post_x, "post_image", return_value={"id": "1"}) as px, \
              mock.patch.object(pipeline.image_host, "publish_image") as host, \
              mock.patch.object(pipeline.post_meta, "post_to_instagram") as ig:
-            out = pipeline._post_everywhere("card.png", "caption")
-        px.assert_called_once_with("card.png", "caption")
+            out = pipeline._post_everywhere("card.png", "Bridgeman leads at -11 after round 2.")
+        px.assert_called_once_with("card.png", "Bridgeman leads at -11 after round 2.")
         host.assert_not_called()
         ig.assert_not_called()
         self.assertEqual(out["x"], {"id": "1"})
@@ -437,7 +437,7 @@ class PlatformSwitchTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {"POST_PLATFORMS": "x,instagram"}), \
              mock.patch.object(pipeline.post_x, "post_image", return_value={"id": "1"}), \
              mock.patch.object(pipeline.image_host, "publish_image", side_effect=RuntimeError("git")):
-            out = pipeline._post_everywhere("card.png", "caption")
+            out = pipeline._post_everywhere("card.png", "Bridgeman leads at -11 after round 2.")
         self.assertEqual(out["x"], {"id": "1"})
         self.assertIn("FAILED", out["image_host"])
 
@@ -655,7 +655,7 @@ class ReelMusicTests(unittest.TestCase):
              mock.patch.object(pipeline, "_build_reel", return_value=("/tmp/r.mp4", "")) as build, \
              mock.patch.object(pipeline.post_meta, "post_reel_to_facebook", return_value={"video_id": "v"}), \
              mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", return_value={"id": "i"}):
-            out = pipeline._post_everywhere("/tmp/card.png", "cap", hook="BRIDGEMAN LEADS")
+            out = pipeline._post_everywhere("/tmp/card.png", "Bridgeman leads at -11 after round 2.", hook="BRIDGEMAN LEADS")
         build.assert_called_once_with("/tmp/card.png", "BRIDGEMAN LEADS")
         self.assertEqual((out["facebook"], out["instagram"]), ({"reel": {"video_id": "v"}}, {"reel": {"id": "i"}}))
 
@@ -976,14 +976,26 @@ class PreviewCarouselTests(PipelineDryRunTests):
         rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
         posts, writer, saved = self._auto_poll(rows, prev)
         by = {p["path"]: p for p in posts}
-        self.assertFalse(by["live_alert.png"]["draft"])                     # alert really posts
-        self.assertEqual(by["live_alert.png"]["caption"], "Cy Hot goes 3 under on one hole (round 2, thru 11). Now 1 at -14.")
-        writer.assert_not_called()                                           # no AI wording when unattended
         self.assertFalse(by["hot_take_live.png"]["draft"])                   # lead change -> QA passed -> posts
         self.assertEqual(by["hot_take_live.png"]["caption"], "A b c d\n\nK")  # full take, not just the kicker
+        self.assertNotIn("live_alert.png", by)                               # same story: the alert waits
         self.assertNotIn("leaderboard_live.png", by)                         # waits: something already posted this poll
-        self.assertEqual(self.qa_mock.call_count, 2)                         # every unattended post was reviewed
+        self.assertEqual(self.qa_mock.call_count, 1)                         # every unattended post was reviewed
         self.assertIn("lead_change_verified_by_code", self.qa_mock.call_args_list[0].args[0])
+
+    def test_auto_alert_posts_data_only_and_waits_after_any_post(self):
+        prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 9e12,
+                "live_scores": {"3": {"name": "Cy Hot", "pos": "1", "score": -11, "today": -4, "thru": 10, "rank": 1}}}
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
+        posts, writer, saved = self._auto_poll(rows, prev)
+        self.assertEqual([p["path"] for p in posts], ["live_alert.png"])
+        self.assertFalse(posts[0]["draft"])                                  # alert really posts
+        self.assertEqual(posts[0]["caption"], "Cy Hot goes 3 under on one hole (round 2, thru 11). Now 1 at -14.")
+        writer.assert_not_called()                                           # no AI wording when unattended
+        self.assertGreater(saved["last_public_post_ts"], 0)
+        import time as _t                                                    # a leaderboard 6 min ago -> alert waits
+        posts, _, _ = self._auto_poll(rows, {**prev, "last_public_post_ts": _t.time() - 360})
+        self.assertEqual(posts, [])
 
     def test_auto_leaderboard_falls_back_to_data_only_caption_when_qa_rejects_the_ai_one(self):
         rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11},
@@ -1017,6 +1029,34 @@ class PreviewCarouselTests(PipelineDryRunTests):
         with mock.patch.object(pipeline, "MAX_ALERTS_PER_HOUR", 0):
             posts, _, _ = self._auto_poll(rows, {**prev, "last_public_post_ts": _t.time() - 600})
         self.assertEqual(posts, [])
+
+    def test_broken_caption_never_posts_for_real(self):
+        self.assertIn("mid-sentence", transform.caption_problem("— one shot back is close enough to stay in this fight"))
+        self.assertIn("too short", transform.caption_problem("Cy leads."))
+        self.assertEqual(transform.caption_problem("Cy Hot goes 3 under on one hole (round 2, thru 11). Now 1 at -14."), "")
+        with mock.patch.object(pipeline.notify_telegram, "send_file", return_value=None), \
+             mock.patch.object(pipeline.image_host, "publish_image") as host:
+            out = pipeline._post_everywhere(os.path.join(tempfile.mkdtemp(), "x.png"), "— one shot back is close enough to stay in this fight")
+        host.assert_not_called()
+        self.assertTrue(out["DRAFT"])
+        self.assertTrue(out["would_post_caption"].startswith("QA HELD (caption starts mid-sentence"))
+
+    def test_meta_captions_get_a_tag_line_and_x_does_not(self):
+        self.assertEqual(pipeline.hashtags("pga", "Baycurrent Classic"), "#golf #PGATOUR #BaycurrentClassic")
+        self.assertEqual(pipeline.hashtags("euro", "Open de España presented by Madrid", "#OpenDeEspana"),
+                         "#golf #DPWorldTour #OpenDeEspana")                  # sponsor dropped, no duplicate tag
+        self.assertEqual(pipeline.with_tags("Cy leads at -14. #USOpen", "#golf #USOpen"), "Cy leads at -14. #USOpen\n\n#golf")
+        cap, tags = "Bridgeman leads at -11 after round 2.", "#golf #PGATOUR #BaycurrentClassic"
+        with mock.patch.object(pipeline, "enabled_platforms", return_value={"x", "facebook", "instagram"}), \
+             mock.patch.object(pipeline.post_x, "post_image", return_value={"id": "1"}) as px, \
+             mock.patch.object(pipeline.image_host, "publish_image", return_value="https://x/c.jpg"), \
+             mock.patch.object(pipeline, "_build_reel", return_value=("/tmp/r.mp4", "")), \
+             mock.patch.object(pipeline.post_meta, "post_reel_to_facebook", return_value={"video_id": "v"}) as fb, \
+             mock.patch.object(pipeline.post_meta, "post_reel_to_instagram", return_value={"id": "i"}) as ig:
+            pipeline._post_everywhere("/tmp/card.png", cap, tags=tags)
+        px.assert_called_once_with("/tmp/card.png", cap)
+        self.assertEqual(fb.call_args.args[1], f"{cap}\n\n{tags}")
+        self.assertEqual(ig.call_args.args[1], f"{cap}\n\n{tags}")
 
     def test_tied_leaders_swapping_order_is_not_a_lead_change(self):
         tied = [{"dg_id": 1, "player_name": "Syme, Connor", "current_pos": "T1", "current_score": -6, "today": -2, "thru": 6},
