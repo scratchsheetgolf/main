@@ -445,6 +445,29 @@ def final_caption(event_name: str, top5: list) -> str:
     return f"{event_name} final: {win['name']} wins at {win['score']}." + (f" Then: {rest}." if rest else "")
 
 
+def live_caption(event_name: str, rnd, top5: list) -> str:
+    """Data-only caption for an hourly leaderboard: who leads and by how much, nothing else. Used when
+    QA rejects the AI caption, so the board still posts (the España boards were all held, 2026-10-09)."""
+    scores = [(p, _score_int(p["score"])) for p in top5 if _score_int(p["score"]) is not None]
+    if not scores:
+        return f"{event_name}, round {rnd}: live leaderboard."
+    best = scores[0][1]
+    leaders = [p["name"] for p, sc in scores if sc == best]
+    chasers = [(p["name"], sc) for p, sc in scores if sc != best]
+    head = f"{event_name}, round {rnd}: "
+    if len(leaders) == 1:
+        head += f"{leaders[0]} leads at {top5[0]['score']}"
+    else:
+        head += f"{', '.join(leaders[:-1])} and {leaders[-1]} share the lead at {top5[0]['score']}"
+    if chasers:
+        nxt = chasers[0][1]
+        names = [n for n, sc in chasers if sc == nxt]
+        gap = nxt - best
+        head += (f", {gap} shot{'s' if gap != 1 else ''} clear of " if len(leaders) == 1 else f", {gap} ahead of ") \
+            + (" and ".join(names) if len(names) <= 2 else f"{len(names)} players") + f" ({format_to_par(nxt)})"
+    return head + "."
+
+
 INACTIVE_POS = ("CUT", "WD", "DQ", "MDF", "DNS")
 
 

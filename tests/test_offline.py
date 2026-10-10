@@ -951,7 +951,7 @@ class PreviewCarouselTests(PipelineDryRunTests):
         with mock.patch.object(notify_telegram, "quiet_now", return_value=True):
             self.assertEqual(notify_telegram.send_file("x.png", "c", respect_quiet=True), "held (quiet hours)")
 
-    def _auto_poll(self, rows, prev, rnd=2, final_thru=None, qa=(True, "PASS"), refetch=None):
+    def _auto_poll(self, rows, prev, rnd=2, final_thru=None, qa=(True, "PASS"), refetch=None, qa_fn=None):
         live = {"info": {"event_name": "Fake Invitational", "current_round": rnd}, "data": rows}
         feeds = [live] + ([refetch] if refetch else [live] * 3)
         posts = []
@@ -961,7 +961,7 @@ class PreviewCarouselTests(PipelineDryRunTests):
         with mock.patch.object(datagolf, "get_live_in_play", side_effect=feeds + [live] * 3), \
              mock.patch.object(state, "load", return_value=prev), \
              mock.patch.object(state, "save") as saved, \
-             mock.patch.object(content, "qa_review", return_value=qa) as self.qa_mock, \
+             mock.patch.object(content, "qa_review", **({"side_effect": qa_fn} if qa_fn else {"return_value": qa})) as self.qa_mock, \
              mock.patch.object(pipeline, "_post_everywhere", side_effect=fake_post), \
              mock.patch.object(content, "generate_live_reaction") as writer, \
              mock.patch.object(content, "generate_hot_take", return_value={"lines": ["A", "B", "C", "D"], "kicker": "k", "alternatives": []}), \
@@ -984,6 +984,24 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertNotIn("leaderboard_live.png", by)                         # waits: something already posted this poll
         self.assertEqual(self.qa_mock.call_count, 2)                         # every unattended post was reviewed
         self.assertIn("lead_change_verified_by_code", self.qa_mock.call_args_list[0].args[0])
+
+    def test_auto_leaderboard_falls_back_to_data_only_caption_when_qa_rejects_the_ai_one(self):
+        rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11},
+                {"dg_id": 4, "player_name": "Two, Bo", "current_pos": "2", "current_score": -13, "today": -2, "thru": 11}]
+        prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 0,
+                "live_scores": {"3": {"name": "Cy Hot", "pos": "1", "score": -14, "today": -7, "thru": 11, "rank": 1},
+                                "4": {"name": "Bo Two", "pos": "2", "score": -13, "today": -2, "thru": 11, "rank": 2}}}
+        with mock.patch.object(pipeline, "MAX_ALERTS_PER_HOUR", 0):
+            posts, _, _ = self._auto_poll(rows, prev, qa=(False, "FAIL: running away"))
+        self.assertTrue(posts[0]["draft"])                                    # both fail -> still held
+        def qa(raw, text):
+            return (False, "FAIL: running away") if "running away" in text or "CAPTION: k" in text \
+                else (("Fake Invitational, round 2: Cy Hot leads at -14" in text), "PASS")
+        with mock.patch.object(pipeline, "MAX_ALERTS_PER_HOUR", 0), \
+             mock.patch.object(pipeline, "_caption", return_value=("Cy Hot's running away with it.", [])):
+            posts, _, _ = self._auto_poll(rows, prev, qa=None, qa_fn=qa)
+        self.assertFalse(posts[0]["draft"])
+        self.assertEqual(posts[0]["caption"], "Fake Invitational, round 2: Cy Hot leads at -14, 1 shot clear of Bo Two (-13).")
 
     def test_auto_hourly_leaderboard_posts_when_nothing_else_did(self):
         rows = [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "1", "current_score": -14, "today": -7, "thru": 11}]
@@ -1019,7 +1037,8 @@ class PreviewCarouselTests(PipelineDryRunTests):
         by = {p["path"]: p for p in posts}
         for name in ("hot_take_live.png", "leaderboard_live.png"):
             self.assertTrue(by[name]["draft"])
-            self.assertTrue(by[name]["caption"].startswith("QA HELD (FAIL: off-voice)"))
+            self.assertTrue(by[name]["caption"].startswith("QA HELD (FAIL: off-voice"))
+        self.assertIn("data-only caption also failed", by["leaderboard_live.png"]["caption"])
 
     def test_auto_mode_final_leaderboard_posts_once(self):
         rows = [{"dg_id": 1, "player_name": "Win, Al", "current_pos": "1", "current_score": -20, "today": -3, "thru": 18},
@@ -1141,6 +1160,16 @@ class PreviewCarouselTests(PipelineDryRunTests):
                 {"dg_id": 4, "player_name": "Drop, Di", "current_pos": "4", "current_score": -1, "today": 6, "thru": 18},
                 {"dg_id": 5, "player_name": "Flat, Ed", "current_pos": "5", "current_score": 0, "today": 0, "thru": 18}]
         return {"info": {"event_name": "Fake Open", "current_round": 2}, "data": rows}
+
+    def test_live_caption_is_data_only(self):
+        top5 = [{"pos": "1", "name": "Grant Forrest", "score": "-9"}, {"pos": "T2", "name": "Joel Girrbach", "score": "-8"},
+                {"pos": "T2", "name": "Connor Syme", "score": "-8"}, {"pos": "T4", "name": "A B", "score": "-7"}]
+        self.assertEqual(transform.live_caption("Open de España", 2, top5),
+                         "Open de España, round 2: Grant Forrest leads at -9, 1 shot clear of Joel Girrbach and Connor Syme (-8).")
+        tied = [{"pos": "T1", "name": "Jacob Bridgeman", "score": "-11"}, {"pos": "T1", "name": "Keith Mitchell", "score": "-11"},
+                {"pos": "T3", "name": "Max Homa", "score": "-9"}]
+        self.assertEqual(transform.live_caption("Baycurrent Classic", 3, tied),
+                         "Baycurrent Classic, round 3: Jacob Bridgeman and Keith Mitchell share the lead at -11, 2 ahead of Max Homa (-9).")
 
     def test_movers_rank_before_and_after_today(self):
         live = self._r2_live()

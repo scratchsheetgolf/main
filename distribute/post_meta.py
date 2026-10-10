@@ -198,7 +198,11 @@ def post_reel_to_facebook(video_path: str, caption: str, publish: bool = True, w
     # at the deadline is left alone: it publishes on its own, and a fallback photo would double-post.
     status, deadline = None, time.time() + wait_s
     while time.time() < deadline:
-        st = _get(video_id, fields="status").get("status") or {}
+        try:
+            st = _get(video_id, fields="status").get("status") or {}
+        except RuntimeError:   # right after finish the video can briefly 400 as "does not exist": not a failure
+            time.sleep(5)      # (a fallback photo then double-posted, 2026-10-09 10:19 PM ET)
+            continue
         phases = {k: (st.get(k) or {}).get("status") for k in ("uploading_phase", "processing_phase", "publishing_phase")}
         if st.get("video_status") == "error" or "error" in phases.values():
             raise RuntimeError(f"Facebook Reel processing failed: {str(st)[:300]}")

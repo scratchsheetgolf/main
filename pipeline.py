@@ -673,6 +673,13 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
     wraps = list(prev.get("wraps") or []) if prev.get("event_name") == event_name else []
     saved_picks = prev.get("last_picks") or {}
     have_picks = transform.event_key(saved_picks.get("event_name")) == transform.event_key(event_name)
+    if dry_run:
+        rows_ = live.get("data") or []
+        print("wrap check:", {"round": current_round, "wraps": wraps, "have_picks": have_picks, "final": final,
+                              "complete": transform.round_complete(live),
+                              "blocking": [(r.get("player_name"), r.get("current_pos"), r.get("thru")) for r in rows_
+                                           if str(r.get("current_pos", "")).upper() not in transform.INACTIVE_POS
+                                           and transform._thru_int(r.get("thru")) < 18][:5]}, file=sys.stderr)
     if not final and current_round and current_round not in wraps and have_picks and transform.round_complete(live):
         if notify_telegram.quiet_now():
             actions_taken.append(("round_wrap", f"round {current_round} done; held until quiet hours end"))
@@ -768,6 +775,14 @@ def run_live_poll(tour: str = "pga", min_leaderboard_gap_minutes: int = 60, dry_
             passed, why = _qa_gate(tour, event_name,
                                    f"CARD: {'final ' if final else 'live '}top 5 {expected}\nCAPTION: {caption}",
                                    expect_final=final, check_row=same_top5)
+            if not passed and not final:   # the AI caption overreached: retry with the data-only one
+                plain = transform.live_caption(event_name, current_round, top5) + (f" {event_tag}" if event_tag else "")
+                passed, why2 = _qa_gate(tour, event_name, f"CARD: live top 5 {expected}\nCAPTION: {plain}",
+                                        expect_final=False, check_row=same_top5)
+                if passed:
+                    caption = plain
+                else:
+                    why = f"{why}; data-only caption also failed: {why2}"
             if not passed:
                 lb_draft, caption = True, f"QA HELD ({why}). Check before posting:\n{caption}"
         actions_taken.append(("leaderboard", _post_everywhere(image_path, caption, dry_run=dry_run,
