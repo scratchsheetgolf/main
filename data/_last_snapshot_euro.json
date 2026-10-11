@@ -40,7 +40,7 @@
   },
   "event_name": "Open de Espa\u00f1a presented by Madrid",
   "leader_name": "Grant Forrest",
-  "last_leaderboard_post_ts": 1791728754.8984885,
+  "last_leaderboard_post_ts": 1791732649.0449064,
   "standings": {
     "event_name": "Open de Espa\u00f1a presented by Madrid",
     "round": 4,
@@ -482,7 +482,7 @@
       "pos": "T1",
       "score": -13,
       "today": 0,
-      "thru": 16,
+      "thru": 17,
       "rank": 2
     },
     "26745": {
@@ -1542,7 +1542,12 @@
   "last_leaderboard_top5": [
     {
       "pos": "T1",
-      "name": "Jacob Skov Olesen",
+      "name": "Victor Perez",
+      "score": "-13"
+    },
+    {
+      "pos": "T1",
+      "name": "Grant Forrest",
       "score": "-13"
     },
     {
@@ -1551,19 +1556,14 @@
       "score": "-13"
     },
     {
-      "pos": "3",
+      "pos": "T4",
       "name": "Joe Dean",
       "score": "-12"
     },
     {
       "pos": "T4",
-      "name": "Victor Perez",
-      "score": "-11"
-    },
-    {
-      "pos": "T4",
-      "name": "Grant Forrest",
-      "score": "-11"
+      "name": "Jacob Skov Olesen",
+      "score": "-12"
     }
   ],
   "holes": {
@@ -1595,7 +1595,7 @@
     "16475": {
       "round": 4,
       "start": 1,
-      "thru": 16,
+      "thru": 17,
       "today": 0,
       "course": "CC",
       "rel": {
@@ -1614,7 +1614,8 @@
         "13": -1,
         "14": -1,
         "15": 0,
-        "16": 0
+        "16": 0,
+        "17": 0
       }
     },
     "16497": {
@@ -4010,5 +4011,5 @@
       "18": 4
     }
   },
-  "last_public_post_ts": 1791728754.8984885
+  "last_public_post_ts": 1791732649.0449064
 }
