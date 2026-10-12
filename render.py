@@ -294,7 +294,7 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
     slides: [{"path": 4:5 png, "seconds": float, "top": heading, "sub": one-line meaning, "bottom": why line}]
     (text keys optional; "deal": seconds for the card's entrance, default a quick 7-frame snap; "zoom": push-in
     amount, default 0.02; "hook": big opening line that fades in, holds and fades out over "hook_seconds"
-    (default 1.9: 0.45 s fades, 1 s hold) before the card slides in; "closer": a red marker line written
+    (default 1.9: 0.45 s fades, 1 s hold; "hook_fade_in"/"hook_fade_out": False = no fade at that end) before the card slides in; "closer": a red marker line written
     on its own screen after the card, large and tilted with a snaking underline, over "closer_seconds"
     (default 2.6); "zoom_seconds": reach the full push-in this fast, then hold; "exit": seconds to slide out left). Each card is
     "dealt" in: a snap with a small settling rotation, then a slow
@@ -422,7 +422,8 @@ def render_reel(slides: list, out_path: str, fps: int = 30, audio: str = None) -
                 total_h, fade = hook_frames(sl), round(sl.get("hook_fade", 0.45) * fps)
                 for i in range(total_h):
                     a_in = (i + 1) / fade if sl.get("hook_fade_in", True) else 1.0   # off = frame 1 is the hook
-                    a = min(1.0, a_in, (total_h - i) / fade)
+                    a_out = (total_h - i) / fade if sl.get("hook_fade_out", True) else 1.0   # off = hard cut to the card
+                    a = min(1.0, a_in, a_out)
                     proc.stdin.write((full if a >= 1 else Image.blend(blank, full, a)).tobytes())
             bg, card = background(sl), card_img(sl["path"])
             deal = deal_frames(sl)

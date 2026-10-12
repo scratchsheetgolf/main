@@ -224,10 +224,12 @@ def _build_reel(local_image_path: str, hook: str = ""):
     if not clip:
         return None, "no music clip available"
     try:
-        # Mike's cut: hook 1.9 s, card in 0.8 s, 6% push reached in 2.2 s, hold, slide out left 0.6 s,
-        # then the tilted marker closer 2.6 s: 10.5 s total (8.6 s without a hook)
-        return render_reel([{"path": local_image_path, "seconds": 6.0 if hook else 7.9, "deal": 0.8,
-                             "zoom": 0.06, "zoom_seconds": 2.2, "exit": 0.6, "hook": hook, "hook_fade_in": False,
+        # Mike's cut: hook held static full-screen 2.0 s (no fades; Oct 8-11 avg play was 1-2 s, so the old
+        # 1.45 s fade-out lost viewers before the card), card in 0.8 s, 6% push reached in 2.2 s, hold,
+        # slide out left 0.6 s, then the tilted marker closer 2.6 s: 10.5 s total (8.6 s without a hook)
+        return render_reel([{"path": local_image_path, "seconds": 5.9 if hook else 7.9, "deal": 0.8,
+                             "zoom": 0.06, "zoom_seconds": 2.2, "exit": 0.6, "hook": hook, "hook_seconds": 2.0,
+                             "hook_fade_in": False, "hook_fade_out": False,
                              "closer": REEL_CLOSER, "closer_seconds": 2.6}],
                            os.path.splitext(local_image_path)[0] + "_reel.mp4", audio=clip), ""
     except Exception as e:
