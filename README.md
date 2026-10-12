@@ -67,6 +67,21 @@ tab) appends a real event hashtag to captions during majors, when search
 volume around that tag is genuinely elevated. Leave blank for normal weeks —
 this isn't a default-on hashtag, it's a deliberate per-event choice.
 
+## Headlines (THE WIRE + the newsletter's "Word on the wire")
+
+`data/headlines.py` pulls golf news RSS every 2 hours (`.github/workflows/headlines.yml`): Golf Monthly,
+ESPN, CBS, BBC, Sky, Golf.com, National Club Golfer, and a Google News search that covers Golfweek and
+Golf Channel (neither has a public feed). Keyword tiers (CCC Intel pattern) score each story; the same
+story from several outlets is merged into one. The week's stories feed the newsletter section, each
+linked and credited with a one-line take.
+
+Fresh top-tier stories (withdrawals, caddie splits, DQs, suspensions, LIV moves, aces...) from a trusted
+outlet become a THE WIRE card **draft** in Telegram, with the source link for checking. Never auto-posted:
+the take is AI-written about real people. Takes may react, never guess at motives (`content.speculation`
+rejects "had enough", "feud", "because"... unless the outlet reported it). Caps: 2 drafts a run, 5 a day,
+none in quiet hours. The first run only records the current stories. Dry run:
+`python pipeline.py headlines --dry-run`.
+
 ## Setup, roughly in order
 
 1. **GitHub repo** — create one, push this code, move the `workflows/*.yml`

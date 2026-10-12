@@ -19,4 +19,4 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run the offline tests
-        run: python -m unittest tests.test_offline -v
+        run: python -m unittest tests.test_offline tests.test_headlines -v

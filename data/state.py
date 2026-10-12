@@ -32,17 +32,38 @@ def load(tour: str = "pga") -> dict:
 
 
 def save(snapshot: dict, commit: bool = True, tour: str = "pga") -> None:
-    path = state_path(tour)
+    _write(state_path(tour), snapshot, commit, f"update {tour or 'pga'} snapshot state")
+
+
+def named_path(name: str) -> str:
+    """State that isn't per tour, e.g. 'headlines' -> data/_headlines.json."""
+    return os.path.join(STATE_DIR, f"_{name}.json")
+
+
+def load_named(name: str) -> dict:
+    path = named_path(name)
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r") as f:
+        return json.load(f)
+
+
+def save_named(name: str, data: dict, commit: bool = True) -> None:
+    _write(named_path(name), data, commit, f"update {name} state")
+
+
+def _write(path: str, data: dict, commit: bool, message: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
-        json.dump(snapshot, f, indent=2)
+        json.dump(data, f, indent=2)
     if not commit:
         return
     subprocess.run(["git", "add", path], check=False)
-    subprocess.run(["git", "commit", "-m", f"update {tour or 'pga'} snapshot state"], check=False)
+    subprocess.run(["git", "commit", "-m", message], check=False)
     for attempt in range(3):
         pulled = subprocess.run(["git", "pull", "--rebase", "--autostash"], check=False)
         pushed = subprocess.run(["git", "push"], check=False)
         if getattr(pushed, "returncode", 0) == 0 and getattr(pulled, "returncode", 0) == 0:
             return
-    print(f"state.py: could not push {tour} state after 3 attempts; it will be stale next run", file=sys.stderr)
+    print(f"state.py: could not push {os.path.basename(path)} after 3 attempts; it will be stale next run",
+          file=sys.stderr)

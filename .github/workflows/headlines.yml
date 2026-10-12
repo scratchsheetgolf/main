@@ -1,0 +1,72 @@
+name: Golf Headlines
+
+# Golf news RSS -> data/_headlines.json (the newsletter's "Word on the wire") + THE WIRE card drafts to
+# Telegram for fresh top-tier stories (2 per run, 5 per day, held during quiet hours).
+# ALWAYS drafts: AUTO_POST is ignored, because the take is AI-written about real people and Mike approves
+# each one. The first run only records the current stories (no drafts for the backlog).
+on:
+  schedule:
+    - cron: "23 */2 * * *"   # every 2 hours, off the hour
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'true = dry run (nothing saved, no Telegram). false = a real run (drafts to Telegram).'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: headlines
+  cancel-in-progress: false
+
+jobs:
+  headlines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install card fonts
+        run: |
+          mkdir -p ~/.local/share/fonts
+          cp fonts/*.ttf ~/.local/share/fonts/
+          fc-cache -f
+          fc-list : family | grep -E "Anton|Permanent Marker|Barlow" || { echo "card fonts missing"; exit 1; }
+
+      - name: Configure git identity for auto-commits
+        run: |
+          git config user.name "scratch-sheet-bot"
+          git config user.email "bot@users.noreply.github.com"
+
+      - name: Fetch headlines and draft
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_DRAFTS_TOKEN: ${{ secrets.TELEGRAM_DRAFTS_TOKEN }}
+          TELEGRAM_DRAFTS_CHAT_ID: ${{ secrets.TELEGRAM_DRAFTS_CHAT_ID }}
+          QUIET_TZ: ${{ vars.QUIET_TZ }}
+          QUIET_START: ${{ vars.QUIET_START }}
+          QUIET_END: ${{ vars.QUIET_END }}
+        run: |
+          FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAG="--dry-run"; fi
+          echo "mode: ${FLAG:-real run (drafts only)}"
+          python pipeline.py headlines $FLAG
+
+      - name: Attach drafts (card + caption) to this run
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: headline-drafts
+          path: |
+            output/headline_*.png
+            output/headline_*.txt
+          if-no-files-found: ignore
+          retention-days: 14

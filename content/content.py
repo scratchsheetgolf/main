@@ -40,6 +40,7 @@ LIMITS = {
     "live": {"LINE1": 16, "LINE2": 16, "REACTION": 50},
     "intel": {"STAT": 6, "MEANS": 48, "SUPPORTING": 55},
     "caption": {"CAPTION": 240},  # X allows 280; leaves room for an event hashtag
+    "headline": {"LINE1": 20, "LINE2": 20, "LINE3": 20, "LINE4": 20, "TAKE": 84},   # TAKE wraps to 2 marker lines
 }
 RECAP_MAX_WORDS = 130
 
@@ -338,6 +339,98 @@ def generate_social_caption(post_type: str, image_summary: str, event_tag: str =
     if not options:
         raise ContentError("caption: model chose SKIP")
     return options[0]
+
+
+# A take on a news story reacts to what was reported; it never supplies the reason behind it. Rejected
+# unless the reporting itself says it ("Woolard had enough" was an unsourced line in the first story we saw).
+SPECULATION = ["because", "had enough", "fed up", "sick of", "furious", "meltdown", "feud", "beef", "hates",
+               "fired", "sacked", "dumped", "blew up", "tantrum", "drunk", "affair", "divorce", "arrest",
+               "arrested", "lawsuit", "rehab", "cheat", "cheated", "cheating", "the real reason", "clearly",
+               "obviously", "must have", "probably", "rumor", "rumour", "allegedly", "sources say"]
+
+
+def speculation(text: str, facts: str) -> list:
+    """Motive/scandal words in text that the reported facts don't contain."""
+    low_text, low_facts = text.lower(), facts.lower()
+    return [w for w in SPECULATION
+            if re.search(r"(?<!\w)" + re.escape(w) + r"(?!\w)", low_text)
+            and not re.search(r"(?<!\w)" + re.escape(w) + r"(?!\w)", low_facts)]
+
+
+HEADLINE_RULES = (
+    "This is a NEWS story another outlet reported. The FACTS are their headline and summary, nothing more. "
+    "Report only what they report: if the reason for something isn't in the FACTS, say it's unknown or "
+    "don't mention it. Never guess at motives, feelings, health, money or private life, and don't hint at "
+    "them either. React to the situation, never insult a named person (punch at the moment, not the man). "
+    "No claims that it's the first/only/worst time ever."
+)
+
+
+def generate_headline_card(facts: str, n: int = 3):
+    """For the Headline ('THE WIRE') card. LINE1-4: the reported news, ALL CAPS, as one sentence over four
+    lines. TAKE: our marker-style reaction. Returns {"lines": [4], "take", "alternatives"} or None on SKIP."""
+    system = (
+        _brand_system("news reaction cards") + "\n\n" + HEADLINE_RULES + "\n\n"
+        "LINE1-LINE4 say what happened in plain words, ALL CAPS, reading as one sentence across four short "
+        "lines (set huge in a condensed font). TAKE is your one-line reaction in normal case, the voice of a "
+        "buddy reading the news in the group chat."
+    )
+    limits = LIMITS["headline"]
+    options = _ask("headline card", system, facts, limits, n, temperature=0.9, max_tokens=700)
+    if options is None:
+        return None
+    options = [o for o in options if not speculation(" ".join(o.values()), facts)]
+    if not options:
+        raise ContentError("headline card: every option speculated beyond the reporting")
+    to_card = lambda o: {"lines": [o["LINE1"], o["LINE2"], o["LINE3"], o["LINE4"]], "take": o["TAKE"]}
+    best, *rest = [to_card(o) for o in options]
+    return {**best, "alternatives": rest}
+
+
+DIGEST_MAX_ITEMS = 6
+
+
+def generate_headline_digest(stories: str, max_items: int = DIGEST_MAX_ITEMS) -> list:
+    """The newsletter's 'Word on the wire': picks the week's best stories from a numbered list and writes a
+    one-line take on each. stories: lines like '3. [Golfweek] Headline :: summary'. Returns
+    [{"id": int, "take": str}] in the chosen order; the caller renders headline, source and link from data."""
+    system = (
+        _brand_system("the weekly news round-up in the newsletter") + "\n\n" + HEADLINE_RULES + "\n\n"
+        f"Pick the {max_items} stories a golf fan most needs from this week (skip near-duplicates and fluff). "
+        "For each, write TAKE: one or two sentences, 40 words at most, reacting to it in our voice. "
+        "Output exactly, nothing else, one block per pick:\nITEM\nID: <the story number>\nTAKE: ..."
+    )
+    feedback, issues = "", []
+    for _ in range(2):
+        raw = _generate(system, f"STORIES:\n{stories}{feedback}", max_tokens=1200, temperature=0.7)
+        picks, issues = [], []
+        for block in re.split(r"(?im)^\s*ITEM\s*\d*\s*:?\s*$", raw):
+            fields = {}
+            for line in block.splitlines():
+                key, sep, value = line.partition(":")
+                if sep and key.strip().upper() in ("ID", "TAKE"):
+                    fields.setdefault(key.strip().upper(), value.strip())
+            if not fields.get("ID", "").strip().isdigit() or not fields.get("TAKE"):
+                continue
+            sid = int(fields["ID"])
+            line = re.search(rf"(?m)^{sid}\. (.*)$", stories)
+            if not line:
+                issues.append(f"ID {sid} isn't in the list")
+                continue
+            facts, take = line.group(1), fields["TAKE"]
+            problems = [f"{len(take.split())} words" for _ in [0] if len(take.split()) > 45]
+            problems += [f"numbers not in the story: {', '.join(x)}" for x in [ungrounded_numbers(take, facts)] if x]
+            problems += [f"history claims: {', '.join(x)}" for x in [unsupported_claims(take, facts)] if x]
+            problems += [f"speculation: {', '.join(x)}" for x in [speculation(take, facts)] if x]
+            if problems:
+                issues.append(f"ID {sid}: " + "; ".join(problems))
+            elif sid not in [p["id"] for p in picks]:
+                picks.append({"id": sid, "take": take})
+        if len(picks) >= min(3, max_items):
+            return picks[:max_items]
+        feedback = ("\n\nYour last answer was rejected:\n- " + "\n- ".join(issues[:8] or ["no ITEM blocks"])
+                    + "\nTry again.")
+    raise ContentError(f"headline digest: too few valid picks after a retry ({'; '.join(issues[:4])})")
 
 
 def generate_newsletter_recap(facts: str) -> str:

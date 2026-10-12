@@ -143,6 +143,30 @@ def render_hot_take(lines: list, kicker: str, out_path: str) -> str:
     return _fill_and_render("hot_take.svg", tokens, out_path)
 
 
+def split_take(take: str, width: int = 42) -> tuple:
+    """A take as two marker lines, broken at the space nearest the middle (one line if it's short)."""
+    take = " ".join(take.split())
+    if len(take) <= width:
+        return take, ""
+    mid = len(take) // 2
+    spaces = [i for i, ch in enumerate(take) if ch == " "]
+    if not spaces:
+        return take, ""
+    cut = min(spaces, key=lambda i: abs(i - mid))
+    return take[:cut], take[cut + 1:]
+
+
+def render_headline(source: str, lines: list, take: str, credit: str, out_path: str) -> str:
+    """THE WIRE: a news story another outlet reported. source: 'VIA GOLFWEEK · PGA TOUR'; lines: up to 4
+    ALL-CAPS lines of what was reported; take: our reaction (wrapped to two marker lines); credit: the
+    small print line naming the outlet."""
+    lines = (lines + [""] * 4)[:4]
+    t1, t2 = split_take(take)
+    tokens = {f"line_{i+1}": line for i, line in enumerate(lines)}
+    tokens.update({"source": source, "take_1": t1, "take_2": t2, "credit": credit})
+    return _fill_and_render("headline.svg", tokens, out_path)
+
+
 def render_weekly_picks(event_name: str, win: str, value: str, fade: str, sleeper: str, out_path: str) -> str:
     tokens = {
         "event_name": event_name, "win_player": win, "value_player": value,
