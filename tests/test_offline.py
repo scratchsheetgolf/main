@@ -1425,17 +1425,28 @@ class HeadlinesPipelineTests(PipelineDryRunTests):
             return "ITEM\nID: 1\nTAKE: Wild week for loopers.\nITEM\nID: 2\nTAKE: Big week for Ann.\nITEM\nID: 3\nTAKE: Fine."
         return super().fake_llm(system, user, max_tokens, temperature)
 
+    def seed(self):
+        """A real first run (git commit mocked): only real runs seed, a dry run previews."""
+        with mock.patch.object(state.subprocess, "run"):
+            return pipeline.run_headlines(dry_run=False)
+
     def run_twice(self, second):
         self.fetched.return_value = ([self.old], {})
-        first = pipeline.run_headlines(dry_run=True)
+        first = self.seed()
         self.fetched.return_value = ([self.old] + second, {})
         return first, pipeline.run_headlines(dry_run=True)
 
     def test_first_run_seeds_without_drafts(self):
         self.fetched.return_value = ([self.old, _story("Cy Hot's caddie quits before the final round")], {})
-        out = pipeline.run_headlines(dry_run=True)
+        out = self.seed()
         self.assertIn("seeded", dict(out["actions"]))
         self.assertNotIn("draft", dict(out["actions"]))
+
+    def test_dry_run_on_empty_state_previews_instead_of_seeding(self):
+        self.fetched.return_value = ([self.old, _story("Cy Hot's caddie quits before the final round")], {})
+        out = pipeline.run_headlines(dry_run=True)
+        self.assertNotIn("seeded", dict(out["actions"]))
+        self.assertTrue(dict(out["actions"])["draft"]["DRY_RUN"])
 
     def test_new_story_becomes_a_credited_draft(self):
         story = _story("Cy Hot's caddie quits before the PGA Tour final round", url="https://gm.example/caddie")
@@ -1480,7 +1491,7 @@ class HeadlinesPipelineTests(PipelineDryRunTests):
 
     def test_quiet_hours_hold_drafts(self):
         self.fetched.return_value = ([self.old], {})
-        pipeline.run_headlines(dry_run=True)
+        self.seed()
         self.fetched.return_value = ([self.old, _story("Cy Hot withdraws with a wrist injury")], {})
         with mock.patch.object(pipeline.notify_telegram, "quiet_now", return_value=True), \
              mock.patch.object(state.subprocess, "run"):
