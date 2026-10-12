@@ -1012,7 +1012,8 @@ def _headline_draft(story: dict, dry_run: bool) -> dict:
 def run_headlines(dry_run: bool = False) -> dict:
     """Pull the golf news feeds, keep the week's stories for the newsletter, and draft THE WIRE cards for
     fresh top-tier stories (2 per run, 5 per day, none during quiet hours; a held story is drafted after if
-    it's under 12 h old). Always drafts: AUTO_POST is ignored. The first run only records what's out there."""
+    it's under 12 h old). Always drafts: AUTO_POST is ignored. The first real run only records what's out there;
+    a dry run never seeds (it saves nothing), it previews up to 2 drafts instead."""
     import time
     now = time.time()
     saved = state.load_named("headlines")
@@ -1024,7 +1025,7 @@ def run_headlines(dry_run: bool = False) -> dict:
     live_clusters = {x.get("story") for x in new_state["stories"]}
     drafted = [c for c in (saved.get("drafted") or []) if c in live_clusters]
     log = [t for t in (saved.get("draft_log") or []) if t >= now - 86400]
-    if not saved.get("stories"):
+    if not saved.get("stories") and not dry_run:   # a dry run saves nothing, so it previews instead of seeding
         drafted = sorted(live_clusters)
         actions.append(("seeded", f"first run: {len(drafted)} stories recorded, no drafts for the backlog"))
     elif notify_telegram.quiet_now() and not dry_run:
