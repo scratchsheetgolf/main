@@ -1387,5 +1387,137 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertTrue(out["DRY_RUN"])
         self.assertTrue(str(out["carousel"]).startswith("FAILED"))
 
+
+def _story(title, source="Golf Monthly", hours_ago=1, summary="", url=None):
+    import time as _t
+    from data import headlines as h
+    return {"id": h.story_hash(title, source), "title": title, "source": source,
+            "url": url or f"https://example.com/{h.story_hash(title, source)}", "summary": summary,
+            "ts": _t.time() - hours_ago * 3600, "score": h.score(title, summary), "topic": h.topic(title, summary)}
+
+
+class HeadlinesPipelineTests(PipelineDryRunTests):
+    """THE WIRE drafts and the newsletter's 'Word on the wire' section, feeds mocked."""
+    TAKE = "mid-round caddie swaps were not on my bingo card"
+
+    def setUp(self):
+        super().setUp()
+        self.take = self.TAKE
+        from data import headlines
+        self.headlines = headlines
+        self.fetch = mock.patch.object(headlines, "fetch_all")
+        self.fetched = self.fetch.start()
+        self.quiet = mock.patch.object(pipeline.notify_telegram, "quiet_now", return_value=False)
+        self.quiet.start()
+        self.old = _story("Old Player wins the Fake Classic", hours_ago=30)   # newsletter tier, too old to draft
+
+    def tearDown(self):
+        self.fetch.stop()
+        self.quiet.stop()
+        super().tearDown()
+
+    def fake_llm(self, system, user, max_tokens=300, temperature=1.0):
+        self.llm_prompts.append(user)
+        if "news reaction cards" in system:
+            return "\n".join(f"OPTION {i}\nLINE1: CY HOT TEES OFF\nLINE2: SUNDAY WITH A\nLINE3: NEW CADDIE\n"
+                             f"LINE4: ON THE BAG\nTAKE: {self.take}" for i in (1, 2))
+        if "news round-up" in system:
+            return "ITEM\nID: 1\nTAKE: Wild week for loopers.\nITEM\nID: 2\nTAKE: Big week for Ann.\nITEM\nID: 3\nTAKE: Fine."
+        return super().fake_llm(system, user, max_tokens, temperature)
+
+    def run_twice(self, second):
+        self.fetched.return_value = ([self.old], {})
+        first = pipeline.run_headlines(dry_run=True)
+        self.fetched.return_value = ([self.old] + second, {})
+        return first, pipeline.run_headlines(dry_run=True)
+
+    def test_first_run_seeds_without_drafts(self):
+        self.fetched.return_value = ([self.old, _story("Cy Hot's caddie quits before the final round")], {})
+        out = pipeline.run_headlines(dry_run=True)
+        self.assertIn("seeded", dict(out["actions"]))
+        self.assertNotIn("draft", dict(out["actions"]))
+
+    def test_new_story_becomes_a_credited_draft(self):
+        story = _story("Cy Hot's caddie quits before the PGA Tour final round", url="https://gm.example/caddie")
+        with mock.patch.object(pipeline, "render_headline", wraps=pipeline.render_headline) as card:
+            _, out = self.run_twice([story])
+        drafts = [a[1] for a in out["actions"] if a[0] == "draft"]
+        self.assertEqual(len(drafts), 1)
+        self.assertTrue(drafts[0]["DRY_RUN"])
+        kw = card.call_args.kwargs
+        self.assertEqual(kw["source"], "VIA GOLF MONTHLY · PGA TOUR")
+        self.assertEqual(kw["credit"], "Reported by Golf Monthly. The red ink is ours.")
+        caption = drafts[0]["would_post_caption"]
+        self.assertTrue(caption.startswith(self.TAKE))
+        self.assertIn("Golf Monthly reports: Cy Hot's caddie quits", caption)
+        self.assertNotIn("gm.example", caption)                  # link goes to Mike, not in the caption
+        with open(drafts[0]["caption_file"], encoding="utf-8") as f:
+            self.assertIn("Source (check before posting): https://gm.example/caddie", f.read())
+        self.assertTrue(os.path.exists(drafts[0]["would_post_image"]))
+        saved = state.load_named("headlines")
+        self.assertIn(story["id"], saved["drafted"])
+        self.fetched.return_value = ([self.old, story], {})       # the same story never drafts twice
+        self.assertNotIn("draft", dict(pipeline.run_headlines(dry_run=True)["actions"]))
+
+    def test_take_that_guesses_a_motive_is_rejected(self):
+        self.take = "guess the caddie had enough of the yips"
+        _, out = self.run_twice([_story("Cy Hot's caddie quits before the final round")])
+        draft = dict(out["actions"])["draft"]
+        self.assertTrue(draft["status"].startswith("FAILED: ContentError"))
+
+    def test_untrusted_outlet_never_drafts(self):
+        _, out = self.run_twice([_story("Cy Hot's caddie quits before the final round", source="Heavy.com")])
+        self.assertNotIn("draft", dict(out["actions"]))
+
+    def test_two_drafts_per_run_rest_wait(self):
+        stories = [_story("Cy Hot withdraws with a wrist injury"), _story("Ann Example disqualified at Fake Open"),
+                   _story("Bo Bagman suspended by the PGA Tour")]
+        _, out = self.run_twice(stories)
+        kinds = [a[0] for a in out["actions"]]
+        self.assertEqual((kinds.count("draft"), kinds.count("capped")), (2, 1))
+        out = pipeline.run_headlines(dry_run=True)               # the capped one goes next run
+        self.assertEqual([a[0] for a in out["actions"]].count("draft"), 1)
+
+    def test_quiet_hours_hold_drafts(self):
+        self.fetched.return_value = ([self.old], {})
+        pipeline.run_headlines(dry_run=True)
+        self.fetched.return_value = ([self.old, _story("Cy Hot withdraws with a wrist injury")], {})
+        with mock.patch.object(pipeline.notify_telegram, "quiet_now", return_value=True), \
+             mock.patch.object(state.subprocess, "run"):
+            out = pipeline.run_headlines(dry_run=False)
+        self.assertIn("held", dict(out["actions"]))
+        self.assertEqual(state.load_named("headlines")["drafted"], [self.old["id"]])
+
+    def _newsletter_html(self):
+        out = pipeline.run_weekly_newsletter(dry_run=True)
+        with open(out["preview_file"], encoding="utf-8") as f:
+            return f.read()
+
+    def test_newsletter_gets_the_wire_before_up_next(self):
+        self.run_twice([_story("Cy Hot's caddie quits before the final round", url="https://gm.example/c?a=1&b=2"),
+                        _story("Ann Example wins the Fake Open", source="ESPN"),
+                        _story("Bo Bagman withdraws", source="Heavy.com")])
+        html = self._newsletter_html()
+        self.assertIn("Word on the wire", html)
+        self.assertLess(html.index("Word on the wire"), html.index("Up next"))
+        self.assertIn('href="https://gm.example/c?a=1&amp;b=2"', html)
+        self.assertIn("Wild week for loopers.", html)
+        self.assertIn("(Golf Monthly)", html)
+        self.assertNotIn("Heavy.com", html)                       # untrusted outlets stay out
+
+    def test_newsletter_wire_falls_back_to_plain_list(self):
+        self.run_twice([_story("Cy Hot's caddie quits before the final round")])
+        with mock.patch.object(content, "generate_headline_digest", side_effect=content.ContentError("x")):
+            html = self._newsletter_html()
+        self.assertIn("Cy Hot&#x27;s caddie quits before the final round", html)
+
+
+class SpeculationCheckTests(unittest.TestCase):
+    def test_motive_words_need_the_reporting(self):
+        facts = "HEADLINE: Caddie quits mid-tournament. SUMMARY: reason not disclosed."
+        self.assertEqual(content.speculation("he clearly had enough", facts), ["had enough", "clearly"])
+        self.assertEqual(content.speculation("nobody's saying why", facts), [])
+        self.assertEqual(content.speculation("he had enough", "SUMMARY: sources say he had enough"), [])
+
 if __name__ == "__main__":
     unittest.main()

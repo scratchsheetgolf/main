@@ -12,11 +12,11 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
-from data import datagolf, state, transform
+from data import datagolf, headlines, state, transform
 from content import content
 from render import (render_leaderboard, render_hot_take, render_intel_stat, render_live_alert, render_weekly_picks,
                     render_pick_detail, render_stat_list, render_closer, render_playing_card, render_hand,
-                    render_reel, render_round_wrap, render_round_of_day)
+                    render_reel, render_round_wrap, render_round_of_day, render_headline)
 from distribute import image_host, post_x, post_meta, post_tiktok, notify_telegram, music
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
@@ -68,8 +68,9 @@ def enabled_platforms() -> set:
 
 def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = "",
                      dry_run: bool = False, draft: bool = False, alternatives: list = None, live: bool = False,
-                     hook: str = "", tags: str = ""):
-    """Posts the same image+caption to all four platforms (hook = the Instagram Reel's data-only opening line). Each call is wrapped
+                     hook: str = "", tags: str = "", note: str = ""):
+    """Posts the same image+caption to all four platforms (note: shown to the person posting a draft, never
+    in the caption, e.g. the source link) (hook = the Instagram Reel's data-only opening line). Each call is wrapped
     so one platform's failure (e.g. TikTok still pre-audit) doesn't block the rest.
 
     dry_run / draft skip every real network call (image hosting, all 4 platforms)
@@ -88,10 +89,13 @@ def _post_everywhere(local_image_path: str, caption: str, tiktok_title: str = ""
             if alternatives:
                 f.write("\nOther options (swap in by hand if better):\n")
                 f.write("".join(f"- {alt}\n" for alt in alternatives))
+            if note:
+                f.write(f"\n{note}\n")
         pinged = None
         if draft:   # drafts go to Mike's phone (no-op until the Telegram secrets exist)
             alts = ("\n\nOther options:\n" + "\n".join(f"- {a}" for a in alternatives)) if alternatives else ""
-            pinged = notify_telegram.send_file(local_image_path, f"DRAFT (post by hand)\n\n{caption}{alts}",
+            extra = f"\n\n{note}" if note else ""
+            pinged = notify_telegram.send_file(local_image_path, f"DRAFT (post by hand)\n\n{caption}{alts}{extra}",
                                                respect_quiet=live)
         return {
             "DRY_RUN" if dry_run else "DRAFT": True,
@@ -910,9 +914,42 @@ def _recap_sections(tour: str) -> tuple:
     return sections, ((last if results is not None else None) or upcoming or last)["event_name"]
 
 
+def _wire_section():
+    """'Word on the wire': the week's best stories from trusted outlets, each linked and credited, with our
+    one-line take. Headlines, outlets and links come from the feeds; Claude only picks and writes the takes.
+    If the takes fail, the plain linked list is used (the newsletter is read by Mike before it goes out)."""
+    from html import escape
+    week = [x for x in headlines.week_stories(state.load_named("headlines")) if x["trusted"]][:20]
+    if not week:
+        return None
+    listing = "\n".join(f"{i}. [{x['source']}] {x['title']}" + (f" :: {x['summary'][:300]}" if x["summary"] else "")
+                        for i, x in enumerate(week, 1))
+    try:
+        picks = content.generate_headline_digest(listing)
+    except Exception as e:
+        print(f"newsletter: headline takes failed ({type(e).__name__}); using the plain list", file=sys.stderr)
+        picks = [{"id": i, "take": ""} for i in range(1, min(content.DIGEST_MAX_ITEMS, len(week)) + 1)]
+    items = []
+    for p in picks:
+        x = week[p["id"] - 1]
+        others = [o for o in x["sources"] if o != x["source"]]
+        via = escape(x["source"]) + (f", also {escape(', '.join(others[:3]))}" if others else "")
+        items.append(f'<p><b><a href="{escape(x["url"], quote=True)}">{escape(x["title"])}</a></b> '
+                     f'<i>({via})</i>' + (f"<br>{escape(p['take'])}" if p["take"] else "") + "</p>")
+    return {"heading": "Word on the wire", "body_html": "".join(items)}
+
+
 def run_weekly_newsletter(tour: str = "pga", dry_run: bool = False):
     from newsletter import newsletter
     sections, event_name = _recap_sections(tour)
+    try:
+        wire = _wire_section()
+    except Exception as e:   # the news is extra; it never stops the newsletter
+        print(f"newsletter: wire section skipped ({type(e).__name__}: {e})", file=sys.stderr)
+        wire = None
+    if wire:
+        at = next((i for i, x in enumerate(sections) if x["heading"] == "Up next"), len(sections))
+        sections.insert(at, wire)
     html = newsletter.compile_digest_html(week_label=event_name, sections=sections)
     subject = f"The Scratch Sheet — {event_name}"
     if dry_run:
@@ -944,6 +981,71 @@ def run_weekly_intel(dry_run: bool = False, draft: bool = False, week: int = Non
                               dry_run=dry_run, draft=draft, alternatives=alternatives)
     result["intel"] = intel["summary"]
     return result
+
+
+HEADLINE_DRAFTS_PER_RUN = 2
+HEADLINE_DRAFTS_PER_DAY = 5
+HEADLINE_TAGS = {"PGA TOUR": "#PGATOUR", "LIV GOLF": "#LIVGolf", "DP WORLD TOUR": "#DPWorldTour", "LPGA": "#LPGA",
+                 "KORN FERRY TOUR": "#KornFerryTour", "RYDER CUP": "#RyderCup", "PGA TOUR CHAMPIONS": "#PGATOURChampions"}
+
+
+def _headline_draft(story: dict, dry_run: bool) -> dict:
+    """One news story -> THE WIRE card + caption, sent as a draft (never auto-posted: the take is AI-written
+    about real people, so Mike approves each one). The headline, outlet and link come from the feed."""
+    facts = (f"OUTLET: {story['source']}\nHEADLINE: {story['title']}\nSUMMARY: {story['summary'] or '(none)'}"
+             + (f"\nALSO REPORTED BY: {', '.join(o for o in story['sources'] if o != story['source'])}"
+                if len(story["sources"]) > 1 else ""))
+    card = content.generate_headline_card(facts)
+    if card is None:
+        return {"status": "skipped: writer said the story is too thin"}
+    tour = headlines.tour_of(f"{story['title']} {story['summary']}")
+    image_path = os.path.join(OUTPUT_DIR, f"headline_{story['id']}.png")
+    render_headline(source=f"VIA {story['source'].upper()} · {tour}", lines=card["lines"], take=card["take"],
+                    credit=f"Reported by {story['source']}. The red ink is ours.", out_path=image_path)
+    caption = f"{card['take']}\n\n{story['source']} reports: {story['title']}"
+    tags = " ".join(t for t in ("#golf", HEADLINE_TAGS.get(tour, "")) if t)
+    alternatives = [a["take"] for a in card["alternatives"]]
+    return _post_everywhere(image_path, caption, tiktok_title=story["title"][:90], dry_run=dry_run, draft=not dry_run,
+                            alternatives=alternatives, tags=tags, note=f"Source (check before posting): {story['url']}")
+
+
+def run_headlines(dry_run: bool = False) -> dict:
+    """Pull the golf news feeds, keep the week's stories for the newsletter, and draft THE WIRE cards for
+    fresh top-tier stories (2 per run, 5 per day, none during quiet hours; a held story is drafted after if
+    it's under 12 h old). Always drafts: AUTO_POST is ignored. The first run only records what's out there."""
+    import time
+    now = time.time()
+    saved = state.load_named("headlines")
+    fetched, errors = headlines.fetch_all()
+    if not fetched:
+        raise RuntimeError(f"every headline feed failed: {errors}")
+    new_state, added = headlines.update(saved, fetched, now=now)
+    actions = [("fetched", f"{len(fetched)} items, {len(added)} new" + (f"; feeds down: {errors}" if errors else ""))]
+    live_clusters = {x.get("story") for x in new_state["stories"]}
+    drafted = [c for c in (saved.get("drafted") or []) if c in live_clusters]
+    log = [t for t in (saved.get("draft_log") or []) if t >= now - 86400]
+    if not saved.get("stories"):
+        drafted = sorted(live_clusters)
+        actions.append(("seeded", f"first run: {len(drafted)} stories recorded, no drafts for the backlog"))
+    elif notify_telegram.quiet_now() and not dry_run:
+        actions.append(("held", "quiet hours: candidates wait for the next run"))
+    else:
+        sent = 0
+        for story in headlines.draft_candidates({**new_state, "drafted": drafted}, now=now):
+            if sent >= HEADLINE_DRAFTS_PER_RUN or len(log) >= HEADLINE_DRAFTS_PER_DAY:
+                actions.append(("capped", story["title"][:80]))
+                continue   # not marked drafted: drafted on a later run if it's still fresh
+            try:
+                result = _headline_draft(story, dry_run)
+            except Exception as e:
+                result = {"status": f"FAILED: {type(e).__name__}: {str(e)[:160]}"}
+            drafted.append(story["story"])   # one attempt per story, whatever happened
+            if not result.get("status"):
+                sent += 1
+                log.append(now)
+            actions.append(("draft", {"story": story["title"][:80], "source": story["source"], **result}))
+    state.save_named("headlines", {**new_state, "drafted": drafted, "draft_log": log}, commit=not dry_run)
+    return {"actions": actions}
 
 
 def probe(tour: str = "pga") -> dict:
@@ -1020,7 +1122,7 @@ def run_recap_now(tour: str = "pga", dry_run: bool = False, event_tag: str = "")
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["picks", "live", "recap", "newsletter", "probe", "intel", "qa-selftest"])
+    parser.add_argument("action", choices=["picks", "live", "recap", "newsletter", "probe", "intel", "headlines", "qa-selftest"])
     parser.add_argument("--tour", default="pga")
     parser.add_argument("--dry-run", action="store_true",
                          help="Run against real data/APIs but print what would be posted instead of posting it.")
@@ -1039,6 +1141,8 @@ if __name__ == "__main__":
         print(run_recap_now(args.tour, dry_run=args.dry_run, event_tag=args.event_tag))
     elif args.action == "intel":
         print(run_weekly_intel(dry_run=args.dry_run, draft=args.draft, event_tag=args.event_tag))
+    elif args.action == "headlines":   # news feeds -> newsletter material + THE WIRE drafts
+        print(run_headlines(dry_run=args.dry_run))
     elif args.action == "probe":
         import json
         print(json.dumps(probe(args.tour), indent=2, default=str))

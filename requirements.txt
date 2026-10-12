@@ -1,5 +1,6 @@
 cairosvg==2.9.0
 requests
+feedparser==6.0.12   # golf news RSS (data/headlines.py)
 anthropic>=1.11,<2
 tweepy
 requests-oauthlib  # X v2 media upload (also a tweepy dependency)

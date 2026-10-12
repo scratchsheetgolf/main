@@ -71,6 +71,20 @@ ht = [head("hot take"), frame_inner(),
       footer()]
 open(f"{OUT}/hot_take.svg", "w").write("".join(ht))
 
+# ---------- headline (THE WIRE): what an outlet reported, set big; our take under it in Sharpie ----------
+hl = [head("headline"), frame_inner(), topline("THE WIRE"),
+      f'<text x="96" y="236" font-family="Barlow Condensed SemiBold" font-size="30" fill="{PENCIL}" letter-spacing="4" data-fit="888">__SOURCE__</text>\n',
+      f'<text font-family="Anton" font-size="104" fill="{INK}" data-fit="888">'
+      '<tspan x="94" y="400">__LINE_1__</tspan><tspan x="94" y="520">__LINE_2__</tspan>'
+      '<tspan x="94" y="640">__LINE_3__</tspan><tspan x="94" y="760">__LINE_4__</tspan></text>\n',
+      f'<g stroke="{RULE}" stroke-width="2"><line x1="96" y1="416" x2="984" y2="416"/><line x1="96" y1="536" x2="984" y2="536"/><line x1="96" y1="656" x2="984" y2="656"/></g>\n',
+      f'<path d="{squiggle(96, 800, 620, 31, 6)}" {MK}/>\n',
+      f'<text x="98" y="930" font-family="Permanent Marker" font-size="40" fill="{SHARPIE}" transform="rotate(-2 98 930)" data-fit="880">__TAKE_1__</text>\n',
+      f'<text x="98" y="990" font-family="Permanent Marker" font-size="40" fill="{SHARPIE}" transform="rotate(-2 98 990)" data-fit="880">__TAKE_2__</text>\n',
+      f'<text x="96" y="1140" font-family="Barlow Medium" font-size="26" fill="{PENCIL}" data-fit="888">__CREDIT__</text>\n',
+      footer()]
+open(f"{OUT}/headline.svg", "w").write("".join(hl))
+
 # ---------- weekly picks ----------
 prow = [405, 575, 745, 915]
 wp = [head("weekly picks"), frame_inner(),
