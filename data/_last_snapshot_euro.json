@@ -40,23 +40,17 @@
   },
   "event_name": "Genesis Championship",
   "leader_name": "Yuto Katsuragawa",
-  "last_leaderboard_post_ts": 1792910439.3751106,
+  "last_leaderboard_post_ts": 1792912841.1743712,
   "standings": {
     "event_name": "Genesis Championship",
     "round": 4,
-    "final": false,
+    "final": true,
     "event_stats": [
       {
         "dg_id": 20448,
         "player_name": "Katsuragawa, Yuto",
         "fin_text": "1",
-        "score": "-14"
-      },
-      {
-        "dg_id": 23733,
-        "player_name": "LaCroix, Frederic",
-        "fin_text": "T2",
-        "score": "-11"
+        "score": "-13"
       },
       {
         "dg_id": 27811,
@@ -65,10 +59,10 @@
         "score": "-11"
       },
       {
-        "dg_id": 14609,
-        "player_name": "Kim, Si Woo",
-        "fin_text": "T4",
-        "score": "-10"
+        "dg_id": 23733,
+        "player_name": "LaCroix, Frederic",
+        "fin_text": "T2",
+        "score": "-11"
       },
       {
         "dg_id": 14016,
@@ -89,6 +83,18 @@
         "score": "-10"
       },
       {
+        "dg_id": 26947,
+        "player_name": "Jarvis, Casey",
+        "fin_text": "T4",
+        "score": "-10"
+      },
+      {
+        "dg_id": 14609,
+        "player_name": "Kim, Si Woo",
+        "fin_text": "T4",
+        "score": "-10"
+      },
+      {
         "dg_id": 18770,
         "player_name": "Rozner, Antoine",
         "fin_text": "T4",
@@ -103,19 +109,13 @@
       {
         "dg_id": 17081,
         "player_name": "Sharma, Shubhankar",
-        "fin_text": "T10",
+        "fin_text": "T11",
         "score": "-9"
       },
       {
         "dg_id": 21362,
         "player_name": "Hillier, Daniel",
-        "fin_text": "T10",
-        "score": "-9"
-      },
-      {
-        "dg_id": 26947,
-        "player_name": "Jarvis, Casey",
-        "fin_text": "T10",
+        "fin_text": "T11",
         "score": "-9"
       },
       {
@@ -472,18 +472,10 @@
     "20448": {
       "name": "Yuto Katsuragawa",
       "pos": "1",
-      "score": -14,
-      "today": -1,
-      "thru": 17,
-      "rank": 1
-    },
-    "23733": {
-      "name": "Frederic LaCroix",
-      "pos": "T2",
-      "score": -11,
-      "today": -3,
+      "score": -13,
+      "today": 0,
       "thru": 18,
-      "rank": 2
+      "rank": 1
     },
     "27811": {
       "name": "Martin Couvra",
@@ -491,15 +483,15 @@
       "score": -11,
       "today": -2,
       "thru": 18,
-      "rank": 3
+      "rank": 2
     },
-    "14609": {
-      "name": "Si Woo Kim",
-      "pos": "T4",
-      "score": -10,
-      "today": 0,
-      "thru": 17,
-      "rank": 4
+    "23733": {
+      "name": "Frederic LaCroix",
+      "pos": "T2",
+      "score": -11,
+      "today": -3,
+      "thru": 18,
+      "rank": 3
     },
     "14016": {
       "name": "Jorge Campillo",
@@ -507,7 +499,7 @@
       "score": -10,
       "today": -1,
       "thru": 18,
-      "rank": 5
+      "rank": 4
     },
     "23549": {
       "name": "Filippo Celli",
@@ -515,7 +507,7 @@
       "score": -10,
       "today": -3,
       "thru": 18,
-      "rank": 6
+      "rank": 5
     },
     "11889": {
       "name": "Ryan Fox",
@@ -523,7 +515,23 @@
       "score": -10,
       "today": -1,
       "thru": 18,
+      "rank": 6
+    },
+    "26947": {
+      "name": "Casey Jarvis",
+      "pos": "T4",
+      "score": -10,
+      "today": 1,
+      "thru": 18,
       "rank": 7
+    },
+    "14609": {
+      "name": "Si Woo Kim",
+      "pos": "T4",
+      "score": -10,
+      "today": 0,
+      "thru": 18,
+      "rank": 8
     },
     "18770": {
       "name": "Antoine Rozner",
@@ -531,7 +539,7 @@
       "score": -10,
       "today": 0,
       "thru": 18,
-      "rank": 8
+      "rank": 9
     },
     "23719": {
       "name": "Sanghun Shin",
@@ -539,30 +547,22 @@
       "score": -10,
       "today": 0,
       "thru": 18,
-      "rank": 9
+      "rank": 10
     },
     "17081": {
       "name": "Shubhankar Sharma",
-      "pos": "T10",
+      "pos": "T11",
       "score": -9,
       "today": -3,
       "thru": 18,
-      "rank": 10
+      "rank": 11
     },
     "21362": {
       "name": "Daniel Hillier",
-      "pos": "T10",
+      "pos": "T11",
       "score": -9,
       "today": -5,
       "thru": 18,
-      "rank": 11
-    },
-    "26947": {
-      "name": "Casey Jarvis",
-      "pos": "T10",
-      "score": -9,
-      "today": 2,
-      "thru": 17,
       "rank": 12
     },
     "25628": {
@@ -1494,26 +1494,26 @@
     {
       "pos": "1",
       "name": "Yuto Katsuragawa",
-      "score": "-14"
+      "score": "-13"
     },
     {
-      "pos": "2",
+      "pos": "T2",
       "name": "Martin Couvra",
       "score": "-11"
     },
     {
-      "pos": "T3",
-      "name": "Casey Jarvis",
+      "pos": "T2",
+      "name": "Frederic LaCroix",
+      "score": "-11"
+    },
+    {
+      "pos": "T4",
+      "name": "Jorge Campillo",
       "score": "-10"
     },
     {
-      "pos": "T3",
-      "name": "Si Woo Kim",
-      "score": "-10"
-    },
-    {
-      "pos": "T3",
-      "name": "Antoine Rozner",
+      "pos": "T4",
+      "name": "Filippo Celli",
       "score": "-10"
     }
   ],
@@ -1521,8 +1521,8 @@
     "20448": {
       "round": 4,
       "start": 1,
-      "thru": 17,
-      "today": -1,
+      "thru": 18,
+      "today": 0,
       "course": "WJ",
       "rel": {
         "1": 0,
@@ -1541,60 +1541,8 @@
         "14": 0,
         "15": 0,
         "16": 0,
-        "17": 0
-      }
-    },
-    "14609": {
-      "round": 4,
-      "start": 1,
-      "thru": 17,
-      "today": 0,
-      "course": "WJ",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 1,
-        "5": -1,
-        "6": 0,
-        "7": 1,
-        "8": 0,
-        "9": 1,
-        "10": 0,
-        "11": 0,
-        "12": -1,
-        "13": 0,
-        "14": 0,
-        "15": -1,
-        "16": 0,
-        "17": 0
-      }
-    },
-    "23733": {
-      "round": 4,
-      "start": 1,
-      "thru": 18,
-      "today": -3,
-      "course": "WJ",
-      "rel": {
-        "1": 1,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": -1,
-        "6": -1,
-        "7": 0,
-        "8": -1,
-        "9": 0,
-        "10": 0,
-        "11": -1,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
-        "16": 1,
         "17": 0,
-        "18": -1
+        "18": 1
       }
     },
     "15062": {
@@ -1713,6 +1661,33 @@
         "18": 0
       }
     },
+    "23733": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -3,
+      "course": "WJ",
+      "rel": {
+        "1": 1,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": -1,
+        "6": -1,
+        "7": 0,
+        "8": -1,
+        "9": 0,
+        "10": 0,
+        "11": -1,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": 1,
+        "17": 0,
+        "18": -1
+      }
+    },
     "14016": {
       "round": 4,
       "start": 1,
@@ -1791,6 +1766,60 @@
         "15": 0,
         "16": 0,
         "17": 1,
+        "18": 0
+      }
+    },
+    "26947": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": 1,
+      "course": "WJ",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": -1,
+        "6": 0,
+        "7": 0,
+        "8": -1,
+        "9": 2,
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 2,
+        "14": 0,
+        "15": -1,
+        "16": 1,
+        "17": 0,
+        "18": -1
+      }
+    },
+    "14609": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": 0,
+      "course": "WJ",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 1,
+        "5": -1,
+        "6": 0,
+        "7": 1,
+        "8": 0,
+        "9": 1,
+        "10": 0,
+        "11": 0,
+        "12": -1,
+        "13": 0,
+        "14": 0,
+        "15": -1,
+        "16": 0,
+        "17": 0,
         "18": 0
       }
     },
@@ -1873,32 +1902,6 @@
         "16": 0,
         "17": 0,
         "18": -1
-      }
-    },
-    "26947": {
-      "round": 4,
-      "start": 1,
-      "thru": 17,
-      "today": 2,
-      "course": "WJ",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": -1,
-        "6": 0,
-        "7": 0,
-        "8": -1,
-        "9": 2,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 2,
-        "14": 0,
-        "15": -1,
-        "16": 1,
-        "17": 0
       }
     },
     "12988": {
@@ -3874,6 +3877,6 @@
       "18": 5
     }
   },
-  "last_public_post_ts": 1792910439.3751106,
-  "final_posted": "DP World India Championship"
+  "last_public_post_ts": 1792912841.1743712,
+  "final_posted": "Genesis Championship"
 }
