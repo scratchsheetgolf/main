@@ -40,22 +40,22 @@
   },
   "event_name": "Butterfield Bermuda Championship",
   "leader_name": "Austin Smotherman",
-  "last_leaderboard_post_ts": 1792961453.5337186,
+  "last_leaderboard_post_ts": 1793157363.5879936,
   "standings": {
     "event_name": "Butterfield Bermuda Championship",
     "round": 3,
     "final": false,
     "event_stats": [
       {
-        "dg_id": 10104,
-        "player_name": "Power, Seamus",
-        "fin_text": "T1",
+        "dg_id": 22985,
+        "player_name": "Smotherman, Austin",
+        "fin_text": "1",
         "score": "-16"
       },
       {
-        "dg_id": 22985,
-        "player_name": "Smotherman, Austin",
-        "fin_text": "T1",
+        "dg_id": 10104,
+        "player_name": "Power, Seamus",
+        "fin_text": "2",
         "score": "-16"
       },
       {
@@ -469,19 +469,19 @@
     ]
   },
   "live_scores": {
-    "10104": {
-      "name": "Seamus Power",
-      "pos": "T1",
+    "22985": {
+      "name": "Austin Smotherman",
+      "pos": "1",
       "score": -16,
-      "today": -4,
+      "today": -5,
       "thru": 18,
       "rank": 1
     },
-    "22985": {
-      "name": "Austin Smotherman",
-      "pos": "T1",
+    "10104": {
+      "name": "Seamus Power",
+      "pos": "2",
       "score": -16,
-      "today": -5,
+      "today": -4,
       "thru": 18,
       "rank": 2
     },
@@ -1443,13 +1443,13 @@
   "wraps": [],
   "last_leaderboard_top5": [
     {
-      "pos": "T1",
-      "name": "Seamus Power",
+      "pos": "1",
+      "name": "Austin Smotherman",
       "score": "-16"
     },
     {
-      "pos": "T1",
-      "name": "Austin Smotherman",
+      "pos": "2",
+      "name": "Seamus Power",
       "score": "-16"
     },
     {
