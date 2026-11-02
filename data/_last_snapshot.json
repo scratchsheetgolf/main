@@ -40,21 +40,21 @@
   },
   "event_name": "VidantaWorld Mexico Open",
   "leader_name": "Andrew Novak",
-  "last_leaderboard_post_ts": 1793571820.3082962,
+  "last_leaderboard_post_ts": 1793595136.7294664,
   "standings": {
     "event_name": "VidantaWorld Mexico Open",
     "round": 4,
-    "final": false,
+    "final": true,
     "event_stats": [
       {
         "dg_id": 23475,
         "player_name": "Novak, Andrew",
         "fin_text": "1",
-        "score": "-26"
+        "score": "-25"
       },
       {
-        "dg_id": 24550,
-        "player_name": "Ghim, Doug",
+        "dg_id": 26657,
+        "player_name": "Fisk, Steven",
         "fin_text": "T2",
         "score": "-20"
       },
@@ -65,32 +65,20 @@
         "score": "-20"
       },
       {
-        "dg_id": 26657,
-        "player_name": "Fisk, Steven",
-        "fin_text": "T2",
-        "score": "-20"
+        "dg_id": 24968,
+        "player_name": "Griffin, Ben",
+        "fin_text": "T4",
+        "score": "-19"
       },
       {
         "dg_id": 15556,
         "player_name": "Hughes, Mackenzie",
-        "fin_text": "5",
+        "fin_text": "T4",
         "score": "-19"
-      },
-      {
-        "dg_id": 17550,
-        "player_name": "Van Rooyen, Erik",
-        "fin_text": "T6",
-        "score": "-18"
       },
       {
         "dg_id": 18628,
         "player_name": "Campbell, Brian",
-        "fin_text": "T6",
-        "score": "-18"
-      },
-      {
-        "dg_id": 24766,
-        "player_name": "Kim, Tom",
         "fin_text": "T6",
         "score": "-18"
       },
@@ -101,38 +89,50 @@
         "score": "-18"
       },
       {
-        "dg_id": 23465,
-        "player_name": "Greyserman, Max",
+        "dg_id": 24550,
+        "player_name": "Ghim, Doug",
         "fin_text": "T6",
         "score": "-18"
       },
       {
-        "dg_id": 24968,
-        "player_name": "Griffin, Ben",
+        "dg_id": 24766,
+        "player_name": "Kim, Tom",
         "fin_text": "T6",
         "score": "-18"
       },
       {
-        "dg_id": 19960,
-        "player_name": "Pavon, Matthieu",
+        "dg_id": 17550,
+        "player_name": "Van Rooyen, Erik",
         "fin_text": "T6",
         "score": "-18"
+      },
+      {
+        "dg_id": 20954,
+        "player_name": "Hirata, Kensei",
+        "fin_text": "T11",
+        "score": "-17"
       },
       {
         "dg_id": 27780,
         "player_name": "Crowe, Trace",
-        "fin_text": "T13",
+        "fin_text": "T11",
+        "score": "-17"
+      },
+      {
+        "dg_id": 23465,
+        "player_name": "Greyserman, Max",
+        "fin_text": "T11",
+        "score": "-17"
+      },
+      {
+        "dg_id": 19960,
+        "player_name": "Pavon, Matthieu",
+        "fin_text": "T11",
         "score": "-17"
       },
       {
         "dg_id": 32652,
         "player_name": "Akina, Kihei",
-        "fin_text": "T13",
-        "score": "-17"
-      },
-      {
-        "dg_id": 20954,
-        "player_name": "Hirata, Kensei",
         "fin_text": "15",
         "score": "-16"
       },
@@ -161,6 +161,12 @@
         "score": "-14"
       },
       {
+        "dg_id": 32152,
+        "player_name": "Brown, Blades",
+        "fin_text": "T19",
+        "score": "-14"
+      },
+      {
         "dg_id": 17381,
         "player_name": "Silverman, Ben",
         "fin_text": "T19",
@@ -169,12 +175,6 @@
       {
         "dg_id": 28271,
         "player_name": "Tankersley, Cameron",
-        "fin_text": "T19",
-        "score": "-14"
-      },
-      {
-        "dg_id": 32152,
-        "player_name": "Brown, Blades",
         "fin_text": "T19",
         "score": "-14"
       },
@@ -419,21 +419,21 @@
         "score": "-5"
       },
       {
-        "dg_id": 16341,
-        "player_name": "Peterson, Paul",
-        "fin_text": "T63",
+        "dg_id": 18187,
+        "player_name": "Duncan, Tyler",
+        "fin_text": "63",
         "score": "-4"
       },
       {
-        "dg_id": 18187,
-        "player_name": "Duncan, Tyler",
-        "fin_text": "T63",
-        "score": "-4"
+        "dg_id": 16341,
+        "player_name": "Peterson, Paul",
+        "fin_text": "T64",
+        "score": "-3"
       },
       {
         "dg_id": 10873,
         "player_name": "Skinns, David",
-        "fin_text": "65",
+        "fin_text": "T64",
         "score": "-3"
       },
       {
@@ -472,17 +472,17 @@
     "23475": {
       "name": "Andrew Novak",
       "pos": "1",
-      "score": -26,
-      "today": -3,
-      "thru": 15,
+      "score": -25,
+      "today": -2,
+      "thru": 18,
       "rank": 1
     },
-    "24550": {
-      "name": "Doug Ghim",
+    "26657": {
+      "name": "Steven Fisk",
       "pos": "T2",
       "score": -20,
-      "today": -4,
-      "thru": 15,
+      "today": -8,
+      "thru": 18,
       "rank": 2
     },
     "15651": {
@@ -493,21 +493,53 @@
       "thru": 18,
       "rank": 3
     },
-    "26657": {
-      "name": "Steven Fisk",
-      "pos": "T2",
-      "score": -20,
-      "today": -8,
+    "24968": {
+      "name": "Ben Griffin",
+      "pos": "T4",
+      "score": -19,
+      "today": -4,
       "thru": 18,
       "rank": 4
     },
     "15556": {
       "name": "Mackenzie Hughes",
-      "pos": "5",
+      "pos": "T4",
       "score": -19,
       "today": -5,
-      "thru": 16,
+      "thru": 18,
       "rank": 5
+    },
+    "18628": {
+      "name": "Brian Campbell",
+      "pos": "T6",
+      "score": -18,
+      "today": -5,
+      "thru": 18,
+      "rank": 6
+    },
+    "28309": {
+      "name": "Pierceson Coody",
+      "pos": "T6",
+      "score": -18,
+      "today": -3,
+      "thru": 18,
+      "rank": 7
+    },
+    "24550": {
+      "name": "Doug Ghim",
+      "pos": "T6",
+      "score": -18,
+      "today": -2,
+      "thru": 18,
+      "rank": 8
+    },
+    "24766": {
+      "name": "Tom Kim",
+      "pos": "T6",
+      "score": -18,
+      "today": -5,
+      "thru": 18,
+      "rank": 9
     },
     "17550": {
       "name": "Erik Van Rooyen",
@@ -515,78 +547,46 @@
       "score": -18,
       "today": -7,
       "thru": 18,
-      "rank": 6
-    },
-    "18628": {
-      "name": "Brian Campbell",
-      "pos": "T6",
-      "score": -18,
-      "today": -5,
-      "thru": 17,
-      "rank": 7
-    },
-    "24766": {
-      "name": "Tom Kim",
-      "pos": "T6",
-      "score": -18,
-      "today": -5,
-      "thru": 16,
-      "rank": 8
-    },
-    "28309": {
-      "name": "Pierceson Coody",
-      "pos": "T6",
-      "score": -18,
-      "today": -3,
-      "thru": 15,
-      "rank": 9
-    },
-    "23465": {
-      "name": "Max Greyserman",
-      "pos": "T6",
-      "score": -18,
-      "today": -3,
-      "thru": 15,
       "rank": 10
-    },
-    "24968": {
-      "name": "Ben Griffin",
-      "pos": "T6",
-      "score": -18,
-      "today": -3,
-      "thru": 15,
-      "rank": 11
-    },
-    "19960": {
-      "name": "Matthieu Pavon",
-      "pos": "T6",
-      "score": -18,
-      "today": -1,
-      "thru": 15,
-      "rank": 12
-    },
-    "27780": {
-      "name": "Trace Crowe",
-      "pos": "T13",
-      "score": -17,
-      "today": -8,
-      "thru": 18,
-      "rank": 13
-    },
-    "32652": {
-      "name": "Kihei Akina",
-      "pos": "T13",
-      "score": -17,
-      "today": -3,
-      "thru": 16,
-      "rank": 14
     },
     "20954": {
       "name": "Kensei Hirata",
+      "pos": "T11",
+      "score": -17,
+      "today": -4,
+      "thru": 18,
+      "rank": 11
+    },
+    "27780": {
+      "name": "Trace Crowe",
+      "pos": "T11",
+      "score": -17,
+      "today": -8,
+      "thru": 18,
+      "rank": 12
+    },
+    "23465": {
+      "name": "Max Greyserman",
+      "pos": "T11",
+      "score": -17,
+      "today": -2,
+      "thru": 18,
+      "rank": 13
+    },
+    "19960": {
+      "name": "Matthieu Pavon",
+      "pos": "T11",
+      "score": -17,
+      "today": 0,
+      "thru": 18,
+      "rank": 14
+    },
+    "32652": {
+      "name": "Kihei Akina",
       "pos": "15",
       "score": -16,
-      "today": -3,
-      "thru": 17,
+      "today": -2,
+      "thru": 18,
       "rank": 15
     },
     "29827": {
@@ -621,13 +621,21 @@
       "thru": 18,
       "rank": 19
     },
+    "32152": {
+      "name": "Blades Brown",
+      "pos": "T19",
+      "score": -14,
+      "today": -1,
+      "thru": 18,
+      "rank": 20
+    },
     "17381": {
       "name": "Ben Silverman",
       "pos": "T19",
       "score": -14,
       "today": -4,
       "thru": 18,
-      "rank": 20
+      "rank": 21
     },
     "28271": {
       "name": "Cameron Tankersley",
@@ -635,14 +643,6 @@
       "score": -14,
       "today": -5,
       "thru": 18,
-      "rank": 21
-    },
-    "32152": {
-      "name": "Blades Brown",
-      "pos": "T19",
-      "score": -14,
-      "today": -1,
-      "thru": 17,
       "rank": 22
     },
     "25908": {
@@ -965,25 +965,25 @@
       "thru": 18,
       "rank": 62
     },
-    "16341": {
-      "name": "Paul Peterson",
-      "pos": "T63",
+    "18187": {
+      "name": "Tyler Duncan",
+      "pos": "63",
       "score": -4,
-      "today": -2,
+      "today": 3,
       "thru": 18,
       "rank": 63
     },
-    "18187": {
-      "name": "Tyler Duncan",
-      "pos": "T63",
-      "score": -4,
-      "today": 3,
+    "16341": {
+      "name": "Paul Peterson",
+      "pos": "T64",
+      "score": -3,
+      "today": -1,
       "thru": 18,
       "rank": 64
     },
     "10873": {
       "name": "David Skinns",
-      "pos": "65",
+      "pos": "T64",
       "score": -3,
       "today": 4,
       "thru": 18,
@@ -994,7 +994,7 @@
       "pos": "66",
       "score": -2,
       "today": -5,
-      "thru": 17,
+      "thru": 18,
       "rank": 66
     },
     "22087": {
@@ -1002,7 +1002,7 @@
       "pos": "67",
       "score": -1,
       "today": 0,
-      "thru": 17,
+      "thru": 18,
       "rank": 67
     },
     "24956": {
@@ -1441,11 +1441,11 @@
     {
       "pos": "1",
       "name": "Andrew Novak",
-      "score": "-26"
+      "score": "-25"
     },
     {
       "pos": "T2",
-      "name": "Doug Ghim",
+      "name": "Steven Fisk",
       "score": "-20"
     },
     {
@@ -1454,12 +1454,12 @@
       "score": "-20"
     },
     {
-      "pos": "T2",
-      "name": "Steven Fisk",
-      "score": "-20"
+      "pos": "T4",
+      "name": "Ben Griffin",
+      "score": "-19"
     },
     {
-      "pos": "5",
+      "pos": "T4",
       "name": "Mackenzie Hughes",
       "score": "-19"
     }
@@ -1468,40 +1468,8 @@
     "23475": {
       "round": 4,
       "start": 1,
-      "thru": 15,
-      "today": -3,
-      "course": "VV",
-      "rel": {}
-    },
-    "24550": {
-      "round": 4,
-      "start": 1,
-      "thru": 15,
-      "today": -4,
-      "course": "VV",
-      "rel": {}
-    },
-    "15651": {
-      "round": 4,
-      "start": 1,
       "thru": 18,
-      "today": -8,
-      "course": "VV",
-      "rel": {}
-    },
-    "26657": {
-      "round": 4,
-      "start": 1,
-      "thru": 18,
-      "today": -8,
-      "course": "VV",
-      "rel": {}
-    },
-    "15556": {
-      "round": 4,
-      "start": 1,
-      "thru": 16,
-      "today": -5,
+      "today": -2,
       "course": "VV",
       "rel": {}
     },
@@ -1529,11 +1497,79 @@
       "course": "VV",
       "rel": {}
     },
-    "27780": {
+    "20954": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -4,
+      "course": "VV",
+      "rel": {
+        "18": -1
+      }
+    },
+    "26657": {
       "round": 4,
       "start": 1,
       "thru": 18,
       "today": -8,
+      "course": "VV",
+      "rel": {}
+    },
+    "15651": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -8,
+      "course": "VV",
+      "rel": {}
+    },
+    "24968": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -4,
+      "course": "VV",
+      "rel": {}
+    },
+    "15556": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -5,
+      "course": "VV",
+      "rel": {}
+    },
+    "18628": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -5,
+      "course": "VV",
+      "rel": {
+        "18": 0
+      }
+    },
+    "28309": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -3,
+      "course": "VV",
+      "rel": {}
+    },
+    "24550": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -2,
+      "course": "VV",
+      "rel": {}
+    },
+    "24766": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -5,
       "course": "VV",
       "rel": {}
     },
@@ -1545,59 +1581,27 @@
       "course": "VV",
       "rel": {}
     },
-    "18628": {
+    "27780": {
       "round": 4,
       "start": 1,
-      "thru": 17,
-      "today": -5,
-      "course": "VV",
-      "rel": {}
-    },
-    "24766": {
-      "round": 4,
-      "start": 1,
-      "thru": 16,
-      "today": -5,
-      "course": "VV",
-      "rel": {}
-    },
-    "28309": {
-      "round": 4,
-      "start": 1,
-      "thru": 15,
-      "today": -3,
+      "thru": 18,
+      "today": -8,
       "course": "VV",
       "rel": {}
     },
     "23465": {
       "round": 4,
       "start": 1,
-      "thru": 15,
-      "today": -3,
-      "course": "VV",
-      "rel": {}
-    },
-    "24968": {
-      "round": 4,
-      "start": 1,
-      "thru": 15,
-      "today": -3,
+      "thru": 18,
+      "today": -2,
       "course": "VV",
       "rel": {}
     },
     "19960": {
       "round": 4,
       "start": 1,
-      "thru": 15,
-      "today": -1,
-      "course": "VV",
-      "rel": {}
-    },
-    "32652": {
-      "round": 4,
-      "start": 1,
-      "thru": 16,
-      "today": -3,
+      "thru": 18,
+      "today": 0,
       "course": "VV",
       "rel": {}
     },
@@ -1609,11 +1613,11 @@
       "course": "VV",
       "rel": {}
     },
-    "20954": {
+    "32652": {
       "round": 4,
       "start": 1,
-      "thru": 17,
-      "today": -3,
+      "thru": 18,
+      "today": -2,
       "course": "VV",
       "rel": {}
     },
@@ -1649,6 +1653,16 @@
       "course": "VV",
       "rel": {}
     },
+    "32152": {
+      "round": 4,
+      "start": 1,
+      "thru": 18,
+      "today": -1,
+      "course": "VV",
+      "rel": {
+        "18": 0
+      }
+    },
     "17381": {
       "round": 4,
       "start": 1,
@@ -1662,14 +1676,6 @@
       "start": 1,
       "thru": 18,
       "today": -5,
-      "course": "VV",
-      "rel": {}
-    },
-    "32152": {
-      "round": 4,
-      "start": 1,
-      "thru": 17,
-      "today": -1,
       "course": "VV",
       "rel": {}
     },
@@ -1989,7 +1995,7 @@
       "round": 4,
       "start": 10,
       "thru": 18,
-      "today": -2,
+      "today": -1,
       "course": "VV",
       "rel": {}
     },
@@ -2004,18 +2010,22 @@
     "17538": {
       "round": 4,
       "start": 10,
-      "thru": 17,
+      "thru": 18,
       "today": -5,
       "course": "VV",
-      "rel": {}
+      "rel": {
+        "9": 0
+      }
     },
     "22087": {
       "round": 4,
       "start": 10,
-      "thru": 17,
+      "thru": 18,
       "today": 0,
       "course": "VV",
-      "rel": {}
+      "rel": {
+        "9": 0
+      }
     },
     "24956": {
       "round": 4,
@@ -2448,6 +2458,6 @@
       "18": 4
     }
   },
-  "last_public_post_ts": 1793571820.3082962,
-  "final_posted": "Baycurrent Classic"
+  "last_public_post_ts": 1793595136.7294664,
+  "final_posted": "VidantaWorld Mexico Open"
 }
