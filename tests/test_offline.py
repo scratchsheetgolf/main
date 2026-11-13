@@ -7,6 +7,7 @@ ALL PLAYER DATA HERE IS FAKE (made-up odds/finishes for testing the logic).
 
 Run: python -m unittest tests/test_offline.py -v
 """
+import json
 import os
 import sys
 import tempfile
@@ -1136,6 +1137,28 @@ class PreviewCarouselTests(PipelineDryRunTests):
         self.assertTrue(alert["caption"].startswith("QA HELD (FAIL: position wrong)"))
         raw = self.qa_mock.call_args.args[0]
         self.assertIn('"prev_score": -11', raw)                      # reviewer sees the previous poll too
+
+    def test_auto_alert_reviewer_sees_player_outside_top5_and_the_one_hole_math(self):
+        top = [{"dg_id": 10 + i, "player_name": f"Lead, P{i}", "current_pos": str(i + 1), "current_score": -12 + i,
+                "today": -5, "thru": 12} for i in range(5)]
+        rows = top + [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "T13", "current_score": -4, "today": -3, "thru": 9}]
+        prev = {"event_name": "Fake Invitational", "leader_name": "Lead P0", "last_leaderboard_post_ts": 9e12,
+                "live_scores": {"3": {"name": "Cy Hot", "pos": "T30", "score": -2, "today": -1, "thru": 8, "rank": 30}}}
+        posts, _, _ = self._auto_poll(rows, prev)
+        alert = next(p for p in posts if p["path"] == "live_alert.png")
+        self.assertFalse(alert["draft"])
+        raw = json.loads(self.qa_mock.call_args.args[0])
+        self.assertEqual(raw["alert_player_now"]["current_pos"], "T13")     # not in top 5, still visible to QA
+        self.assertIn("1 more hole", raw["one_hole_move_verified_by_code"])
+
+    def test_qa_outage_warns_on_telegram_once_per_run(self):
+        pipeline._QA_DOWN_WARNED = False
+        with mock.patch.object(pipeline.notify_telegram, "send_text") as tg:
+            pipeline._warn_qa_down("QA call failed (AuthenticationError)")
+            pipeline._warn_qa_down("QA call failed (AuthenticationError)")
+        tg.assert_called_once()
+        self.assertIn("AuthenticationError", tg.call_args.args[0])
+        pipeline._QA_DOWN_WARNED = False
 
     def test_auto_alert_held_when_fresh_feed_disagrees(self):
         prev = {"event_name": "Fake Invitational", "leader_name": "Cy Hot", "last_leaderboard_post_ts": 9e12,

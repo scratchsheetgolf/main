@@ -491,7 +491,25 @@ MAX_ALERTS_PER_HOUR = 1   # per tour, rolling 60 min (2026-10-10 cadence test: ~
 POST_SPACING_MINUTES = 20   # minimum gap before an alert or hourly leaderboard, after any public post
 
 
-def _qa_gate(tour: str, event_name: str, post_text: str, expect_final: bool, check_row=None, extra: dict = None):
+_QA_DOWN_WARNED = False
+
+
+def _warn_qa_down(why: str):
+    """The reviewer itself broke (bad API key, outage): every post is being held for a reason that has nothing
+    to do with the post. Say so loudly on Telegram, once per run, instead of letting it look like a content FAIL."""
+    global _QA_DOWN_WARNED
+    if _QA_DOWN_WARNED:
+        return
+    _QA_DOWN_WARNED = True
+    try:
+        notify_telegram.send_text(f"\u26a0\ufe0f QA REVIEWER IS DOWN: {why}. Every unattended post is being held as a "
+                                  "draft until it's fixed. If it says AuthenticationError, check the ANTHROPIC_API_KEY secret.")
+    except Exception:
+        pass
+
+
+def _qa_gate(tour: str, event_name: str, post_text: str, expect_final: bool, check_row=None, extra: dict = None,
+             focus_dg_id=None):
     """Last check before an UNATTENDED post: re-fetch the live feed, verify it in code, then an independent
     Claude review of the post against the fresh numbers. Returns (passed, reason). Any doubt = fail."""
     import json
@@ -513,7 +531,14 @@ def _qa_gate(tour: str, event_name: str, post_text: str, expect_final: bool, che
         return {k: r.get(k) for k in ("player_name", "current_pos", "current_score", "today", "thru", "round")}
     raw = {"event": info.get("event_name"), "current_round": info.get("current_round"), "final": expect_final,
            "top_5": [slim(r) for r in rows[:5]], **(extra or {})}
-    return content.qa_review(json.dumps(raw, ensure_ascii=False, indent=1), post_text)
+    if focus_dg_id is not None:   # the post is about this player: give the reviewer his fresh row even outside the top 5
+        row = next((r for r in rows if str(r.get("dg_id")) == str(focus_dg_id)), None)
+        if row:
+            raw["alert_player_now"] = slim(row)
+    passed, why = content.qa_review(json.dumps(raw, ensure_ascii=False, indent=1), post_text)
+    if not passed and why.startswith("QA call failed"):
+        _warn_qa_down(why)
+    return passed, why
 
 
 def _alert_row_check(m: dict):
@@ -549,9 +574,14 @@ def _live_alert(m: dict, tour: str, event_name: str, dry_run: bool, draft: bool,
                           event_line_2=line2.upper(), reaction=reaction, out_path=image_path, scorecard=scorecard)
         extra = {"alert_player_previous_poll": {k: m[k] for k in ("prev_score", "prev_thru", "prev_pos") if k in m},
                  "alert_player_today_vs_par": m.get("today")}
+        if m["kind"] == "big_hole":   # the one-hole move is inferred from two polls; state that inference plainly
+            extra["one_hole_move_verified_by_code"] = (
+                f"between the previous poll and now this player completed exactly 1 more hole "
+                f"(thru {m['prev_thru']} -> {m['thru']}) and his total went from {m['prev_score']} to {m['score']}, "
+                f"i.e. {m['drop']} under par on that one hole. Which hole and its par are unknown.")
         passed, why = _qa_gate(tour, event_name,
                                f"CARD: {tour_label(tour)}{m['hole_moment']} | {line1} {line2} | {reaction}\nCAPTION: {m['caption']}",
-                               expect_final=False, check_row=_alert_row_check(m), extra=extra)
+                               expect_final=False, check_row=_alert_row_check(m), extra=extra, focus_dg_id=m["dg_id"])
         if not passed:   # never posts on doubt: goes to Mike as a draft with the reason
             out = _post_everywhere(image_path, f"QA HELD ({why}). Check before posting:\n{m['caption']}",
                                    dry_run=dry_run, draft=True, live=True, tags=tags)
