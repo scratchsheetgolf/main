@@ -40,7 +40,7 @@
   },
   "event_name": "Austin Championship presented by Compliance Solutions",
   "leader_name": "Erik Van Rooyen",
-  "last_leaderboard_post_ts": 1794600939.4175806,
+  "last_leaderboard_post_ts": 1794604560.971454,
   "standings": {
     "event_name": "Austin Championship presented by Compliance Solutions",
     "round": 2,
@@ -1446,28 +1446,28 @@
   "last_leaderboard_top5": [
     {
       "pos": "T1",
-      "name": "Erik Van Rooyen",
-      "score": "-11"
+      "name": "Trace Crowe",
+      "score": "-12"
     },
     {
       "pos": "T1",
+      "name": "Erik Van Rooyen",
+      "score": "-12"
+    },
+    {
+      "pos": "T3",
+      "name": "Kevin Yu",
+      "score": "-11"
+    },
+    {
+      "pos": "T3",
       "name": "Kristoffer Ventura",
       "score": "-11"
     },
     {
-      "pos": "T1",
+      "pos": "T3",
       "name": "Brian Harman",
       "score": "-11"
-    },
-    {
-      "pos": "T4",
-      "name": "Trace Crowe",
-      "score": "-10"
-    },
-    {
-      "pos": "T4",
-      "name": "Kevin Yu",
-      "score": "-10"
     }
   ],
   "holes": {
@@ -3186,6 +3186,6 @@
       "18": 5
     }
   },
-  "last_public_post_ts": 1794600939.4175806,
+  "last_public_post_ts": 1794604560.971454,
   "final_posted": "World Wide Technology Championship"
 }
