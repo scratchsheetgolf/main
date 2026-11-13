@@ -1142,7 +1142,7 @@ class PreviewCarouselTests(PipelineDryRunTests):
         top = [{"dg_id": 10 + i, "player_name": f"Lead, P{i}", "current_pos": str(i + 1), "current_score": -12 + i,
                 "today": -5, "thru": 12} for i in range(5)]
         rows = top + [{"dg_id": 3, "player_name": "Hot, Cy", "current_pos": "T13", "current_score": -4, "today": -3, "thru": 9}]
-        prev = {"event_name": "Fake Invitational", "leader_name": "Lead P0", "last_leaderboard_post_ts": 9e12,
+        prev = {"event_name": "Fake Invitational", "leader_name": "P0 Lead", "last_leaderboard_post_ts": 9e12,
                 "live_scores": {"3": {"name": "Cy Hot", "pos": "T30", "score": -2, "today": -1, "thru": 8, "rank": 30}}}
         posts, _, _ = self._auto_poll(rows, prev)
         alert = next(p for p in posts if p["path"] == "live_alert.png")
