@@ -40,7 +40,7 @@
   },
   "event_name": "Austin Championship presented by Compliance Solutions",
   "leader_name": "Trace Crowe",
-  "last_leaderboard_post_ts": 1794693068.0180726,
+  "last_leaderboard_post_ts": 1794696962.1216106,
   "standings": {
     "event_name": "Austin Championship presented by Compliance Solutions",
     "round": 3,
@@ -1443,27 +1443,27 @@
   "wraps": [],
   "last_leaderboard_top5": [
     {
-      "pos": "T1",
-      "name": "Erik Van Rooyen",
+      "pos": "1",
+      "name": "Trace Crowe",
+      "score": "-14"
+    },
+    {
+      "pos": "T2",
+      "name": "Sami Valimaki",
       "score": "-13"
     },
     {
-      "pos": "T1",
+      "pos": "T2",
       "name": "Chad Ramey",
       "score": "-13"
     },
     {
-      "pos": "T3",
-      "name": "Sami Valimaki",
-      "score": "-12"
+      "pos": "T2",
+      "name": "Erik Van Rooyen",
+      "score": "-13"
     },
     {
-      "pos": "T3",
-      "name": "Trace Crowe",
-      "score": "-12"
-    },
-    {
-      "pos": "T3",
+      "pos": "T5",
       "name": "Max Greyserman",
       "score": "-12"
     }
@@ -3722,6 +3722,6 @@
       "18": 5
     }
   },
-  "last_public_post_ts": 1794693068.0180726,
+  "last_public_post_ts": 1794696962.1216106,
   "final_posted": "World Wide Technology Championship"
 }
