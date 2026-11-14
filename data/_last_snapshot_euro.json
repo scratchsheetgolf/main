@@ -191,14 +191,14 @@
         "score": "+1"
       },
       {
-        "dg_id": 21362,
-        "player_name": "Hillier, Daniel",
+        "dg_id": 20706,
+        "player_name": "Wallace, Matt",
         "fin_text": "T25",
         "score": "+2"
       },
       {
-        "dg_id": 20706,
-        "player_name": "Wallace, Matt",
+        "dg_id": 21362,
+        "player_name": "Hillier, Daniel",
         "fin_text": "T25",
         "score": "+2"
       },
@@ -227,12 +227,6 @@
         "score": "+3"
       },
       {
-        "dg_id": 17813,
-        "player_name": "Armitage, Marcus",
-        "fin_text": "T28",
-        "score": "+3"
-      },
-      {
         "dg_id": 26947,
         "player_name": "Jarvis, Casey",
         "fin_text": "T28",
@@ -245,16 +239,16 @@
         "score": "+3"
       },
       {
-        "dg_id": 14016,
-        "player_name": "Campillo, Jorge",
+        "dg_id": 17813,
+        "player_name": "Armitage, Marcus",
         "fin_text": "T28",
         "score": "+3"
       },
       {
-        "dg_id": 21646,
-        "player_name": "Ferguson, Ewen",
-        "fin_text": "T35",
-        "score": "+4"
+        "dg_id": 14016,
+        "player_name": "Campillo, Jorge",
+        "fin_text": "T28",
+        "score": "+3"
       },
       {
         "dg_id": 11889,
@@ -269,14 +263,20 @@
         "score": "+4"
       },
       {
-        "dg_id": 28268,
-        "player_name": "Kaneko, Kota",
+        "dg_id": 26506,
+        "player_name": "De Leo, Gregorio",
         "fin_text": "T35",
         "score": "+4"
       },
       {
-        "dg_id": 26506,
-        "player_name": "De Leo, Gregorio",
+        "dg_id": 15680,
+        "player_name": "Winther, Jeff",
+        "fin_text": "T35",
+        "score": "+4"
+      },
+      {
+        "dg_id": 21646,
+        "player_name": "Ferguson, Ewen",
         "fin_text": "T35",
         "score": "+4"
       },
@@ -287,8 +287,8 @@
         "score": "+4"
       },
       {
-        "dg_id": 15680,
-        "player_name": "Winther, Jeff",
+        "dg_id": 28268,
+        "player_name": "Kaneko, Kota",
         "fin_text": "T35",
         "score": "+4"
       },
@@ -541,16 +541,16 @@
       "thru": 0,
       "rank": 24
     },
-    "21362": {
-      "name": "Daniel Hillier",
+    "20706": {
+      "name": "Matt Wallace",
       "pos": "T25",
       "score": 2,
       "today": 0,
       "thru": 0,
       "rank": 25
     },
-    "20706": {
-      "name": "Matt Wallace",
+    "21362": {
+      "name": "Daniel Hillier",
       "pos": "T25",
       "score": 2,
       "today": 0,
@@ -589,24 +589,24 @@
       "thru": 0,
       "rank": 30
     },
-    "17813": {
-      "name": "Marcus Armitage",
-      "pos": "T28",
-      "score": 3,
-      "today": 0,
-      "thru": 0,
-      "rank": 31
-    },
     "26947": {
       "name": "Casey Jarvis",
       "pos": "T28",
       "score": 3,
       "today": 0,
       "thru": 0,
-      "rank": 32
+      "rank": 31
     },
     "16475": {
       "name": "Grant Forrest",
+      "pos": "T28",
+      "score": 3,
+      "today": 0,
+      "thru": 0,
+      "rank": 32
+    },
+    "17813": {
+      "name": "Marcus Armitage",
       "pos": "T28",
       "score": 3,
       "today": 0,
@@ -621,21 +621,13 @@
       "thru": 0,
       "rank": 34
     },
-    "21646": {
-      "name": "Ewen Ferguson",
-      "pos": "T35",
-      "score": 4,
-      "today": 0,
-      "thru": 0,
-      "rank": 35
-    },
     "11889": {
       "name": "Ryan Fox",
       "pos": "T35",
       "score": 4,
       "today": 0,
       "thru": 0,
-      "rank": 36
+      "rank": 35
     },
     "9531": {
       "name": "Bernd Wiesberger",
@@ -643,18 +635,26 @@
       "score": 4,
       "today": 0,
       "thru": 0,
+      "rank": 36
+    },
+    "26506": {
+      "name": "Gregorio De Leo",
+      "pos": "T35",
+      "score": 4,
+      "today": 0,
+      "thru": 0,
       "rank": 37
     },
-    "28268": {
-      "name": "Kota Kaneko",
+    "15680": {
+      "name": "Jeff Winther",
       "pos": "T35",
       "score": 4,
       "today": 0,
       "thru": 0,
       "rank": 38
     },
-    "26506": {
-      "name": "Gregorio De Leo",
+    "21646": {
+      "name": "Ewen Ferguson",
       "pos": "T35",
       "score": 4,
       "today": 0,
@@ -669,8 +669,8 @@
       "thru": 0,
       "rank": 40
     },
-    "15680": {
-      "name": "Jeff Winther",
+    "28268": {
+      "name": "Kota Kaneko",
       "pos": "T35",
       "score": 4,
       "today": 0,
@@ -921,7 +921,7 @@
       "course": "JG",
       "rel": {}
     },
-    "15676": {
+    "20706": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -929,7 +929,7 @@
       "course": "JG",
       "rel": {}
     },
-    "25131": {
+    "15676": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -945,7 +945,7 @@
       "course": "JG",
       "rel": {}
     },
-    "20706": {
+    "25131": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -953,7 +953,7 @@
       "course": "JG",
       "rel": {}
     },
-    "12294": {
+    "16497": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -969,7 +969,7 @@
       "course": "JG",
       "rel": {}
     },
-    "16497": {
+    "12294": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -1001,6 +1001,14 @@
       "course": "JG",
       "rel": {}
     },
+    "29971": {
+      "round": 3,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
     "19421": {
       "round": 3,
       "start": 1,
@@ -1010,30 +1018,6 @@
       "rel": {}
     },
     "27811": {
-      "round": 3,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
-    "17813": {
-      "round": 3,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
-    "29971": {
-      "round": 3,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
-    "21646": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -1057,23 +1041,7 @@
       "course": "JG",
       "rel": {}
     },
-    "16475": {
-      "round": 3,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
     "9531": {
-      "round": 3,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
-    "28268": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -1089,6 +1057,14 @@
       "course": "JG",
       "rel": {}
     },
+    "16475": {
+      "round": 3,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
     "26506": {
       "round": 3,
       "start": 1,
@@ -1097,7 +1073,7 @@
       "course": "JG",
       "rel": {}
     },
-    "14016": {
+    "15680": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -1105,7 +1081,7 @@
       "course": "JG",
       "rel": {}
     },
-    "32550": {
+    "17813": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -1113,10 +1089,10 @@
       "course": "JG",
       "rel": {}
     },
-    "14838": {
+    "21646": {
       "round": 3,
       "start": 1,
-      "thru": 1,
+      "thru": 0,
       "today": 0,
       "course": "JG",
       "rel": {}
@@ -1129,15 +1105,7 @@
       "course": "JG",
       "rel": {}
     },
-    "20448": {
-      "round": 3,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
-    "30445": {
+    "14016": {
       "round": 3,
       "start": 1,
       "thru": 0,
@@ -1161,7 +1129,39 @@
       "course": "JG",
       "rel": {}
     },
-    "15680": {
+    "32550": {
+      "round": 3,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
+    "14838": {
+      "round": 3,
+      "start": 1,
+      "thru": 1,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
+    "20448": {
+      "round": 3,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
+    "30445": {
+      "round": 3,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
+    "28268": {
       "round": 3,
       "start": 1,
       "thru": 0,
