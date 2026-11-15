@@ -221,39 +221,39 @@
         "score": "-1"
       },
       {
-        "dg_id": 15676,
-        "player_name": "Norgaard, Niklas",
-        "fin_text": "T27",
-        "score": "-1"
-      },
-      {
         "dg_id": 14016,
         "player_name": "Campillo, Jorge",
-        "fin_text": "T31",
+        "fin_text": "T30",
         "score": "E"
       },
       {
         "dg_id": 12294,
         "player_name": "Fleetwood, Tommy",
-        "fin_text": "T31",
+        "fin_text": "T30",
         "score": "E"
       },
       {
         "dg_id": 11889,
         "player_name": "Fox, Ryan",
-        "fin_text": "T31",
+        "fin_text": "T30",
+        "score": "E"
+      },
+      {
+        "dg_id": 15676,
+        "player_name": "Norgaard, Niklas",
+        "fin_text": "T30",
         "score": "E"
       },
       {
         "dg_id": 7677,
         "player_name": "Norris, Shaun",
-        "fin_text": "T31",
+        "fin_text": "T30",
         "score": "E"
       },
       {
         "dg_id": 14838,
         "player_name": "Reed, Patrick",
-        "fin_text": "T31",
+        "fin_text": "T30",
         "score": "E"
       },
       {
@@ -490,7 +490,7 @@
       "pos": "T18",
       "score": -3,
       "today": -1,
-      "thru": 16,
+      "thru": 17,
       "rank": 18
     },
     "28268": {
@@ -581,41 +581,41 @@
       "thru": 18,
       "rank": 29
     },
-    "15676": {
-      "name": "Niklas Norgaard",
-      "pos": "T27",
-      "score": -1,
-      "today": 1,
-      "thru": 16,
-      "rank": 30
-    },
     "14016": {
       "name": "Jorge Campillo",
-      "pos": "T31",
+      "pos": "T30",
       "score": 0,
       "today": -4,
       "thru": 18,
-      "rank": 31
+      "rank": 30
     },
     "12294": {
       "name": "Tommy Fleetwood",
-      "pos": "T31",
+      "pos": "T30",
       "score": 0,
       "today": -3,
       "thru": 18,
-      "rank": 32
+      "rank": 31
     },
     "11889": {
       "name": "Ryan Fox",
-      "pos": "T31",
+      "pos": "T30",
       "score": 0,
       "today": -4,
       "thru": 18,
+      "rank": 32
+    },
+    "15676": {
+      "name": "Niklas Norgaard",
+      "pos": "T30",
+      "score": 0,
+      "today": 2,
+      "thru": 17,
       "rank": 33
     },
     "7677": {
       "name": "Shaun Norris",
-      "pos": "T31",
+      "pos": "T30",
       "score": 0,
       "today": -2,
       "thru": 18,
@@ -623,7 +623,7 @@
     },
     "14838": {
       "name": "Patrick Reed",
-      "pos": "T31",
+      "pos": "T30",
       "score": 0,
       "today": -3,
       "thru": 18,
@@ -934,6 +934,26 @@
         "12": 1
       }
     },
+    "6430": {
+      "round": 4,
+      "start": 1,
+      "thru": 11,
+      "today": 0,
+      "course": "JG",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": -1,
+        "4": 0,
+        "5": 1,
+        "6": 0,
+        "7": -1,
+        "8": 0,
+        "9": 1,
+        "10": 0,
+        "11": 0
+      }
+    },
     "29971": {
       "round": 4,
       "start": 1,
@@ -954,26 +974,6 @@
         "11": 0,
         "12": 0,
         "13": -1
-      }
-    },
-    "6430": {
-      "round": 4,
-      "start": 1,
-      "thru": 11,
-      "today": 0,
-      "course": "JG",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": -1,
-        "4": 0,
-        "5": 1,
-        "6": 0,
-        "7": -1,
-        "8": 0,
-        "9": 1,
-        "10": 0,
-        "11": 0
       }
     },
     "19421": {
@@ -1210,7 +1210,7 @@
     "21362": {
       "round": 4,
       "start": 1,
-      "thru": 16,
+      "thru": 17,
       "today": -1,
       "course": "JG",
       "rel": {
@@ -1229,7 +1229,8 @@
         "13": 1,
         "14": -1,
         "15": 0,
-        "16": 0
+        "16": 0,
+        "17": 0
       }
     },
     "28268": {
@@ -1490,31 +1491,6 @@
         "18": 1
       }
     },
-    "15676": {
-      "round": 4,
-      "start": 1,
-      "thru": 16,
-      "today": 1,
-      "course": "JG",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": 0,
-        "6": 0,
-        "7": 0,
-        "8": 1,
-        "9": 1,
-        "10": 0,
-        "11": 0,
-        "12": 1,
-        "13": -1,
-        "14": 0,
-        "15": 0,
-        "16": -1
-      }
-    },
     "14016": {
       "round": 4,
       "start": 1,
@@ -1594,6 +1570,32 @@
         "16": 1,
         "17": -1,
         "18": -1
+      }
+    },
+    "15676": {
+      "round": 4,
+      "start": 1,
+      "thru": 17,
+      "today": 2,
+      "course": "JG",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 1,
+        "9": 1,
+        "10": 0,
+        "11": 0,
+        "12": 1,
+        "13": -1,
+        "14": 0,
+        "15": 0,
+        "16": -1,
+        "17": 1
       }
     },
     "7677": {
