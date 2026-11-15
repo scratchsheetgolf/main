@@ -40,7 +40,7 @@
   },
   "event_name": "DP World Tour Championship",
   "leader_name": "Tyrrell Hatton",
-  "last_leaderboard_post_ts": 1794736845.8609893,
+  "last_leaderboard_post_ts": 1794740743.4287872,
   "standings": {
     "event_name": "DP World Tour Championship",
     "round": 4,
@@ -53,14 +53,14 @@
         "score": "-13"
       },
       {
-        "dg_id": 20084,
-        "player_name": "Lindberg, Mikael",
+        "dg_id": 10091,
+        "player_name": "McIlroy, Rory",
         "fin_text": "T2",
         "score": "-9"
       },
       {
-        "dg_id": 10091,
-        "player_name": "McIlroy, Rory",
+        "dg_id": 20084,
+        "player_name": "Lindberg, Mikael",
         "fin_text": "T2",
         "score": "-9"
       },
@@ -71,50 +71,50 @@
         "score": "-8"
       },
       {
-        "dg_id": 21407,
-        "player_name": "Reitan, Kristoffer",
-        "fin_text": "T4",
-        "score": "-8"
-      },
-      {
         "dg_id": 20085,
         "player_name": "Lindell, Oliver",
         "fin_text": "T4",
         "score": "-8"
       },
       {
-        "dg_id": 14987,
-        "player_name": "Laporta, Francesco",
-        "fin_text": "7",
+        "dg_id": 20730,
+        "player_name": "Perez, Victor",
+        "fin_text": "T6",
         "score": "-7"
       },
       {
-        "dg_id": 20730,
-        "player_name": "Perez, Victor",
-        "fin_text": "T8",
+        "dg_id": 14987,
+        "player_name": "Laporta, Francesco",
+        "fin_text": "T6",
+        "score": "-7"
+      },
+      {
+        "dg_id": 21407,
+        "player_name": "Reitan, Kristoffer",
+        "fin_text": "T6",
+        "score": "-7"
+      },
+      {
+        "dg_id": 25611,
+        "player_name": "Olesen, Jacob Skov",
+        "fin_text": "T9",
         "score": "-6"
       },
       {
         "dg_id": 29971,
         "player_name": "Bradbury, Dan",
-        "fin_text": "T8",
+        "fin_text": "T9",
         "score": "-6"
-      },
-      {
-        "dg_id": 25611,
-        "player_name": "Olesen, Jacob Skov",
-        "fin_text": "T8",
-        "score": "-6"
-      },
-      {
-        "dg_id": 6430,
-        "player_name": "Scott, Adam",
-        "fin_text": "T11",
-        "score": "-5"
       },
       {
         "dg_id": 25131,
         "player_name": "Hill, Calum",
+        "fin_text": "T11",
+        "score": "-5"
+      },
+      {
+        "dg_id": 6430,
+        "player_name": "Scott, Adam",
         "fin_text": "T11",
         "score": "-5"
       },
@@ -357,20 +357,20 @@
       "thru": 13,
       "rank": 1
     },
-    "20084": {
-      "name": "Mikael Lindberg",
-      "pos": "T2",
-      "score": -9,
-      "today": -3,
-      "thru": 14,
-      "rank": 2
-    },
     "10091": {
       "name": "Rory McIlroy",
       "pos": "T2",
       "score": -9,
       "today": -4,
       "thru": 15,
+      "rank": 2
+    },
+    "20084": {
+      "name": "Mikael Lindberg",
+      "pos": "T2",
+      "score": -9,
+      "today": -3,
+      "thru": 14,
       "rank": 3
     },
     "26745": {
@@ -378,16 +378,8 @@
       "pos": "T4",
       "score": -8,
       "today": -3,
-      "thru": 14,
-      "rank": 4
-    },
-    "21407": {
-      "name": "Kristoffer Reitan",
-      "pos": "T4",
-      "score": -8,
-      "today": -4,
       "thru": 15,
-      "rank": 5
+      "rank": 4
     },
     "20085": {
       "name": "Oliver Lindell",
@@ -395,47 +387,47 @@
       "score": -8,
       "today": -7,
       "thru": 18,
+      "rank": 5
+    },
+    "20730": {
+      "name": "Victor Perez",
+      "pos": "T6",
+      "score": -7,
+      "today": 1,
+      "thru": 14,
       "rank": 6
     },
     "14987": {
       "name": "Francesco Laporta",
-      "pos": "7",
+      "pos": "T6",
       "score": -7,
       "today": -2,
       "thru": 15,
       "rank": 7
     },
-    "20730": {
-      "name": "Victor Perez",
-      "pos": "T8",
-      "score": -6,
-      "today": 2,
-      "thru": 13,
+    "21407": {
+      "name": "Kristoffer Reitan",
+      "pos": "T6",
+      "score": -7,
+      "today": -3,
+      "thru": 16,
       "rank": 8
-    },
-    "29971": {
-      "name": "Dan Bradbury",
-      "pos": "T8",
-      "score": -6,
-      "today": -2,
-      "thru": 15,
-      "rank": 9
     },
     "25611": {
       "name": "Jacob Skov Olesen",
-      "pos": "T8",
+      "pos": "T9",
       "score": -6,
       "today": -3,
       "thru": 17,
-      "rank": 10
+      "rank": 9
     },
-    "6430": {
-      "name": "Adam Scott",
-      "pos": "T11",
-      "score": -5,
-      "today": 0,
-      "thru": 14,
-      "rank": 11
+    "29971": {
+      "name": "Dan Bradbury",
+      "pos": "T9",
+      "score": -6,
+      "today": -2,
+      "thru": 15,
+      "rank": 10
     },
     "25131": {
       "name": "Calum Hill",
@@ -443,6 +435,14 @@
       "score": -5,
       "today": -4,
       "thru": 18,
+      "rank": 11
+    },
+    "6430": {
+      "name": "Adam Scott",
+      "pos": "T11",
+      "score": -5,
+      "today": 0,
+      "thru": 14,
       "rank": 12
     },
     "15326": {
@@ -490,7 +490,7 @@
       "pos": "T16",
       "score": -4,
       "today": -1,
-      "thru": 16,
+      "thru": 17,
       "rank": 18
     },
     "21362": {
@@ -530,7 +530,7 @@
       "pos": "T19",
       "score": -3,
       "today": 1,
-      "thru": 15,
+      "thru": 16,
       "rank": 23
     },
     "30445": {
@@ -562,7 +562,7 @@
       "pos": "T27",
       "score": -1,
       "today": 2,
-      "thru": 16,
+      "thru": 17,
       "rank": 27
     },
     "15676": {
@@ -764,26 +764,26 @@
     {
       "pos": "1",
       "name": "Tyrrell Hatton",
-      "score": "-11"
+      "score": "-13"
     },
     {
-      "pos": "2",
-      "name": "Mikael Lindberg",
-      "score": "-10"
-    },
-    {
-      "pos": "T3",
+      "pos": "T2",
       "name": "Rory McIlroy",
       "score": "-9"
     },
     {
-      "pos": "T3",
-      "name": "Victor Perez",
+      "pos": "T2",
+      "name": "Mikael Lindberg",
       "score": "-9"
     },
     {
-      "pos": "5",
-      "name": "Francesco Laporta",
+      "pos": "T4",
+      "name": "Eugenio Chacarra",
+      "score": "-8"
+    },
+    {
+      "pos": "T4",
+      "name": "Oliver Lindell",
       "score": "-8"
     }
   ],
@@ -810,29 +810,6 @@
         "13": 0
       }
     },
-    "20084": {
-      "round": 4,
-      "start": 1,
-      "thru": 14,
-      "today": -3,
-      "course": "JG",
-      "rel": {
-        "1": 0,
-        "2": -1,
-        "3": 0,
-        "4": 0,
-        "5": -1,
-        "6": -1,
-        "7": 0,
-        "8": -1,
-        "9": 0,
-        "10": 1,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0
-      }
-    },
     "10091": {
       "round": 4,
       "start": 1,
@@ -857,10 +834,33 @@
         "15": 0
       }
     },
-    "26745": {
+    "20084": {
       "round": 4,
       "start": 1,
       "thru": 14,
+      "today": -3,
+      "course": "JG",
+      "rel": {
+        "1": 0,
+        "2": -1,
+        "3": 0,
+        "4": 0,
+        "5": -1,
+        "6": -1,
+        "7": 0,
+        "8": -1,
+        "9": 0,
+        "10": 1,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": 0
+      }
+    },
+    "26745": {
+      "round": 4,
+      "start": 1,
+      "thru": 15,
       "today": -3,
       "course": "JG",
       "rel": {
@@ -877,29 +877,6 @@
         "11": 0,
         "12": 1,
         "13": -1,
-        "14": -1
-      }
-    },
-    "21407": {
-      "round": 4,
-      "start": 1,
-      "thru": 15,
-      "today": -4,
-      "course": "JG",
-      "rel": {
-        "1": 0,
-        "2": -1,
-        "3": 0,
-        "4": 0,
-        "5": 0,
-        "6": -1,
-        "7": -1,
-        "8": 0,
-        "9": 1,
-        "10": -1,
-        "11": 0,
-        "12": 0,
-        "13": 0,
         "14": -1,
         "15": 0
       }
@@ -907,8 +884,8 @@
     "20730": {
       "round": 4,
       "start": 1,
-      "thru": 13,
-      "today": 2,
+      "thru": 14,
+      "today": 1,
       "course": "JG",
       "rel": {
         "1": 1,
@@ -923,30 +900,8 @@
         "10": 1,
         "11": 0,
         "12": 0,
-        "13": 0
-      }
-    },
-    "6430": {
-      "round": 4,
-      "start": 1,
-      "thru": 14,
-      "today": 0,
-      "course": "JG",
-      "rel": {
-        "1": 0,
-        "2": 0,
-        "3": -1,
-        "4": 0,
-        "5": 1,
-        "6": 0,
-        "7": -1,
-        "8": 0,
-        "9": 1,
-        "10": 0,
-        "11": 0,
-        "12": 1,
-        "13": -1,
-        "14": 0
+        "13": 0,
+        "14": -1
       }
     },
     "14987": {
@@ -971,6 +926,31 @@
         "13": 0,
         "14": -1,
         "15": 0
+      }
+    },
+    "21407": {
+      "round": 4,
+      "start": 1,
+      "thru": 16,
+      "today": -3,
+      "course": "JG",
+      "rel": {
+        "1": 0,
+        "2": -1,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": -1,
+        "7": -1,
+        "8": 0,
+        "9": 1,
+        "10": -1,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": -1,
+        "15": 0,
+        "16": 1
       }
     },
     "14838": {
@@ -998,6 +978,32 @@
         "16": 0,
         "17": 0,
         "18": -1
+      }
+    },
+    "25611": {
+      "round": 4,
+      "start": 1,
+      "thru": 17,
+      "today": -3,
+      "course": "JG",
+      "rel": {
+        "1": 0,
+        "2": -1,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": -1,
+        "8": 0,
+        "9": 0,
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": -1,
+        "17": 0
       }
     },
     "20085": {
@@ -1049,32 +1055,6 @@
         "13": -1,
         "14": 0,
         "15": 0
-      }
-    },
-    "25611": {
-      "round": 4,
-      "start": 1,
-      "thru": 17,
-      "today": -3,
-      "course": "JG",
-      "rel": {
-        "1": 0,
-        "2": -1,
-        "3": 0,
-        "4": 0,
-        "5": 0,
-        "6": 0,
-        "7": -1,
-        "8": 0,
-        "9": 0,
-        "10": 0,
-        "11": 0,
-        "12": 0,
-        "13": 0,
-        "14": 0,
-        "15": 0,
-        "16": -1,
-        "17": 0
       }
     },
     "30445": {
@@ -1156,6 +1136,29 @@
         "16": 1,
         "17": 0,
         "18": -1
+      }
+    },
+    "6430": {
+      "round": 4,
+      "start": 1,
+      "thru": 14,
+      "today": 0,
+      "course": "JG",
+      "rel": {
+        "1": 0,
+        "2": 0,
+        "3": -1,
+        "4": 0,
+        "5": 1,
+        "6": 0,
+        "7": -1,
+        "8": 0,
+        "9": 1,
+        "10": 0,
+        "11": 0,
+        "12": 1,
+        "13": -1,
+        "14": 0
       }
     },
     "15326": {
@@ -1241,7 +1244,7 @@
     "20706": {
       "round": 4,
       "start": 1,
-      "thru": 16,
+      "thru": 17,
       "today": -1,
       "course": "JG",
       "rel": {
@@ -1260,7 +1263,8 @@
         "13": -1,
         "14": 0,
         "15": 0,
-        "16": 0
+        "16": 0,
+        "17": 0
       }
     },
     "21362": {
@@ -1428,7 +1432,7 @@
     "26991": {
       "round": 4,
       "start": 1,
-      "thru": 15,
+      "thru": 16,
       "today": 1,
       "course": "JG",
       "rel": {
@@ -1446,7 +1450,8 @@
         "12": 1,
         "13": -1,
         "14": 0,
-        "15": 0
+        "15": 0,
+        "16": 0
       }
     },
     "14196": {
@@ -1560,7 +1565,7 @@
     "16497": {
       "round": 4,
       "start": 1,
-      "thru": 16,
+      "thru": 17,
       "today": 2,
       "course": "JG",
       "rel": {
@@ -1579,7 +1584,8 @@
         "13": 0,
         "14": 0,
         "15": 0,
-        "16": 0
+        "16": 0,
+        "17": 0
       }
     },
     "15676": {
@@ -2116,6 +2122,6 @@
       "18": 5
     }
   },
-  "last_public_post_ts": 1794736845.8609893,
+  "last_public_post_ts": 1794740743.4287872,
   "final_posted": "Genesis Championship"
 }
