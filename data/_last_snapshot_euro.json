@@ -40,11 +40,11 @@
   },
   "event_name": "DP World Tour Championship",
   "leader_name": "Tyrrell Hatton",
-  "last_leaderboard_post_ts": 1794744345.1092176,
+  "last_leaderboard_post_ts": 1794744944.542531,
   "standings": {
     "event_name": "DP World Tour Championship",
     "round": 4,
-    "final": false,
+    "final": true,
     "event_stats": [
       {
         "dg_id": 14796,
@@ -354,7 +354,7 @@
       "pos": "1",
       "score": -15,
       "today": -6,
-      "thru": 17,
+      "thru": 18,
       "rank": 1
     },
     "10091": {
@@ -410,7 +410,7 @@
       "pos": "T5",
       "score": -7,
       "today": 1,
-      "thru": 17,
+      "thru": 18,
       "rank": 8
     },
     "21407": {
@@ -794,7 +794,7 @@
     "14796": {
       "round": 4,
       "start": 1,
-      "thru": 17,
+      "thru": 18,
       "today": -6,
       "course": "JG",
       "rel": {
@@ -814,7 +814,8 @@
         "14": -1,
         "15": -1,
         "16": 0,
-        "17": 0
+        "17": 0,
+        "18": 0
       }
     },
     "14838": {
@@ -1036,7 +1037,7 @@
     "20730": {
       "round": 4,
       "start": 1,
-      "thru": 17,
+      "thru": 18,
       "today": 1,
       "course": "JG",
       "rel": {
@@ -1056,7 +1057,8 @@
         "14": -1,
         "15": 0,
         "16": 0,
-        "17": 0
+        "17": 0,
+        "18": 0
       }
     },
     "21407": {
@@ -2160,6 +2162,6 @@
       "18": 5
     }
   },
-  "last_public_post_ts": 1794744345.1092176,
-  "final_posted": "Genesis Championship"
+  "last_public_post_ts": 1794744944.542531,
+  "final_posted": "DP World Tour Championship"
 }
