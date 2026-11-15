@@ -119,8 +119,8 @@
         "score": "-3"
       },
       {
-        "dg_id": 16497,
-        "player_name": "Dean, Joe",
+        "dg_id": 27588,
+        "player_name": "Schott, Freddy",
         "fin_text": "T11",
         "score": "-3"
       },
@@ -131,8 +131,8 @@
         "score": "-3"
       },
       {
-        "dg_id": 27588,
-        "player_name": "Schott, Freddy",
+        "dg_id": 16497,
+        "player_name": "Dean, Joe",
         "fin_text": "T11",
         "score": "-3"
       },
@@ -149,14 +149,14 @@
         "score": "-2"
       },
       {
-        "dg_id": 15676,
-        "player_name": "Norgaard, Niklas",
+        "dg_id": 14196,
+        "player_name": "Meronk, Adrian",
         "fin_text": "T17",
         "score": "-2"
       },
       {
-        "dg_id": 14196,
-        "player_name": "Meronk, Adrian",
+        "dg_id": 15676,
+        "player_name": "Norgaard, Niklas",
         "fin_text": "T17",
         "score": "-2"
       },
@@ -173,12 +173,6 @@
         "score": "-1"
       },
       {
-        "dg_id": 25131,
-        "player_name": "Hill, Calum",
-        "fin_text": "T20",
-        "score": "-1"
-      },
-      {
         "dg_id": 19421,
         "player_name": "Du Plessis, Hennie",
         "fin_text": "T20",
@@ -191,14 +185,14 @@
         "score": "-1"
       },
       {
-        "dg_id": 15326,
-        "player_name": "Sullivan, Andy",
-        "fin_text": "T25",
-        "score": "E"
+        "dg_id": 25131,
+        "player_name": "Hill, Calum",
+        "fin_text": "T20",
+        "score": "-1"
       },
       {
-        "dg_id": 16475,
-        "player_name": "Forrest, Grant",
+        "dg_id": 15326,
+        "player_name": "Sullivan, Andy",
         "fin_text": "T25",
         "score": "E"
       },
@@ -209,6 +203,18 @@
         "score": "E"
       },
       {
+        "dg_id": 16475,
+        "player_name": "Forrest, Grant",
+        "fin_text": "T25",
+        "score": "E"
+      },
+      {
+        "dg_id": 17813,
+        "player_name": "Armitage, Marcus",
+        "fin_text": "T28",
+        "score": "+1"
+      },
+      {
         "dg_id": 27811,
         "player_name": "Couvra, Martin",
         "fin_text": "T28",
@@ -217,12 +223,6 @@
       {
         "dg_id": 28268,
         "player_name": "Kaneko, Kota",
-        "fin_text": "T28",
-        "score": "+1"
-      },
-      {
-        "dg_id": 17813,
-        "player_name": "Armitage, Marcus",
         "fin_text": "T28",
         "score": "+1"
       },
@@ -269,14 +269,14 @@
         "score": "+3"
       },
       {
-        "dg_id": 10201,
-        "player_name": "Guerrier, Julien",
+        "dg_id": 32550,
+        "player_name": "Bryant, Davis",
         "fin_text": "T38",
         "score": "+4"
       },
       {
-        "dg_id": 32550,
-        "player_name": "Bryant, Davis",
+        "dg_id": 10201,
+        "player_name": "Guerrier, Julien",
         "fin_text": "T38",
         "score": "+4"
       },
@@ -445,8 +445,8 @@
       "thru": 0,
       "rank": 12
     },
-    "16497": {
-      "name": "Joe Dean",
+    "27588": {
+      "name": "Freddy Schott",
       "pos": "T11",
       "score": -3,
       "today": 0,
@@ -461,8 +461,8 @@
       "thru": 0,
       "rank": 14
     },
-    "27588": {
-      "name": "Freddy Schott",
+    "16497": {
+      "name": "Joe Dean",
       "pos": "T11",
       "score": -3,
       "today": 0,
@@ -485,16 +485,16 @@
       "thru": 0,
       "rank": 17
     },
-    "15676": {
-      "name": "Niklas Norgaard",
+    "14196": {
+      "name": "Adrian Meronk",
       "pos": "T17",
       "score": -2,
       "today": 0,
       "thru": 0,
       "rank": 18
     },
-    "14196": {
-      "name": "Adrian Meronk",
+    "15676": {
+      "name": "Niklas Norgaard",
       "pos": "T17",
       "score": -2,
       "today": 0,
@@ -517,24 +517,24 @@
       "thru": 0,
       "rank": 21
     },
-    "25131": {
-      "name": "Calum Hill",
-      "pos": "T20",
-      "score": -1,
-      "today": 0,
-      "thru": 0,
-      "rank": 22
-    },
     "19421": {
       "name": "Hennie Du Plessis",
       "pos": "T20",
       "score": -1,
       "today": 0,
       "thru": 0,
-      "rank": 23
+      "rank": 22
     },
     "15680": {
       "name": "Jeff Winther",
+      "pos": "T20",
+      "score": -1,
+      "today": 0,
+      "thru": 0,
+      "rank": 23
+    },
+    "25131": {
+      "name": "Calum Hill",
       "pos": "T20",
       "score": -1,
       "today": 0,
@@ -549,21 +549,29 @@
       "thru": 0,
       "rank": 25
     },
-    "16475": {
-      "name": "Grant Forrest",
-      "pos": "T25",
-      "score": 0,
-      "today": 0,
-      "thru": 0,
-      "rank": 26
-    },
     "10158": {
       "name": "Joost Luiten",
       "pos": "T25",
       "score": 0,
       "today": 0,
       "thru": 0,
+      "rank": 26
+    },
+    "16475": {
+      "name": "Grant Forrest",
+      "pos": "T25",
+      "score": 0,
+      "today": 0,
+      "thru": 0,
       "rank": 27
+    },
+    "17813": {
+      "name": "Marcus Armitage",
+      "pos": "T28",
+      "score": 1,
+      "today": 0,
+      "thru": 0,
+      "rank": 28
     },
     "27811": {
       "name": "Martin Couvra",
@@ -571,18 +579,10 @@
       "score": 1,
       "today": 0,
       "thru": 0,
-      "rank": 28
+      "rank": 29
     },
     "28268": {
       "name": "Kota Kaneko",
-      "pos": "T28",
-      "score": 1,
-      "today": 0,
-      "thru": 0,
-      "rank": 29
-    },
-    "17813": {
-      "name": "Marcus Armitage",
       "pos": "T28",
       "score": 1,
       "today": 0,
@@ -626,7 +626,7 @@
       "pos": "T33",
       "score": 3,
       "today": 0,
-      "thru": 0,
+      "thru": 1,
       "rank": 35
     },
     "11889": {
@@ -634,7 +634,7 @@
       "pos": "T33",
       "score": 3,
       "today": -1,
-      "thru": 2,
+      "thru": 3,
       "rank": 36
     },
     "14838": {
@@ -645,16 +645,16 @@
       "thru": 0,
       "rank": 37
     },
-    "10201": {
-      "name": "Julien Guerrier",
+    "32550": {
+      "name": "Davis Bryant",
       "pos": "T38",
       "score": 4,
       "today": 0,
       "thru": 1,
       "rank": 38
     },
-    "32550": {
-      "name": "Davis Bryant",
+    "10201": {
+      "name": "Julien Guerrier",
       "pos": "T38",
       "score": 4,
       "today": 0,
@@ -666,7 +666,7 @@
       "pos": "T38",
       "score": 4,
       "today": 0,
-      "thru": 0,
+      "thru": 1,
       "rank": 40
     },
     "18554": {
@@ -682,7 +682,7 @@
       "pos": "T38",
       "score": 4,
       "today": 0,
-      "thru": 2,
+      "thru": 3,
       "rank": 42
     },
     "26008": {
@@ -881,7 +881,7 @@
       "course": "JG",
       "rel": {}
     },
-    "16497": {
+    "27588": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -897,7 +897,7 @@
       "course": "JG",
       "rel": {}
     },
-    "27588": {
+    "16497": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -921,7 +921,7 @@
       "course": "JG",
       "rel": {}
     },
-    "15676": {
+    "14196": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -929,7 +929,7 @@
       "course": "JG",
       "rel": {}
     },
-    "14196": {
+    "15676": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -953,23 +953,7 @@
       "course": "JG",
       "rel": {}
     },
-    "25131": {
-      "round": 4,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
     "19421": {
-      "round": 4,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
-    "15326": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -985,7 +969,7 @@
       "course": "JG",
       "rel": {}
     },
-    "16475": {
+    "25131": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -993,7 +977,7 @@
       "course": "JG",
       "rel": {}
     },
-    "27811": {
+    "17813": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -1001,7 +985,38 @@
       "course": "JG",
       "rel": {}
     },
-    "10201": {
+    "15326": {
+      "round": 4,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
+    "10158": {
+      "round": 4,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
+    },
+    "24127": {
+      "round": 4,
+      "start": 1,
+      "thru": 6,
+      "today": 3,
+      "course": "JG",
+      "rel": {
+        "1": 1,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 2
+      }
+    },
+    "32550": {
       "round": 4,
       "start": 1,
       "thru": 1,
@@ -1010,6 +1025,14 @@
       "rel": {
         "1": 0
       }
+    },
+    "27811": {
+      "round": 4,
+      "start": 1,
+      "thru": 0,
+      "today": 0,
+      "course": "JG",
+      "rel": {}
     },
     "28268": {
       "round": 4,
@@ -1058,20 +1081,23 @@
     "12294": {
       "round": 4,
       "start": 1,
-      "thru": 0,
+      "thru": 1,
       "today": 0,
       "course": "JG",
-      "rel": {}
+      "rel": {
+        "1": 0
+      }
     },
     "11889": {
       "round": 4,
       "start": 1,
-      "thru": 2,
+      "thru": 3,
       "today": -1,
       "course": "JG",
       "rel": {
         "1": 0,
-        "2": -1
+        "2": -1,
+        "3": 0
       }
     },
     "26947": {
@@ -1089,7 +1115,7 @@
         "7": 0
       }
     },
-    "32550": {
+    "10201": {
       "round": 4,
       "start": 1,
       "thru": 1,
@@ -1099,7 +1125,7 @@
         "1": 0
       }
     },
-    "20448": {
+    "16475": {
       "round": 4,
       "start": 1,
       "thru": 0,
@@ -1107,13 +1133,15 @@
       "course": "JG",
       "rel": {}
     },
-    "17813": {
+    "20448": {
       "round": 4,
       "start": 1,
-      "thru": 0,
+      "thru": 1,
       "today": 0,
       "course": "JG",
-      "rel": {}
+      "rel": {
+        "1": 0
+      }
     },
     "18554": {
       "round": 4,
@@ -1131,12 +1159,13 @@
     "9531": {
       "round": 4,
       "start": 1,
-      "thru": 2,
+      "thru": 3,
       "today": 0,
       "course": "JG",
       "rel": {
         "1": 0,
-        "2": 0
+        "2": 0,
+        "3": 0
       }
     },
     "26008": {
@@ -1207,14 +1236,6 @@
         "6": 0
       }
     },
-    "10158": {
-      "round": 4,
-      "start": 1,
-      "thru": 0,
-      "today": 0,
-      "course": "JG",
-      "rel": {}
-    },
     "14838": {
       "round": 4,
       "start": 1,
@@ -1222,21 +1243,6 @@
       "today": 0,
       "course": "JG",
       "rel": {}
-    },
-    "24127": {
-      "round": 4,
-      "start": 1,
-      "thru": 6,
-      "today": 3,
-      "course": "JG",
-      "rel": {
-        "1": 1,
-        "2": 0,
-        "3": 0,
-        "4": 0,
-        "5": 0,
-        "6": 2
-      }
     },
     "18105": {
       "round": 4,
